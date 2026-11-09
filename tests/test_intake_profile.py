@@ -156,7 +156,7 @@ runpy.run_path(entry, run_name='__main__')
         args = ['preview-root-admission', '--manifest-sha256', self.package['manifestSha256'],
             '--state-dir', str(self.worker), '--legacy-budget', str(self.legacy),
             '--profile', str(self.profile_file), '--profile-sha256', self.selection[1],
-            '--task-file', str(self.task_file), '--task-sha256', self.task_selection[1]]
+            '--task-file', str(self.task_file), '--task-sha256', self.task_selection[1], '--output-tokens', '20000']
         env = {'PATH': str(self.git_tool.parent) + ':/usr/bin:/bin', 'HOME': str(self.root)}
         result = subprocess.run([sys.executable, '-IBS', '-c', driver, str(self.installed), str(self.git_tool), *args],
             cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
@@ -165,6 +165,8 @@ runpy.run_path(entry, run_name='__main__')
         self.assertEqual(snapshot(self.root), before)
         self.assertEqual(snapshot(self.installed), installed_before)
         self.assertFalse(preview['executionAuthorized'] or preview['liveModelAvailable'])
+        self.assertEqual(preview['modelRequest']['max_output_tokens'], 20000)
+        self.assertEqual(preview['intent']['maxOutputTokens'], 20000)
         self.assertEqual(preview['intent']['controllerInstallation']['manifestSha256'], self.package['manifestSha256'])
         self.assertEqual(preview['intent']['task']['dataSha256'], fingerprint(self.task))
         self.assertEqual(preview['intent']['profile']['sha256'], self.selection[1])
@@ -327,10 +329,11 @@ runpy.run_path(entry, run_name='__main__')
         self.assertEqual(self.budget.path.read_bytes(), before)
         self.assertFalse((self.worker / 'local-tasks').exists())
 
-    def reviewed_retained_fixture(self):
+    def reviewed_retained_fixture(self, *, output_tokens=None, input_tokens=100, response_status='completed'):
         """A live-shaped receipt, using a provider double and a temporary fixture ledger only."""
+        selected = {} if output_tokens is None else {'output_tokens': output_tokens}
         with self.guarded():
-            base = self.preview()
+            base = c.preview_root_admission(self.selection, root_task=self.task_selection, intake_only=True, **selected)
             requirements = base['projectGrantRequirements']
             names = ('operation', 'model', 'requestSha256', 'scopeSha256', 'target', 'taskSha256',
                      'sourceSha256', 'originalLedgerSha256', 'markerSha256', 'legacyBytesSha256')
@@ -342,23 +345,24 @@ runpy.run_path(entry, run_name='__main__')
             self.grant_file.write_bytes(encoded(grant))
             grant_selection = self.grant_file, sha(self.grant_file.read_bytes())
             preview = c.preview_root_admission(self.selection, root_task=self.task_selection, intake_only=True,
-                                               live_grant=grant_selection)
+                                               live_grant=grant_selection, **selected)
 
             def provider(endpoint, payload):
                 if endpoint == 'responses/input_tokens':
-                    return {'input_tokens': 100}
+                    return {'input_tokens': input_tokens}
                 self.assertEqual(endpoint, 'responses')
+                self.assertEqual(payload['max_output_tokens'], output_tokens or 8192)
                 proposal = {'triage': {'ready': True, 'reason': 'Local fixture', 'risk': 'low',
                     'paths': [self.source_path], 'acceptance': ['Show the reviewed greeting']},
                     'patch': {'summary': 'Local fixture', 'edits': [{'path': self.source_path,
                         'old': 'Hello reader', 'new': 'Hello reviewer'}]}}
-                return {'id': 'fixture_retained_intake_response', 'model': MODEL, 'status': 'completed',
-                    'usage': {'input_tokens': 100, 'output_tokens': 100},
+                return {'id': 'fixture_retained_intake_response', 'model': MODEL, 'status': response_status,
+                    'usage': {'input_tokens': input_tokens, 'output_tokens': 100},
                     'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(proposal)}]}]}
 
             with patch.object(c, 'transport_from_key_file', return_value=provider):
                 state = c.run_issue(root_profile=self.selection, root_task=self.task_selection, intake_only=True,
-                                    live_grant=grant_selection, authorize_root_intent=preview['intentSha256'])
+                                    live_grant=grant_selection, authorize_root_intent=preview['intentSha256'], **selected)
         retained = self.worker / 'local-tasks' / state['key']
         paths = {'stateSha256': retained / 'state.json', 'proposalSha256': retained / 'intake.json',
                  'receiptSha256': retained / 'effects/intake.receipt.json',
@@ -373,6 +377,195 @@ runpy.run_path(entry, run_name='__main__')
         self.review_file.write_bytes(encoded(self.review if review is None else review))
         return {'root_profile': self.selection, 'root_task': self.task_selection,
                 'retained_intake': (self.review_file, sha(self.review_file.read_bytes()))}
+
+    def test_installed_live_intake_cli_selects_exact_allowance_and_resumes_without_provider(self):
+        key = self.root / 'fixture-private-key'
+        key.write_text('Fixture sentinel, never read as a credential')
+        key.chmod(0o600)
+        driver = '''import contextlib, io, json, runpy, socket, subprocess, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[1]) / 'lib'))
+from aim_ci import controller as c
+from openai_budget import MODEL
+def forbidden(*args, **kwargs):
+    raise AssertionError('Real credentials, network, execution or publication forbidden')
+c.github = c.human_review_pause = c.publish_candidate = c.probe.validate = forbidden
+socket.socket = forbidden
+git_pin, run = sys.argv[2], subprocess.run
+def git_only(argv, *args, **kwargs):
+    assert argv[0] == git_pin, argv
+    return run(argv, *args, **kwargs)
+subprocess.run = git_only
+def provider(endpoint, payload):
+    assert '--resume' not in sys.argv, 'Provider replay forbidden'
+    if endpoint == 'responses/input_tokens':
+        return {'input_tokens': 11179}
+    assert endpoint == 'responses' and payload['max_output_tokens'] == 20000
+    proposal = {'triage': {'ready': True, 'reason': 'Fixture', 'risk': 'low',
+        'paths': ['src/pages/index.astro'], 'acceptance': ['Show reviewed greeting']},
+        'patch': {'summary': 'Fixture', 'edits': [{'path': 'src/pages/index.astro',
+            'old': 'Hello reader', 'new': 'Hello reviewer'}]}}
+    return {'id': 'fixture-installed-response', 'model': MODEL, 'status': 'completed',
+        'usage': {'input_tokens': 11179, 'output_tokens': 100},
+        'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(proposal)}]}]}
+def credentials(*args, **kwargs):
+    assert '--resume' not in sys.argv, 'Credential replay forbidden'
+    return provider
+c.transport_from_key_file = credentials
+original = c.run_issue
+def quiet_run(*args, **kwargs):
+    with contextlib.redirect_stdout(io.StringIO()):
+        return original(*args, **kwargs)
+c.run_issue = quiet_run
+entry = str(Path(sys.argv[1]) / 'aim-ci-control.py')
+sys.argv = [entry, *sys.argv[3:]]
+runpy.run_path(entry, run_name='__main__')
+'''
+        common = ['run-local-intake', '--manifest-sha256', self.package['manifestSha256'],
+            '--state-dir', str(self.worker), '--legacy-budget', str(self.legacy),
+            '--profile', str(self.profile_file), '--profile-sha256', self.selection[1],
+            '--task-file', str(self.task_file), '--task-sha256', self.task_selection[1],
+            '--key-file', str(key), '--output-tokens', '20000']
+
+        def cli(*options, success=True):
+            result = subprocess.run([sys.executable, '-IBS', '-c', driver, str(self.installed),
+                str(self.git_tool), *common, *options], cwd=self.root,
+                env={'PATH': str(self.git_tool.parent) + ':/usr/bin:/bin', 'HOME': str(self.root)},
+                capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0 if success else 1, result.stderr)
+            return json.loads(result.stdout) if success else result.stderr
+
+        source_before = snapshot(self.checkout)
+        before = snapshot(self.root)
+        base = cli('--preview')
+        self.assertEqual(snapshot(self.root), before)
+        self.assertEqual(base['intent']['maxOutputTokens'], 20000)
+        requirements = base['projectGrantRequirements']
+        names = ('operation', 'model', 'requestSha256', 'scopeSha256', 'target', 'taskSha256',
+                 'sourceSha256', 'originalLedgerSha256', 'markerSha256', 'legacyBytesSha256')
+        grant = {name: requirements[name] for name in names}
+        grant.update(version=3, extraNanoUsd=0, extraGenerations=0, maxOperationNanoUsd=50_000_000,
+                     maxLedgerNanoUsd=requirements['existingLimitNanoUsd'],
+                     maxLedgerCalls=requirements['existingCallCeiling'])
+        grant_file = self.root / 'fixture-installed-grant.json'
+        grant_file.write_bytes(encoded(grant))
+        grant_args = ['--live-grant', str(grant_file), '--live-grant-sha256', sha(grant_file.read_bytes())]
+        approved = cli('--preview', *grant_args)
+        self.assertEqual(approved['modelRequest']['max_output_tokens'], 20000)
+        self.assertIn('Consent must match', cli('--authorize-intent', base['intentSha256'], *grant_args, success=False))
+        result = cli('--authorize-intent', approved['intentSha256'], *grant_args)
+        self.assertEqual(result['stage'], 'intake_proposed')
+        self.assertEqual(result['rootAdmission']['maxOutputTokens'], 20000)
+        retained = snapshot(self.worker)
+        self.assertEqual(cli('--authorize-intent', approved['intentSha256'], '--resume', *grant_args), result)
+        self.assertEqual(snapshot(self.worker), retained)
+        self.assertEqual(snapshot(self.checkout), source_before)
+        entry = self.budget.read()['requests'][-1]
+        self.assertEqual(entry['maxOutputTokens'], 20000)
+        self.assertEqual(entry['actualNanoUsd'], 11179 * 250 + 100 * 2000)
+
+    def test_output_allowance_binds_grant_consent_resume_and_candidate_without_replay(self):
+        with self.guarded():
+            default = self.preview()
+            explicit_default = c.preview_root_admission(self.selection, root_task=self.task_selection,
+                                                        intake_only=True, output_tokens=8192)
+            selected = c.preview_root_admission(self.selection, root_task=self.task_selection,
+                                                intake_only=True, output_tokens=20000)
+            self.assertEqual(default, explicit_default)
+            self.assertNotIn('maxOutputTokens', default['intent'])
+            self.assertEqual(selected['intent']['maxOutputTokens'], 20000)
+            self.assertNotEqual(selected['intentSha256'], default['intentSha256'])
+            self.assertNotEqual(selected['projectGrantRequirements']['requestSha256'],
+                                default['projectGrantRequirements']['requestSha256'])
+            self.assertNotEqual(selected['projectGrantRequirements']['scopeSha256'],
+                                default['projectGrantRequirements']['scopeSha256'])
+        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=11179)
+        admission = intake['rootAdmission']
+        inputs = dict(root_profile=self.selection, root_task=self.task_selection, intake_only=True,
+                      live_grant=(self.grant_file, sha(self.grant_file.read_bytes())),
+                      authorize_root_intent=admission['intentSha256'], output_tokens=20000)
+        preserved = {path: path.read_bytes() for path in (*paths.values(), self.budget.path, self.legacy)}
+        with self.guarded():
+            self.assertEqual(c.run_issue(**inputs, resume=True), intake)
+            for allowance in (8192, 16000, 25000):
+                with self.subTest(allowance=allowance), self.assertRaises(Refused):
+                    c.run_issue(**{**inputs, 'output_tokens': allowance}, resume=True)
+            with self.assertRaisesRegex(Refused, 'Consent must match'):
+                c.run_issue(**{**inputs, 'authorize_root_intent': default['intentSha256']})
+            with self.assertRaisesRegex(Refused, 'already dispatched'):
+                c.run_issue(**inputs)
+        with self.candidate_guarded():
+            candidate = c.preview_intake_candidate(**args)
+            self.assertEqual(candidate['intent']['maxOutputTokens'], 20000)
+            self.assertEqual(candidate['intent']['intakeIntentSha256'], admission['intentSha256'])
+            # A genuinely different consumer contract still reconstructs the producer's exact request.
+            with patch.object(c, 'resume_contract_sha', return_value='e' * 64):
+                newer_args = self.candidate_inputs({**self.review, 'candidateControllerSha256': 'e' * 64})
+                newer = c.preview_intake_candidate(**newer_args)
+                self.assertEqual(newer['intent']['controllerSha256'], 'e' * 64)
+                self.assertEqual(newer['intent']['originControllerSha256'], intake['resumeContractSha256'])
+                self.assertEqual(newer['intent']['intakeIntentSha256'], admission['intentSha256'])
+                self.assertEqual(newer['intent']['maxOutputTokens'], 20000)
+            self.candidate_inputs()
+            state_path = paths['stateSha256']
+            state_bytes = state_path.read_bytes()
+            changed = json.loads(state_bytes)
+            changed['rootAdmission']['maxOutputTokens'] = 16000
+            state_path.write_bytes(encoded(changed))
+            with self.assertRaisesRegex(Refused, 'independently reviewed bytes'):
+                c.preview_intake_candidate(**args)
+            changed_args = self.candidate_inputs({**self.review, 'stateSha256': sha(state_path.read_bytes())})
+            with self.assertRaisesRegex(Refused, 'Project grant differs from the exact request'):
+                c.preview_intake_candidate(**changed_args)
+            state_path.write_bytes(state_bytes)
+            self.candidate_inputs()
+        entry = self.budget.read()['requests'][-1]
+        self.assertEqual(entry['maxOutputTokens'], 20000)
+        self.assertEqual(entry['inputTokens'], 11179)
+        self.assertEqual(entry['reservedNanoUsd'], 50_000_000)
+        self.assertEqual(entry['actualNanoUsd'], 11179 * 250 + 100 * 2000)
+        self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
+
+    def test_selected_allowance_incomplete_response_never_replays(self):
+        self.assert_stopped_output_selection(11179, 'incomplete', 'Model response incomplete')
+
+    def test_selected_allowance_over_cap_preflight_never_replays(self):
+        self.assert_stopped_output_selection(40000, 'completed', 'Actual token count exceeds')
+
+    def assert_stopped_output_selection(self, input_tokens, response_status, reason):
+        with self.assertRaisesRegex(Refused, reason):
+            self.reviewed_retained_fixture(output_tokens=20000, input_tokens=input_tokens,
+                                           response_status=response_status)
+        entry = self.budget.read()['requests'][-1]
+        self.assertEqual(entry['maxOutputTokens'], 20000)
+        self.assertEqual(entry['reservedNanoUsd'], 50_000_000)
+        retained = self.worker / 'local-tasks' / c.local_task_key(self.repository, self.task['id'])
+        state = json.loads((retained / 'state.json').read_bytes())
+        self.assertEqual(state['stage'], 'stopped')
+        self.assertFalse((retained / 'intake.json').exists())
+        self.assertFalse((retained / 'effects/intake.receipt.json').exists())
+        if response_status == 'incomplete':
+            self.assertEqual(entry['status'], 'completed')
+            self.assertEqual(entry['responseStatus'], 'incomplete')
+        else:
+            self.assertEqual(entry['status'], 'unknown')
+            self.assertEqual(entry['failureClass'], 'TokenPreflightRefused')
+        # Resume may append a stopped audit event, but cannot change accounting or the model journal.
+        observed = (self.budget.path, retained / 'effects/effects.json', retained / 'triage/budget.json')
+        preserved = {path: path.read_bytes() for path in observed if path.exists()}
+        inputs = dict(root_profile=self.selection, root_task=self.task_selection, intake_only=True,
+            live_grant=(self.grant_file, sha(self.grant_file.read_bytes())), output_tokens=20000,
+            authorize_root_intent=state['rootAdmission']['intentSha256'])
+        with self.guarded():
+            for resume in (False, True):
+                with self.subTest(resume=resume), self.assertRaises(Refused):
+                    c.run_issue(**inputs, resume=resume)
+            with self.assertRaises(Refused):
+                c.run_issue(**{**inputs, 'output_tokens': 16000}, resume=True)
+        self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
+        self.assertEqual(json.loads((retained / 'state.json').read_bytes())['stage'], 'stopped')
+        self.assertFalse((retained / 'intake.json').exists())
+        self.assertFalse((retained / 'effects/intake.receipt.json').exists())
 
     def test_reviewed_proposal_prepares_only_private_unvalidated_candidate(self):
         args, intake, paths = self.reviewed_retained_fixture()
@@ -480,7 +673,7 @@ runpy.run_path(entry, run_name='__main__')
                         self.repository, self.task['id']))).read_bytes(), head)
 
     def test_installed_candidate_cli_preview_prepare_resume_and_withdraw_without_key(self):
-        args, intake, paths = self.reviewed_retained_fixture()
+        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=11179)
         preserved = {path: path.read_bytes() for path in (*paths.values(), self.budget.path, self.legacy)}
         (self.checkout / 'unselected-dirty.txt').write_text('Keep local edits\n')
         source_before, installed_before = snapshot(self.checkout), snapshot(self.installed)
@@ -523,6 +716,8 @@ runpy.run_path(entry, run_name='__main__')
         self.assertFalse(preview['executionAuthorized'])
         self.assertEqual(preview['intent']['controllerInstallation']['manifestSha256'], self.package['manifestSha256'])
         self.assertEqual(preview['intent']['candidateScope']['scope'], 'preparation-only')
+        self.assertEqual(preview['intent']['maxOutputTokens'], 20000)
+        self.assertEqual(intake['rootAdmission']['maxOutputTokens'], 20000)
         self.assertIn('Consent must match', cli('--authorize-intent', intake['rootAdmission']['intentSha256'], success=False))
         self.assertFalse(Path(preview['intent']['output']).exists())
         consent = preview['intentSha256']

@@ -1,3 +1,36 @@
+# AIM Flow 0.1.0-beta.6
+
+Select output capacity for one exact local intake without changing prior accounting.
+
+## Changes
+
+- Added `--output-tokens N` to source/installed intake preview and installed `run-local-intake`. The default remains 8,192 tokens. Values must be positive integers within the pinned provider's capacity.
+- Bound a selected allowance to the exact model request, grant, consent and resume. Changing the allowance cannot reuse consent for different request bytes or increase an approved spending cap.
+- Kept historical 8,192-token accounting fixed independently of the configurable request default. Historical retained admissions without a selection keep their original request contract.
+- Reconstructed reviewed private candidates from the allowance in their pinned retained intake. Candidate preparation remains offline and accepts no output override.
+- Retained completed, stopped, incomplete and unknown-operation protections. Selecting more output does not authorize another call or retry.
+- Ported only the applicable output-allowance changes from upstream commit `5d2b63e6b580d1465e7978a23e9c4b45a5a887d1`, using the clean product's generic model-support module.
+
+See [output capacity](aim-ci-onboarding.md#select-output-capacity-for-one-intake) for the CLI workflow. Provider token preflight and existing financial limits still apply before generation. Existing candidate and execution boundaries are unchanged.
+
+## Verification
+
+Local validation on 9 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **328 tests run, 327 passed, 1 skipped**, 356.467 seconds.
+- Existing skip: separate-candidate validation requires two verified fixture packages. No claim is made for the skipped path.
+- Profile suite: **17 tests passed**. Portable output-allowance suite: **5 tests passed**, covering parser propagation, strict bounds and default compatibility.
+- Node: **16 tests passed**, no failures or skips.
+- Independent read-only port review found no blockers in selection propagation, historical accounting, exact grant/consent/resume bindings or retained-candidate reconstruction.
+- Source inventory: 73 files verified. All 50 controller payload files match current reviewed source.
+- Branded download: nine payload hashes, trusted-source bootstrap match, fresh installation and expected unconfigured readiness exit 3 passed.
+- Static website: 18 local links/assets checked. Recursive current-file and nested-archive scan: 189 members; excluded application content absent.
+- Controller archive SHA-256: `2d6dc382fd562faaf844cf2c957ce0b0fda96a74e5c8d647dddf607a82adc5f2`.
+- Controller manifest SHA-256: `21d8050369ce73239b9e8cb01415eb7c42685b95ec6c2f293d275db08fd2c08c`.
+- Download ZIP SHA-256: `b7d7645788964b3a0aaec6d6374c4341b95ac1f605ffb16092e35bc94c79d2df`.
+
+The publication workflow runs the complete offline Python suite and Node tests before deployment. Verification used generated fixtures and temporary local repositories, with no live provider call, real budget mutation, VM or project-script execution.
+
 # AIM Flow 0.1.0-beta.5
 
 Prepare an independently reviewed proposal as an isolated private code candidate.

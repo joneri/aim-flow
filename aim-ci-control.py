@@ -67,6 +67,8 @@ def main():
     local_intake.add_argument('--live-grant', type=Path,
                               help='Optional for preview, required for dispatch; separately approved version 3 grant')
     local_intake.add_argument('--live-grant-sha256')
+    local_intake.add_argument('--output-tokens', type=int,
+                              help='Positive output-token allowance bound to this exact intake, grant and consent; default 8192')
     for option in ('manifest-sha256', 'profile-sha256', 'task-sha256'):
         local_intake.add_argument('--' + option, required=True)
     local_candidate = commands.add_parser('prepare-local-candidate',
@@ -251,7 +253,8 @@ def main():
         inputs = {'root_profile': (args.profile, args.profile_sha256),
                   'root_task': (args.task_file, args.task_sha256), 'intake_only': True,
                   'live_grant': ((args.live_grant, args.live_grant_sha256) if args.live_grant is not None else None),
-                  'live_key_file': args.key_file}
+                  'live_key_file': args.key_file,
+                  **({'output_tokens': args.output_tokens} if args.output_tokens is not None else {})}
         with installed_root_context(args.manifest_sha256, args.state_dir, args.legacy_budget):
             if args.preview:
                 result = preview_root_admission(**inputs)

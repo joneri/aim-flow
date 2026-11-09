@@ -310,6 +310,11 @@
       "kind": "modified",
       "upstreamSha256": "3b244070eed86743fe66b745c26fe2e9372331927e95c82b3613f083df846ed3"
     },
+    "tests/test_output_allowance.py": {
+      "kind": "added",
+      "upstreamCommit": "5d2b63e6b580d1465e7978a23e9c4b45a5a887d1",
+      "upstreamSha256": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5"
+    },
     "tests/test_project_discovery_sizes.py": {
       "kind": "added",
       "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
@@ -345,16 +350,16 @@
     }
   },
   "files": {
-    "aim-ci-control.py": "cade98d10d4ce55b0d8a71e77dd8d157923337f4e3fef0108017fd34a19ac2f6",
+    "aim-ci-control.py": "781af5e10b7deedc6538c93a881ce36f52a72b3c058a161faacdf879364c1569",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
-    "docs/aim-ci-onboarding.md": "2bfd0596bae333cfbd8e939b7a32e230a0173ea03bdbc403824f5864ab3125a7",
+    "docs/aim-ci-onboarding.md": "1387158eb803a6e2375462195cdfaf8a4d2a5bcd3f2a28bc505420303a93a27c",
     "docs/aim-ci-plan-recipe.md": "d16821bb4624f26897e4ce127b8ee0879470306211106219a0219cc11c259bb0",
     "docs/aim-ci-propose-adaptation.md": "1a42306a5cc8b4396b548316ae17641ba130a56f67091dc6f32a7ab07e427d1c",
-    "docs/aim-ci-python-test-matrix.md": "22125c950f440878e694abedf912c1dba9076f8d88e5d9439eab326019563cc2",
-    "docs/aim-ci-size-handling.md": "3bfabc842e652631207cc727d91acba689b20a829d6a337e6fcbb885569ba6b8",
+    "docs/aim-ci-python-test-matrix.md": "52e8f549f533e44709cee57d0df7900b0f143a6599be125f8f9d01f84bf871ae",
+    "docs/aim-ci-size-handling.md": "1a8ad614974d0a4a0aa40f5021c678f161ebf4bebec900f8162bba223dbf2fe5",
     "fixtures/products/catalog-oracle.py": "c66350ab4d96eafffa943e559a41936009a56ee781af17390cb778707e2fd45e",
     "fixtures/products/catalog/catalog.py": "8fdf097ef42419ae21ded44bc93d4d0bc1f7e7263532b7a2706c220111ea4c3e",
     "fixtures/products/catalog/fixtures/items.csv": "e2212a8405f0bd5c08b5db14f035650da4678eb5c5acb8734308cc145b79faa0",
@@ -365,8 +370,8 @@
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
     "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
-    "lib/aim_ci/control_package.py": "2adb70c2d45c164ddd5cd0ef4e43fabfe93bfacf787a04a7627f1de2d98ea091",
-    "lib/aim_ci/controller.py": "081a51877724be7367fce3455368c554003a12e44e3761d98d906c101fab2a4a",
+    "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
+    "lib/aim_ci/controller.py": "c93b7b339e243426fa32c5d511ee5ac11d438d26f61b13b1aae12a10defb2a0d",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
     "lib/aim_ci/docker_engine.py": "60439c9101daa706ec4066327093bdc7b852402dad6649c369703afaf2faec88",
     "lib/aim_ci/docker_image_evidence.py": "59115c01f2f77309ddb1252d5b1327bac81dbc727437f307a47f5c3bdded9d9a",
@@ -375,7 +380,7 @@
     "lib/aim_ci/image_preparation.py": "25559643a7dc2d26f30acc68b66b849961fd8bdb5e628998ddd386ed50cd7c8f",
     "lib/aim_ci/installed_runtime.py": "469f2b41c7b4e60a25733d1c50b0d8c9aaef3be9ca68e5441dc5bdb728109081",
     "lib/aim_ci/local_ci.py": "b33d491c7b4d0cb19d530625370c34641548a746465c19e8e5ac3fbcaa8e1a22",
-    "lib/aim_ci/model_support.py": "b828b88cc3c5915d0fd66673d1c9dc9729c0f40e492a7686593cc23ccfd60610",
+    "lib/aim_ci/model_support.py": "0e243813c095d978b670d2daaa719cef70fdbe3d4fae279e9ad7fa58cbac4a63",
     "lib/aim_ci/npm_acquisition.py": "323b6448b7867368fab4d87539e4a22f96f04b157b42813394df6632988ab74d",
     "lib/aim_ci/npm_platform.py": "8cd9314e421dbd8050230b6724eae1cffbbd0eb2d452d64c51a991ba3671df9b",
     "lib/aim_ci/npm_platform_build.cjs": "5aa9b6d7891eeeaa93eb1cef9f34b82e643e11b187d432ab05ec08c68d28f4b7",
@@ -392,7 +397,7 @@
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
-    "lib/openai_budget.py": "8c6cdba1a34ae9fdd92c9c68ab5ff5ff97ba8b10b666e81104fa055811e05747",
+    "lib/openai_budget.py": "d30b620c96d3514fc32537381b39300234354161844a1fb510f01855f57dccf5",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
@@ -403,12 +408,13 @@
     "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
-    "tests/test_intake_profile.py": "2b12954eb7ff60da42118324d4097efaf93d5d3b789dc55a98853f24bab58b5a",
+    "tests/test_intake_profile.py": "fd4420df24c76252558b0ff2b25112e61b08eb4b53965c8b1639e33db7423104",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
     "tests/test_npm_platform_build.cjs": "6bc7b9e45e8894090e2fd287748901e5a1fb3728e0a89f4afdbb9af1d420b01e",
     "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
+    "tests/test_output_allowance.py": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5",
     "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
     "tests/test_project_installation.py": "f6b11b76ebfd6ff81ba2da1ccb02517940bfd4ea139d3e341908b20b1185e16c",
     "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
@@ -484,6 +490,22 @@
         "docs/aim-ci-python-test-matrix.md"
       ],
       "summary": "Prepare an independently reviewed retained proposal as an unvalidated private candidate with new exact consent."
+    },
+    {
+      "commit": "5d2b63e6b580d1465e7978a23e9c4b45a5a887d1",
+      "paths": [
+        "aim-ci-control.py",
+        "docs/aim-ci-onboarding.md",
+        "docs/aim-ci-python-test-matrix.md",
+        "docs/aim-ci-size-handling.md",
+        "lib/aim_ci/control_package.py",
+        "lib/aim_ci/controller.py",
+        "lib/aim_ci/model_support.py",
+        "lib/openai_budget.py",
+        "tests/test_intake_profile.py",
+        "tests/test_output_allowance.py"
+      ],
+      "summary": "Select output allowance for exact intake requests while preserving historical accounting and retained work."
     }
   ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",

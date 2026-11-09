@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import signal
 import subprocess
-from openai_budget import MAX_OUTPUT, MODEL, Refused, canonical, safe_path, owned_file, read_owned, write_owned
+from openai_budget import DEFAULT_OUTPUT, MAX_OUTPUT, MODEL, provider_token_bounds, Refused, canonical, safe_path, owned_file, read_owned, write_owned
 
 from .owned_paths import read_owned_content
 
@@ -28,7 +28,8 @@ def frozen_inputs(project):
             result[str(path.relative_to(project))] = hashlib.sha256(read_owned_content(project, path.relative_to(project))).hexdigest()
     return result
 
-def payload(instructions, data, schema, name, *, output_tokens=MAX_OUTPUT):
+def payload(instructions, data, schema, name, *, output_tokens=DEFAULT_OUTPUT):
+    provider_token_bounds(0, output_tokens)
     return {"model": MODEL, "service_tier": "default", "store": False,
             "reasoning": {"effort": "low"}, "max_output_tokens": output_tokens,
             "instructions": instructions, "input": canonical(data),

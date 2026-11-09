@@ -12,7 +12,7 @@ A no-key preview does not know the token count or final cost. Its byte-derived c
 
 A new project grant holds its already approved operation cap before credentials or preflight are used. The actual input count and selected output allowance must fit that hold before generation. Unknown outcomes keep their reservation and are not retried automatically. Existing ledger prefixes, financial ceilings and approved call slots are not expanded by these changes.
 
-The default output allowance is 8,192 tokens, including reasoning and formatting. It is not a universal product or provider maximum: the request-building API accepts an explicit output_tokens allowance, bound into the exact request hash and checked against approved money and actual provider constraints. This change does not add a CLI or profile selection for that parameter. Historical experiment grants retain their previously authorized financial reservation envelopes.
+The default output allowance is 8,192 tokens, including reasoning and formatting. It is not a universal product or provider maximum: the request-building API accepts an explicit output_tokens allowance, bound into the exact request hash and checked against approved money and actual provider constraints. The intake CLI accepts `--output-tokens N` for `preview-root-admission` and `run-local-intake`. The selection must match the preview, approved grant, exact consent and resume. Historical admissions without a selected value keep their original 8,192-token contract; selecting a new allowance cannot replay spent, stopped or unknown work. Historical experiment grants retain their previously authorized financial reservation envelopes.
 
 ## Controls that remain
 

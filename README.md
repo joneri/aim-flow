@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.5` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.6` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -15,12 +15,12 @@ AIM Flow helps you understand a software project, choose the next step and check
 - **Project discovery:** inspect committed project metadata, scripts, CI and container definitions without running project code.
 - **Project-aware installation:** retain a source-bound adaptation draft separately from the immutable controller.
 - **Bounded source checks:** explicitly select one supported npm script and its committed inputs, then separately review preparation and execution. This mode installs no dependencies and produces no application build.
-- **Proposal-only task intake:** preview a project-bound request before choosing a build setup. No model call or change is made by the preview. Actual API use requires its own grant, consent and existing budget history.
+- **Proposal-only task intake:** preview a project-bound request before choosing a build setup. No model call or change is made by the preview. Select an output allowance for the exact request. Actual API use requires a matching grant, consent, provider preflight and existing budget history.
 - **Project size:** read complete selected source and project definitions without fixed product file-size, file-count or request-byte caps. Provider, approved spending and reviewed runtime limits still apply. See [size handling](docs/aim-ci-size-handling.md).
 - **Reviewed private candidates:** prepare an isolated local code candidate from an independently reviewed retained proposal, with new exact consent. This leaves the source checkout untouched and does not run or publish the project.
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the private-candidate update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the output-allowance update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 

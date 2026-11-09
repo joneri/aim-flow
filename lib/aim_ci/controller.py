@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-from openai_budget import Campaign, MODEL, Refused, atomic_json, canonical, fingerprint, read_owned, write_owned, transport_from_key_file
+from openai_budget import Campaign, DEFAULT_OUTPUT, MAX_OUTPUT, MODEL, provider_token_bounds, Refused, atomic_json, canonical, fingerprint, read_owned, write_owned, transport_from_key_file
 from .budget import Budget
 from .owned_paths import read_owned_content
 from .effects import EffectJournal
@@ -342,7 +342,7 @@ def github_review_gate(repo, number, head):
         raise Refused('Explicit trusted current-head Codex review completion is missing')
 
 
-def model_request(phase, instructions, data, schema, *, output_tokens=probe.MAX_OUTPUT):
+def model_request(phase, instructions, data, schema, *, output_tokens=DEFAULT_OUTPUT):
     return {**probe.payload(instructions, data, schema, phase.replace('-', '_'), output_tokens=output_tokens), 'stream': True}
 
 
@@ -358,7 +358,8 @@ def model_call(directory, phase, instructions, data, schema, budget, transport, 
     if (not isinstance(binding, dict) or set(binding) != set(actual)
             or binding != actual or state.get('executionBinding') != binding):
         raise Refused('Model effect requires the unchanged authoritative execution binding')
-    request = model_request(phase, instructions, data, schema)
+    output_tokens = root_admission.get('maxOutputTokens', MAX_OUTPUT) if root_admission else DEFAULT_OUTPUT
+    request = model_request(phase, instructions, data, schema, output_tokens=output_tokens)
     live_intake = (root_admission is not None and root_admission.get('executionMode') == LIVE_LOCAL_MODE
                    and 'task' in root_admission and 'liveGrant' in root_admission)
     if root_admission is not None and (
@@ -711,11 +712,12 @@ def live_intake_transport(key_file, excluded, *, inspect_file=True):
 
 
 def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, intake_only=False, live_grant=None,
-                           live_key_file=None, _credential_metadata=True):
+                           live_key_file=None, output_tokens=DEFAULT_OUTPUT, _credential_metadata=True):
     from .operator_build import canonical_path, overlaps, owned_input
     from .platform_build import report_json
     from .project_discovery import CommitReader
 
+    provider_token_bounds(0, output_tokens)
     if (os.getuid(), os.getgid()) != (os.geteuid(), os.getegid()):
         raise Refused('Local root admission requires the invoking OS principal')
     if type(intake_only) is not bool:
@@ -790,7 +792,7 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
     reader.verify_head()
     instructions, data = intake_arguments(config, identity, originals, root_review=True, intake_only=intake_only,
                                           local_task=local_task)
-    request = model_request('intake', instructions, data, INTAKE_SCHEMA)
+    request = model_request('intake', instructions, data, INTAKE_SCHEMA, output_tokens=output_tokens)
     intent = {'version': 1, 'effect': ROOT_PROPOSAL_EFFECT if intake_only else 'local-root-intake-and-technical-review',
               'executionMode': 'synthetic-test-only' if runtime is not None else 'preview-only',
               'principal': {'uid': os.getuid(), 'gid': os.getgid()},
@@ -799,6 +801,10 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
               'target': {**target, 'tree': reader.tree, 'checkout': str(checkout)},
               'allowedPaths': config['allowedPaths'], 'controllerSha256': resume_contract_sha(),
               'modelRequestSha256': fingerprint(request)}
+    # Keep omitted/default historical contracts byte-compatible. A selected allowance
+    # is explicit admission data as well as part of the exact provider request hash.
+    if output_tokens != MAX_OUTPUT:
+        intent['maxOutputTokens'] = output_tokens
     if 'intakeScope' in config:
         intent['intakeScope'] = config['intakeScope']
     if installation is not None:
@@ -877,9 +883,9 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
 
 
 def preview_root_admission(root_profile, root_issue=None, *, root_task=None, intake_only=False, live_grant=None,
-                           live_key_file=None):
+                           live_key_file=None, output_tokens=DEFAULT_OUTPUT):
     return inspect_root_admission(root_profile, root_issue, root_task=root_task, intake_only=intake_only,
-                                  live_grant=live_grant, live_key_file=live_key_file)[-1]
+                                  live_grant=live_grant, live_key_file=live_key_file, output_tokens=output_tokens)[-1]
 
 
 def root_git(*args, cwd, executable='git'):
@@ -1063,6 +1069,18 @@ def inspect_intake_candidate(root_profile, root_issue, root_task, retained_intak
     state = json.loads(state_bytes)
     if not isinstance(state, dict) or type(state.get('version')) is not int or state['version'] != 1:
         raise Refused('Unsupported retained intake state version')
+    # Read the pinned retained selection before reconstructing its exact request.
+    # Missing means the immutable 8192-token historical contract, even if a future
+    # default changes. No new allowance or consent is inferred for retained work.
+    retained_admission = state.get('rootAdmission')
+    if not isinstance(retained_admission, dict):
+        raise Refused('Retained intake requires its original root admission')
+    selected_output = retained_admission.get('maxOutputTokens', MAX_OUTPUT)
+    provider_token_bounds(0, selected_output)
+    if selected_output != intake['modelRequest']['max_output_tokens']:
+        config, reviewed, requirement, intake = inspect_root_admission(
+            root_profile, root_issue, root_task=root_task, intake_only=True, output_tokens=selected_output)
+        current = intake['intent']
     if historical:
         admission, ledger = retained_live_admission(state, intake, review, key, retained,
                                                    config['repository'], identity['id'])
@@ -1123,6 +1141,8 @@ def inspect_intake_candidate(root_profile, root_issue, root_task, retained_intak
               'receiptSha256': hashlib.sha256(receipt_bytes).hexdigest(),
               'triage': triage, 'patch': patch, 'candidateSha256': fingerprint(replacements),
               'output': str(directory / 'candidate'), 'publicationAuthorized': False}
+    if 'maxOutputTokens' in admission:
+        intent['maxOutputTokens'] = admission['maxOutputTokens']
     if historical:
         intent.update(originControllerSha256=review['originControllerSha256'], retainedIntakeReviewSha256=retained_intake[1])
     if reviewed.get('kind') == INTAKE_PROFILE_KIND:
@@ -1527,7 +1547,12 @@ def resume_root_review(directory, state, config, reviewed, runtime, recipe_evide
 def run_issue(number=None, config=None, *, resume=False, root_profile=None, root_issue=None, root_task=None,
               authorize_root_intent=None, recipe_evidence=None, intake_only=False, live_grant=None, live_key_file=None,
               candidate_action=None, authorize_candidate_intent=None, retained_intake=None, technical_decision=None,
-              candidate_validation=None, authorize_validation_intent=None):
+              candidate_validation=None, authorize_validation_intent=None, output_tokens=None):
+    if output_tokens is not None:
+        provider_token_bounds(0, output_tokens)
+        if (root_profile is None or not intake_only or candidate_action is not None
+                or retained_intake is not None or candidate_validation is not None):
+            raise Refused('Output allowance selection requires explicit root intake-only admission')
     if candidate_validation is not None or authorize_validation_intent is not None:
         if (any(value is not None for value in (number, config, root_issue, authorize_root_intent, live_grant, live_key_file,
                                                 candidate_action, authorize_candidate_intent))
@@ -1572,7 +1597,8 @@ def run_issue(number=None, config=None, *, resume=False, root_profile=None, root
         with lock(state_root() / 'worker.lock'):
             config, reviewed, request_input, preview = inspect_root_admission(
                 root_profile, root_issue, root_task=root_task, intake_only=intake_only, live_grant=live_grant,
-                live_key_file=live_key_file, _credential_metadata=not resume)
+                live_key_file=live_key_file, output_tokens=DEFAULT_OUTPUT if output_tokens is None else output_tokens,
+                _credential_metadata=not resume)
             if (not local_task and request_input['number'] != number) or authorize_root_intent != preview['intentSha256']:
                 label = 'task' if local_task else 'Issue'
                 raise Refused(f'Consent must match this exact root target, {label} and intake preview')
@@ -1755,6 +1781,7 @@ def _run_issue(number, config, *, resume=False, root_profile=None, reviewed_root
                                                 root_task=selection if local_task else None, intake_only=True,
                                                 live_grant=grant_selection,
                                                 live_key_file=root_admission.get('liveTransport', {}).get('keyFile'),
+                                                output_tokens=root_admission.get('maxOutputTokens', MAX_OUTPUT),
                                                 _credential_metadata=not resume)[-1]
                 if current['intentSha256'] != root_admission['intentSha256']:
                     raise Refused('Intake-only inputs changed since consent')

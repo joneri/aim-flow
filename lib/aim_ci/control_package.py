@@ -29,6 +29,8 @@ def require_source_checkout(root):
 
 
 def add_root_preview_input(parser):
+    parser.add_argument('--output-tokens', type=int,
+                        help='Positive output-token allowance for this exact pinned-model intake; default 8192')
     inputs = parser.add_mutually_exclusive_group(required=True)
     for kind in ('issue', 'task'):
         inputs.add_argument(f'--{kind}-file', type=Path)
@@ -36,13 +38,14 @@ def add_root_preview_input(parser):
 
 
 def root_preview_input(parser, args):
+    output = {'output_tokens': args.output_tokens} if args.output_tokens is not None else {}
     if args.task_file is not None:
         if args.task_sha256 is None or args.issue_sha256 is not None:
             parser.error('--task-file requires only --task-sha256')
-        return {'root_task': (args.task_file, args.task_sha256), 'intake_only': True}
+        return {**output, 'root_task': (args.task_file, args.task_sha256), 'intake_only': True}
     if args.issue_sha256 is None or args.task_sha256 is not None:
         parser.error('--issue-file requires only --issue-sha256')
-    return {'root_issue': (args.issue_file, args.issue_sha256)}
+    return {**output, 'root_issue': (args.issue_file, args.issue_sha256)}
 
 
 def _payload(root):

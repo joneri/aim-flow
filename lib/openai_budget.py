@@ -23,7 +23,7 @@ INPUT_RATE = 250  # USD0.25 / million tokens, uncached standard service
 OUTPUT_RATE = 2000  # USD2 / million tokens, including reasoning
 MAX_CALLS = 4
 DEFAULT_OUTPUT = 8192
-MAX_OUTPUT = DEFAULT_OUTPUT  # Historical ledger/probe allowance, not a provider or product maximum.
+MAX_OUTPUT = 8192  # Immutable historical ledger/probe allowance, not a provider or product maximum.
 # Actual pinned-model limits, not local product policy. Verified 2026-11-09:
 # https://developers.openai.com/api/docs/models/gpt-5-mini
 PROVIDER_MAX_INPUT = 272_000

@@ -48,6 +48,30 @@ transfer source or call a model. One actual proposal still requires a
 separately approved project-bound v3 grant, exact live intent and existing
 shared-budget capacity. Exhausted history remains exhausted.
 
+### Select output capacity for one intake
+
+`--output-tokens N` selects the output allowance for the exact pinned-model
+request in `preview-root-admission` and `run-local-intake`. The default is
+8192 for compatibility, not a universal product maximum. For example, add
+`--output-tokens 20000` to a new preview, then use the same value for its live
+preview, authorized run and resume. A positive integer is required. The
+pinned `gpt-5-mini-2025-08-07` provider allows up to 128000 output tokens,
+272000 input tokens and 400000 total context tokens. These are provider
+constraints, not a guarantee that an operation fits its approved money cap.
+Output includes reasoning as well as the structured proposal.
+
+The allowance changes the exact request and, when non-default, appears as
+`intent.maxOutputTokens`. Request, scope, grant and consent must all match;
+old consent cannot authorize a different allowance. Token preflight must
+still fit the existing approved operation cap and shared campaign budget.
+The shared v3 ledger still holds its approved operation cap. Selecting an allowance grants no call, new budget or retry. A spent/stopped/unknown operation
+remains spent/stopped/unknown; a different output selection cannot replay it.
+
+The reviewed candidate route reconstructs the original allowance from the
+independently pinned retained intake. Its CLI needs no output override and
+never calls the provider. Historical admissions without the field retain
+their original 8192-token accounting and request contract.
+
 After a separately authorized proposal, inspect the retained proposal and
 receipt. Nothing has been applied. An independently reviewed proposal can
 then become an isolated private code candidate with separate exact consent,

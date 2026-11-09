@@ -7,7 +7,7 @@ Target: **public `joneri/aim-flow`**, MIT. Website: GitHub Pages project site un
 3. In repository **Settings → Pages → Build and deployment**, choose **GitHub Actions**.
 4. Run the prepared **Beta packaging checks** workflow on `main` (or push `main` after Pages is configured). Its portable checks run first, then the Pages job publishes `site/` to the `github-pages` environment.
 5. Verify the remote commit and workflow result. Open the real HTTPS page and test the guide, scope, PDF, ZIP, checksum and artwork-notice links.
-6. Only then describe the website as live. Optionally create a pre-release tagged `v0.1.0-beta.5`, attaching the reviewed `site/downloads/aim-flow-0.1.0-beta.5.zip` and `SHA256SUMS`.
+6. Only then describe the website as live. Optionally create a pre-release tagged `v0.1.0-beta.6`, attaching the reviewed `site/downloads/aim-flow-0.1.0-beta.6.zip` and `SHA256SUMS`.
 
 If the first Pages job runs before Pages is enabled, configure Pages and rerun the failed deployment job. Do not change repository access, add provider credentials or migrate the old application automation to work around publication problems.
 

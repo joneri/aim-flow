@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.5.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.6.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.5.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.6.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 
@@ -66,10 +66,16 @@ If a project does not yet have a qualified build setup, use the [proposal-only l
 
 The beta no longer imposes the former 50 KB source-file or 100 KB request-byte caps. A preview reads all explicitly selected committed content and checks the same source identities and allowed paths. It does not call a model or expand an existing budget.
 
-Actual generation still needs separately approved money and call slots plus provider token preflight. The default output allowance is not a universal maximum; this release adds no CLI/profile switch for choosing another allowance. Read [size handling and retained resource controls](aim-ci-size-handling.md) before changing runtime settings.
+Actual generation still needs separately approved money and call slots plus provider token preflight. Use `--output-tokens N` with `preview-root-admission` or `run-local-intake` to select output capacity for one exact intake. Use the same value for preview, authorization and resume. The default remains 8,192 tokens; changing it requires matching request/grant/consent bindings and does not raise an approved spending cap. Read [size handling and retained resource controls](aim-ci-size-handling.md) before changing runtime settings.
 
 ## Prepare a reviewed private candidate
 
 Use the installed `prepare-local-candidate --preview` command with the same pinned profile/task and an independently pinned retained-intake review. Inspect the returned patch, output path and complete intent before providing its new exact consent. The original intake consent is not sufficient.
 
 The result is a separate local candidate, not a built, tested or deployable application. No model call is needed for this preparation. Follow the [private-candidate guide](aim-ci-onboarding.md#prepare-an-unvalidated-private-candidate) for required pins, resume and withdrawal. Build and deployment still require their own supported path, evidence and authorization.
+
+## Select output capacity
+
+Follow [the output-allowance guide](aim-ci-onboarding.md#select-output-capacity-for-one-intake) before selecting a larger response. An allowance includes reasoning and structured output, and must fit both the pinned provider's capacity and the existing approved money/call limits.
+
+A larger allowance grants no new model call or retry. Historical retained work keeps its original allowance and accounting. Private-candidate preparation reconstructs that retained selection and offers no output override.

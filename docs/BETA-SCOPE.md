@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.5 scope
+# AIM Flow 0.1.0-beta.6 scope
 
 ## Available paths
 
@@ -44,6 +44,6 @@ A responsible operator, a trusted project, an explicitly reviewed source set and
 
 Fixed source-file, request-byte, patch-size/count and default changed-line caps are removed. Discovery reads complete committed definitions and repository inventories. New whole-build plans pin a measured source inventory; older inventory-less plans retain their compatibility envelope.
 
-This does not mean unlimited computer or model capacity. Actual provider constraints, approved money/call limits, per-run artifact/resource budgets and untrusted archive/protocol defenses still apply. Token preflight must fit the approved reservation before generation. Preview estimates cannot authorize or increase spending.
+This does not mean unlimited computer or model capacity. Actual provider constraints, approved money/call limits, per-run artifact/resource budgets and untrusted archive/protocol defenses still apply. The intake commands accept an explicit output allowance, bound to the exact request, grant and consent. Token preflight must fit the approved reservation before generation. Preview estimates cannot authorize or increase spending.
 
 The former formatter file-size guard was also removed. Its sandbox, protected inputs and deadline remain, but independent formatter disk-space enforcement is unqualified. Use trusted, reviewed projects. See [project size handling](aim-ci-size-handling.md) for the exact boundaries.
