@@ -1,26 +1,31 @@
-# AIM Flow 0.1.0-beta.1
+# AIM Flow 0.1.0-beta.2
 
-Initial public packaging of the existing bounded controller as AIM Flow Beta. Publication/hosting are separate from local qualification; consult the repository's actual release and Pages status rather than treating this file as deployment evidence.
+Product-only Beta packaging with the approved official AIM A identity.
 
-## Included
+## Changes
 
-- Exact 52-file controller extraction from `joneri/agenticpipeline` commit `783cb975f897b3179f3a8492a98b24fcc48dead6`.
-- MIT license, compatibility/source inventory, current quickstart, Beta boundaries and release checklist.
-- AIM Flow source-checkout convenience wrapper, separate from installed `aim-ci` command names.
-- Approved official AIM A identity, static GitHub Pages site and matching launch material. Original AIM source attribution is retained separately from the MIT code license.
-- Branded download wrapper with the unchanged controller archive, bootstrap, license and instructions.
+- Removed unrelated legacy application integrations, manifests, profile, API probe script and application-specific verifier fixtures.
+- Moved generic model support into a normal controller module.
+- Introduced one exact product-only controller archive layout (schema 2). Older mixed archive layouts are intentionally not accepted by this distribution.
+- Retained project discovery/installation, bounded source-check planning/execution, separately approved local intake and neutral catalog offline test coverage.
+- Kept MIT code licensing separate from original AIM artwork attribution and font notices.
+- Rebuilt the downloadable Beta and replaced previous-version links in the website and documentation.
 
-## Local checks, 9 November 2026
+## Verification
 
-- Python 3.14.8 / macOS / Apple Git 2.54.0: **265 tests run, 264 passed, 1 skipped**, 214.891 seconds.
-- Skipped: separate candidate validation needs two verified fixture packages. This omission is not counted as runtime proof.
-- Node 26.7.0: **12 tests passed**, 0 failed/skipped.
-- Extraction: **69 preserved files verified**, including the 52 controller files and selected tests/context.
-- The v0.1.0-beta.1 controller archive built in this extraction was byte-for-byte identical to the same version built in the upstream checkout.
-- Controller archive SHA-256: `e32a0f3fbed1e26b8a233304069692fda73214672418e3242f7d5916a9708b33`.
-- Controller manifest SHA-256: `1e9480aca8c42cbd7296fca8b2bc489b1f9ef65454e78d352da7f9fcf2ad36ae`.
+Local validation on 9 November 2026:
 
-- Static site: local assets/anchors/downloads checked; original design reviewed at desktop and 390/320-pixel mobile widths. No runtime JavaScript, external font requests, forms or analytics.
-- Branded download smoke test: eight outer-file hashes and MIT notice checked; bootstrap verification, fresh installation and expected unconfigured readiness exit 3 passed.
+- Python 3.14.8 / Apple Git 2.54: **270 tests run, 269 passed, 1 skipped**, 212.609 seconds.
+- Skipped: the separate-candidate validation case requires two verified fixture packages.
+- Node: **12 tests passed**, no failures or skips.
+- Independent dependency review: all 50 packaged inputs present, all packaged modules import, no removed-helper or stale-schema references.
+- Source inventory: 68 files verified (45 unchanged upstream files, 21 reviewed modifications, 2 added files).
+- Branded download: trusted-source bootstrap match, eight payload hashes, fresh installation and expected unconfigured readiness exit 3 passed.
+- Static website: 18 local links/assets checked.
+- Controller archive SHA-256: `1608173c6e9e57414868ad07dd7b9ee6907241ca2092811781765b7eb8a69d04`.
+- Controller manifest SHA-256: `c00b9fdcdc5b5c100e0ec44e624cc9379790526c3a8994e140d750943b7c1453`.
+- Download ZIP SHA-256: `40169aa3648383fadcdfd4619e1853a18d63eed19368a9821ed8927c29cf3add`.
 
-The prepared GitHub workflow runs a smaller portable contract subset, not the full Mac validation, and then publishes the static site for an authorized main-branch push once Pages is configured. No VM, model, external provider, GitHub CI, deployment or hosted website verification was performed by these local packaging checks. Prior runtime evidence and its limits are summarized separately in [VERIFICATION.md](VERIFICATION.md).
+ Earlier runtime proof is described separately in [VERIFICATION.md](VERIFICATION.md); this cleanup does not claim a new VM/model/runtime qualification.
+
+The GitHub workflow runs portable offline contracts, verifies the downloadable bundle and builds another bundle from source before it deploys the static site. A source-check pass is not an application build, deployment or product-owner acceptance.

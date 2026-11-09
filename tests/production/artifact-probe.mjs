@@ -7,11 +7,9 @@ import { pathToFileURL } from 'node:url';
 
 export function playwrightModule(name) {
   const modules = process.env.AIM_CI_PLAYWRIGHT_ROOT;
-  if (modules) {
-    assert.equal(process.env.EXECUTION_MODE, 'synthetic-offline');
-    return import(pathToFileURL(join(modules, name, 'index.mjs')).href);
-  }
-  return import(new URL(`../../fakeATG/node_modules/${name}/index.mjs`, import.meta.url).href);
+  assert.ok(modules, 'Explicit reviewed Playwright module directory required');
+  assert.equal(process.env.EXECUTION_MODE, 'synthetic-offline');
+  return import(pathToFileURL(join(modules, name, 'index.mjs')).href);
 }
 
 const loopback = 'http://127.0.0.1:4173/';

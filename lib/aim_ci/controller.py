@@ -4,7 +4,6 @@ from contextvars import ContextVar
 import base64
 import fcntl
 import hashlib
-import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -19,12 +18,10 @@ from .budget import Budget
 from .effects import EffectJournal
 from .human_review import policy as review_policy, pause as human_review_pause
 from .products import PRODUCTS, get_product, product_for
-from .contracts import admit_issue, admit_local_task, admitted_triage, baseline_oracle_status, bounded_patch, check_change_size, checks_pass, codex_completed_comment, intake_proposal, merge_ready, review_decision, unchanged_issue
+from .contracts import admit_issue, admit_local_task, admitted_triage, bounded_patch, check_change_size, checks_pass, codex_completed_comment, intake_proposal, merge_ready, review_decision, unchanged_issue
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location('aim_ci_probe', ROOT / 'api-story-probe.py')
-probe = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(probe)
+from . import model_support as probe
 STATE = ROOT / '.sandbox/aim-ci'
 TRANSPORTS = ContextVar('aim_ci_transports', default=None)
 TARGET = ContextVar('aim_ci_target', default=None)
@@ -42,7 +39,7 @@ LIAM_TASK_SHA256 = '414e3ad3e2ea17fadfe7ea02f46638f8fb5199208fabce2faa33ebfe38d7
 LIAM_FILE_SHA256 = 'acd34ecda29fe5626ed1629cc578632a3992b1c6e4a2a0cb9fe2cff324f884ad'
 LIAM_FIRST_REQUEST_SHA256 = '503c8e586e48c3854bd39a02ff965e44894dee268decf155e115f498bb0fd414'
 LIAM_CORRECTED_REQUEST_SHA256 = '50f71ef3eed665cd16da1799d607f61a35b51f26c650d697100502ced46a7d66'
-CONTROL_PATHS = ('aim-ci.py', 'aim-ci-release.py', 'api-story-probe.py', 'ci-governance.sh',
+CONTROL_PATHS = ('aim-ci.py', 'aim-ci-release.py', 'ci-governance.sh',
                  'lib', 'profiles', 'scm', '.github/workflows', 'fixtures', 'tests')
 
 
@@ -130,7 +127,7 @@ def installed_root_binding():
 
 
 def resume_contract_sha(manifest_files=None):
-    names = {'aim-ci.py', 'aim-ci-release.py', 'api-story-probe.py', 'lib/openai_budget.py', 'lib/review-policy.sh',
+    names = {'aim-ci.py', 'aim-ci-release.py', 'lib/openai_budget.py', 'lib/review-policy.sh',
              *(product.oracle_source for product in PRODUCTS.values())}
     patterns = ('lib/aim_ci/*.py', 'profiles/*.json', 'tests/production/*.mjs')
     if manifest_files is None:
@@ -174,7 +171,7 @@ def github(endpoint, method='GET', value=None):
     return json.loads(command(args, data=json.dumps(value) if value is not None else None))
 
 
-def profile(name='fakeatg'):
+def profile(name='catalog'):
     product = get_product(name)
     value = json.loads((ROOT / 'profiles' / (name + '.json')).read_text())
     if (value.get('version') != 1 or value.get('model') != MODEL

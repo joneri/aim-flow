@@ -5,26 +5,9 @@ standard library. Project inspection also needs an existing local Git checkout
 and a real Git 2.54.0 or newer executable. The local workflow was tested on
 macOS. Git, Node and npm are unnecessary for installation.
 
-## Download a CI development candidate
+## Obtain the Beta bundle
 
-Open the exact commit's **AIM CI** pull request run in GitHub Actions. After
-the quality and security job passes, the `controller-candidate` job builds
-and checks `aim-ci-controller-candidate-<full commit>-<run attempt>`.
-Download that artifact from the run, or look it up by run ID and artifact
-name in the [GitHub Actions artifacts API](https://docs.github.com/en/rest/actions/artifacts).
-The artifact is retained for 14 days.
-
-Check the downloaded ZIP against the SHA-256 from trusted GitHub artifact
-metadata and extract it into a new private directory. Check that
-`candidate.json` identifies the expected repository, source commit and
-tree, workflow ref and SHA, run ID and attempt. The source commit is the
-validated PR head. GitHub can load the workflow itself from a different
-commit. The version `0.0.0-dev.g<full commit>` identifies an **unaccepted
-development candidate**. CI provides packaging and read-only installed
-readiness evidence. Product acceptance, a release, and actual Docker image
-preparation remain separate. One locked tarball has been qualified through
-the installed acquisition command. Installation of project dependencies and
-build execution require their separate reviewed inputs and authorization.
+Use the current AIM Flow Beta download and its separately trusted checksum. The outer distribution contains MIT and artwork notices plus current instructions; its `controller/` directory contains the controller archive, bootstrap and detailed guide. Installation proves package integrity, not runtime readiness or product acceptance.
 
 Obtain the expected bootstrap and archive SHA-256 values through a trusted
 channel. The bundle's `candidate.json` and `release.json` list hashes for
@@ -104,8 +87,7 @@ Exit **1** reports invalid, stale or unsupported inputs. A verified package
 and a complete configuration still leave `ready: false`. Docker, image
 contents, isolation, network, installation, build, browser tests and product
 acceptance are unchecked. Use the separate preview and exact-intent consent
-for any later effect. The legacy `readiness` invocation without `--workflow`
-keeps the registered-product report for FakeATG or Catalog.
+for any later effect. The plain `readiness` invocation without `--workflow` reports package state; the neutral catalog profile remains an offline testing aid.
 
 Project discovery also reports Python, alternative JavaScript package
 managers, container definitions and CI configuration. Use those facts and

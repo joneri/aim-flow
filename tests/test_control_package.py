@@ -78,7 +78,9 @@ class ControlPackageTests(unittest.TestCase):
         self.assertEqual(manifest['files'], {name: digest(data) for name, data in members.items()})
         self.assertEqual(self.snapshot(self.destination), {**manifest['files'], 'control-manifest.json': digest(manifest_bytes)})
         self.assertEqual(members['aim-ci.py'], (ROOT / 'aim-ci.py').read_bytes())
-        self.assertIn('fakeATG/package-lock.json', members)
+        self.assertIn('lib/aim_ci/model_support.py', members)
+        self.assertEqual(manifest['schemaVersion'], 2)
+        self.assertFalse(any(name.startswith('fixtures/api-probe/') for name in members))
         self.assertIn('tests/production/artifact-probe.mjs', members)
         for name, data in members.items():
             self.assertFalse({'node_modules', '.sandbox', '.git', '.env.local', 'pilot.sh'} & set(Path(name).parts))
@@ -136,14 +138,6 @@ class ControlPackageTests(unittest.TestCase):
         return checkout
 
     def test_readiness_checks_explicit_checkout_and_offline_profile(self):
-        fake = self.checkout('fakeatg', 'fakeATG')
-        self.git(fake, 'remote', 'add', 'origin', 'https://github.com/joneri/agenticpipeline.git')
-        result = json.loads(self.readiness('fakeatg-target', '--product', 'fakeatg', '--checkout', str(fake)).stdout)
-        self.assertEqual(result['checkout']['head'], self.git(fake, 'rev-parse', 'HEAD'))
-        self.assertFalse(result['ready'])
-        self.git(fake, 'remote', 'set-url', '--push', 'origin', 'https://github.com/fixture/wrong.git')
-        failure = self.readiness('wrong-target', '--checkout', str(fake), expected=1)
-        self.assertIn('origin does not match', failure.stderr)
         catalog = self.checkout('catalog', 'catalog')
         origin = self.scratch / 'catalog.git'
         self.git(self.scratch, 'clone', '-q', '--bare', '--local', str(catalog), str(origin))
@@ -210,7 +204,6 @@ class ControlPackageTests(unittest.TestCase):
             ('recovery', 'aim-ci.py', ('resume-deployment', '--issue', '1', '--observe')),
             ('local-qualification', 'aim-ci.py', ('qualify-offline', '--output', str(self.scratch / 'unstarted'))),
             ('release-gate', 'aim-ci-release.py', ('gate', '--head', 'a' * 40)),
-            ('legacy-probe', 'api-story-probe.py', ('run',)),
         ):
             with self.subTest(entry=label):
                 result = self.cli(label, self.destination, script, *args, expected=1)

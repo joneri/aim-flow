@@ -463,18 +463,20 @@ raise SystemExit(code)
         self.assertEqual(self.output.read_text(), 'Existing evidence')
         control_package.verify_installation(self.destination, self.release['manifestSha256'])
 
-    def test_older_archive_still_installs_but_project_install_refuses_before_outputs(self):
-        from aim_ci.control_archive import READINESS_FILES
-        payload = {name: (ROOT / name).read_bytes() for name in READINESS_FILES}
-        data, built = control_package._build_archive(payload, '0.10.0-old-install.1')
-        archive = self.case / 'older-control.tar.gz'
+    def test_partial_archive_refused_before_install_or_project_outputs(self):
+        from aim_ci.control_archive import FILES
+        payload = {name: (ROOT / name).read_bytes() for name in FILES
+                   if name != 'lib/aim_ci/project_installation.py'}
+        data, built = control_package._build_archive(payload, '0.1.0-incomplete.1')
+        archive = self.case / 'incomplete-control.tar.gz'
         archive.write_bytes(data)
         ordinary = self.case / 'ordinary-install'
-        result = control_package.install(archive, built['archiveSha256'], ordinary)
-        self.assertEqual(result['mode'], 'installed-offline-capable')
+        with self.assertRaisesRegex(Refused, 'Invalid controller package manifest'):
+            control_package.install(archive, built['archiveSha256'], ordinary)
+        self.assertFalse(ordinary.exists())
         args = self.args(self.commit())
         args.archive, args.sha256 = archive, built['archiveSha256']
-        with self.assertRaisesRegex(Refused, 'predates project-aware installation'):
+        with self.assertRaisesRegex(Refused, 'Invalid controller package manifest'):
             project_installation.install_project(ROOT, args)
         self.assertFalse(self.destination.exists())
         self.assertFalse(self.output.exists())

@@ -567,19 +567,22 @@ class DockerEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(Refused, 'Effect scope/profile/mode changed'):
             self.advance(dependency_store_sha256=OTHER)
 
-    def test_public_readiness_stays_blocked_and_archive_accepts_prior_allowlists(self):
+    def test_public_readiness_stays_blocked_and_archive_requires_current_exact_allowlist(self):
         result = check_recipe_execution(*self.plan_args())
         self.assertEqual(result['status'], 'blocked-before-dispatch')
         self.assertFalse(result['processStarted'])
         self.assertFalse(self.journal.exists())
         self.assertIn('lib/aim_ci/docker_engine.py', control_archive.FILES)
         self.assertIn('lib/aim_ci/docker_image_evidence.py', control_archive.FILES)
-        for files in (control_archive.FILES, control_archive.DOCKER_FILES,
-                      control_archive.SOURCE_FREE_FILES, control_archive.LEGACY_FILES):
-            with self.subTest(files=len(files)):
-                value = {'format': 'aim-ci-control', 'schemaVersion': 1, 'version': '0.11.0-local.1',
-                         'files': {name: CONTROL for name in files}}
-                self.assertEqual(control_archive.parse_manifest(json.dumps(value)), value)
+        value = {'format': control_archive.FORMAT, 'schemaVersion': control_archive.SCHEMA_VERSION,
+                 'version': '0.1.0-beta.2', 'files': {name: CONTROL for name in control_archive.FILES}}
+        self.assertEqual(control_archive.parse_manifest(json.dumps(value)), value)
+        for version in (1, 0, True, 3):
+            with self.subTest(schema=version), self.assertRaisesRegex(Refused, 'Invalid controller package manifest'):
+                control_archive.parse_manifest(json.dumps({**value, 'schemaVersion': version}))
+        for files in ({}, dict(list(value['files'].items())[:-1]), {**value['files'], 'unexpected.py': CONTROL}):
+            with self.subTest(files=len(files)), self.assertRaisesRegex(Refused, 'Invalid controller package manifest'):
+                control_archive.parse_manifest(json.dumps({**value, 'files': files}))
 
     def test_unix_http_uses_only_the_pinned_socket(self):
         simulated_socket = Mock()

@@ -99,13 +99,15 @@ class SyntheticTransports:
         os._exit(77)  # Genuine process death; no exception/finally rescue.
 
     def _seed_fixture(self):
-        source = c.ROOT / 'fakeATG' if self.product.name == 'fakeatg' else c.ROOT / 'fixtures/products/catalog'
+        source = c.ROOT / 'fixtures/products/catalog'
+        if not source.is_dir():
+            raise Refused('Synthetic catalog source is not bundled; provide an explicit reviewed checkout')
         shutil.copytree(source, self.root / self.product.directory,
                         ignore=shutil.ignore_patterns('node_modules', 'dist', '__pycache__', '*.pyc', 'test-results', 'playwright-report', '.env*', '.npmrc'))
         for name in ('lib', 'profiles', 'fixtures', 'tests/production'):
             shutil.copytree(c.ROOT / name, self.root / name,
                             ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-        for name in ('aim-ci.py', 'aim-ci-release.py', 'api-story-probe.py'):
+        for name in ('aim-ci.py', 'aim-ci-release.py'):
             shutil.copy2(c.ROOT / name, self.root / name)
         git(self.root, 'init', '-b', 'main')
 
@@ -215,9 +217,8 @@ class SyntheticTransports:
         try:
             environment = {'EXECUTION_MODE': 'synthetic-offline', 'PRODUCTION_URL': self.destination,
                            'SOURCE_SHA': sha, 'CONTENT_SHA256': ci['release']['contentSha256'], 'EVIDENCE_DIR': str(proof),
-                           'EXPECTED_STARTER_PREFIX': self.job['new'] if self.product.name == 'fakeatg' else '',
-                           'EXPECTED_HEADING': self.job['new'] if self.product.name == 'catalog' else ''}
-            recipe = 'verify.mjs' if self.product.name == 'fakeatg' else 'catalog-verify.mjs'
+                           'EXPECTED_HEADING': self.job['new']}
+            recipe = 'catalog-verify.mjs'
             if self.browser:
                 node = self.browser['node']
                 environment.update(PATH=os.defpath, HOME=os.environ['HOME'], TMPDIR=os.environ['TMPDIR'],
@@ -225,9 +226,14 @@ class SyntheticTransports:
                                    AIM_CI_CHROMIUM=self.browser['chromium'],
                                    PLAYWRIGHT_BROWSERS_PATH=self.browser['browsers'])
             else:
-                node = '/opt/homebrew/bin/node'
-                environment.update(PATH='/opt/homebrew/bin:/usr/bin:/bin', HOME=str(Path.home()),
-                                   PLAYWRIGHT_BROWSERS_PATH=str(Path.home() / 'Library/Caches/ms-playwright'))
+                modules = os.environ.get('AIM_CI_PLAYWRIGHT_ROOT')
+                chromium = os.environ.get('AIM_CI_CHROMIUM')
+                node = shutil.which('node')
+                if not modules or not chromium or not node:
+                    raise Refused('Catalog browser qualification requires Node on PATH and explicit '
+                                  'AIM_CI_PLAYWRIGHT_ROOT and AIM_CI_CHROMIUM; no runtime is bundled')
+                environment.update(PATH=os.defpath, HOME=str(Path.home()),
+                                   AIM_CI_PLAYWRIGHT_ROOT=modules, AIM_CI_CHROMIUM=chromium)
             completed = subprocess.run([node, str(c.ROOT / 'tests/production' / recipe)],
                                        env=environment, capture_output=True, text=True, timeout=180)
             (directory / 'browser.txt').write_text(completed.stdout + completed.stderr)
@@ -340,7 +346,7 @@ class SyntheticTransports:
 
 
 def core_bindings():
-    paths = ['aim-ci.py', 'api-story-probe.py', 'aim-ci-release.py']
+    paths = ['aim-ci.py', 'aim-ci-release.py']
     paths += [str(path.relative_to(c.ROOT)) for path in sorted((c.ROOT / 'lib/aim_ci').glob('*.py'))]
     paths += ['lib/openai_budget.py', 'lib/review-policy.sh']
     paths += [str(path.relative_to(c.ROOT)) for path in sorted((c.ROOT / 'profiles').glob('*.json'))]
@@ -415,12 +421,9 @@ def run_human_case(directory, *, resume=False, product=None, reviewer=None, deci
     with c.offline_transports(runtime):
         if resume:
             runtime.config = c.profile(product)
-        elif product == 'catalog':
+        else:
             runtime.set_job(102, 'Use a fictional product catalog heading', 'Synthetic catalog',
                             'Fictional product catalog', 'Catalog heading says Fictional product catalog')
-        else:
-            runtime.set_job(102, 'Use start number in starter radio names', 'Choose gate',
-                            'Choose start number', 'Starter choices say Choose start number')
         state = c.run_issue(102, runtime.config, resume=resume)
         result = {'synthetic': True, 'stage': state['stage'], 'humanReview': state.get('humanReview'),
                   'publicationAuthorized': False, 'productAccepted': False,
@@ -435,12 +438,12 @@ def qualify(directory):
     directory.mkdir(parents=True)
     atomic_json(directory / 'synthetic-legacy.json', {'synthetic': True, 'requests': []})
     real_paths = [c.STATE / 'budget.json', c.ROOT / '.sandbox/openai-api-probe/budget.json']
-    real_before = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in real_paths}
+    real_before = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+                   for path in real_paths}
     frozen = core_bindings(); results = []
-    adapters = {name: SyntheticTransports(directory, name) for name in ('fakeatg', 'catalog')}
-    jobs = [('A1', 'fakeatg', 101, 'Use Select when announcing starter choices', 'Choose start number', 'Select start number', 'Starter choices say Select start number'),
-            ('B1', 'catalog', 102, 'Use a fictional product catalog heading', 'Synthetic catalog', 'Fictional product catalog', 'Catalog heading says Fictional product catalog'),
-            ('A2', 'fakeatg', 103, 'Use Pick when announcing starter choices', 'Select start number', 'Pick start number', 'Starter choices say Pick start number')]
+    adapters = {'catalog': SyntheticTransports(directory, 'catalog')}
+    jobs = [('B1', 'catalog', 102, 'Use a fictional product catalog heading', 'Synthetic catalog',
+             'Fictional product catalog', 'Catalog heading says Fictional product catalog')]
     try:
         for job, name, number, title, old, new, expected in jobs:
             if core_bindings() != frozen: raise Refused('Frozen core bytes changed between qualification jobs')
@@ -457,7 +460,8 @@ def qualify(directory):
                                 'coreSha256': fingerprint(frozen), 'synthetic': True})
                 atomic_json(directory / 'result.json', {'synthetic': True, 'passed': False, 'jobs': results})
         if core_bindings() != frozen: raise Refused('Core changed during qualification')
-        if any(hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest for path,digest in real_before.items()):
+        if any((hashlib.sha256(Path(path).read_bytes()).hexdigest() if Path(path).exists() else None) != digest
+               for path,digest in real_before.items()):
             raise Refused('Real resource history changed during offline qualification')
         result = {'synthetic': True, 'passed': True, 'coreBindings': frozen, 'jobs': results,
                   'realBudgetUnchanged': True, 'liveModelCalls': 0, 'liveGitHubWrites': 0, 'productionDeployments': 0,

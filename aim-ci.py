@@ -22,7 +22,7 @@ def main():
     watch = sub.add_parser('watch')
     watch.add_argument('--once', action='store_true')
     for worker in (run, watch):
-        worker.add_argument('--product', default='fakeatg', help='Reviewed built-in product profile')
+        worker.add_argument('--product', default='catalog', help='Reviewed built-in product profile')
         worker.add_argument('--checkout', type=Path, help='Existing checkout of the selected product repository')
     recovery = sub.add_parser('resume-deployment')
     recovery.add_argument('--issue', type=int, required=True)
@@ -42,7 +42,7 @@ def main():
     resume_case.add_argument('--output', type=Path, required=True)
     human = sub.add_parser('prepare-human-offline')
     human.add_argument('--output', type=Path, required=True)
-    human.add_argument('--product', choices=['fakeatg', 'catalog'], default='catalog')
+    human.add_argument('--product', choices=['catalog'], default='catalog')
     human.add_argument('--reviewer', required=True)
     human_resume = sub.add_parser('resume-human-offline')
     human_resume.add_argument('--output', type=Path, required=True)
@@ -57,7 +57,7 @@ def main():
     verify_ci.add_argument('--bundle', type=Path, required=True)
     verify_ci.add_argument('--evidence-sha256', required=True)
     for command in (local_ci, verify_ci):
-        command.add_argument('--product', choices=['fakeatg', 'catalog'], required=True)
+        command.add_argument('--product', choices=['catalog'], required=True)
         command.add_argument('--checkout', type=Path, required=True)
         command.add_argument('--origin', type=Path, required=True)
         command.add_argument('--head', required=True)

@@ -21,11 +21,11 @@ RUNTIME_PYTHON_REQUIREMENT = '.'.join(map(str, MIN_RUNTIME_PYTHON))
 MAX_FILE = 2_000_000
 MAX_ARCHIVE = 8_000_000
 VERSION_PATTERN = r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*)?'
-LEGACY_FILES = (
+SCHEMA_VERSION = 2
+FILES = (
     'aim-ci.py',
     'aim-ci-control.py',
     'aim-ci-release.py',
-    'api-story-probe.py',
     'docs/aim-ci-install.md',
     'docs/aim-ci-discover-project.md',
     'docs/aim-ci-plan-recipe.md',
@@ -51,27 +51,29 @@ LEGACY_FILES = (
     'lib/aim_ci/recipe_plan.py',
     'lib/aim_ci/release.py',
     'profiles/catalog.json',
-    'profiles/fakeatg.json',
-    'fixtures/api-probe/number-oracle.test.tsx',
     'fixtures/products/catalog-oracle.py',
-    'fakeATG/package.json',
-    'fakeATG/package-lock.json',
+    'fixtures/products/catalog/catalog.py',
+    'fixtures/products/catalog/tests/test_catalog.py',
+    'fixtures/products/catalog/fixtures/items.csv',
     'tests/production/artifact-probe.mjs',
     'tests/production/catalog-verify.mjs',
-    'tests/production/verify.mjs',
+    'lib/aim_ci/control_archive.py',
+    'lib/aim_ci/owned_paths.py',
+    'docs/aim-ci-onboarding.md',
+    'lib/aim_ci/docker_engine.py',
+    'lib/aim_ci/docker_image_evidence.py',
+    'lib/aim_ci/npm_platform.py',
+    'lib/aim_ci/npm_platform_build.cjs',
+    'lib/aim_ci/platform_build.py',
+    'lib/aim_ci/operator_build.py',
+    'lib/aim_ci/build_preparation.py',
+    'lib/aim_ci/image_preparation.py',
+    'lib/aim_ci/npm_acquisition.py',
+    'lib/aim_ci/operator_readiness.py',
+    'lib/aim_ci/project_installation.py',
+    'lib/aim_ci/source_subset.py',
+    'lib/aim_ci/model_support.py',
 )
-
-SOURCE_FREE_FILES = (*LEGACY_FILES, 'lib/aim_ci/control_archive.py', 'lib/aim_ci/owned_paths.py',
-                     'docs/aim-ci-onboarding.md')
-DOCKER_FILES = (*SOURCE_FREE_FILES, 'lib/aim_ci/docker_engine.py')
-IMAGE_EVIDENCE_FILES = (*DOCKER_FILES, 'lib/aim_ci/docker_image_evidence.py')
-PLATFORM_BUILD_FILES = (*IMAGE_EVIDENCE_FILES, 'lib/aim_ci/npm_platform.py', 'lib/aim_ci/npm_platform_build.cjs',
-                        'lib/aim_ci/platform_build.py')
-OPERATOR_BUILD_FILES = (*PLATFORM_BUILD_FILES, 'lib/aim_ci/operator_build.py')
-BUILD_PREPARATION_FILES = (*OPERATOR_BUILD_FILES, 'lib/aim_ci/build_preparation.py', 'lib/aim_ci/image_preparation.py')
-ACQUISITION_FILES = (*BUILD_PREPARATION_FILES, 'lib/aim_ci/npm_acquisition.py')
-READINESS_FILES = (*ACQUISITION_FILES, 'lib/aim_ci/operator_readiness.py')
-FILES = (*READINESS_FILES, 'lib/aim_ci/project_installation.py', 'lib/aim_ci/source_subset.py')
 MAX_EXPANDED_ARCHIVE = MAX_FILE * (len(FILES) + 1) + 256_000
 
 
@@ -88,11 +90,10 @@ def parse_manifest(encoded):
     manifest = json.loads(encoded)
     if (not isinstance(manifest, dict) or set(manifest) != {'format', 'schemaVersion', 'version', 'files'}
             or manifest['format'] != FORMAT or type(manifest['schemaVersion']) is not int
-            or manifest['schemaVersion'] != 1
+            or manifest['schemaVersion'] != SCHEMA_VERSION
             or not isinstance(manifest['version'], str) or not re.fullmatch(VERSION_PATTERN, manifest['version'])
             or not isinstance(manifest['files'], dict)
-            or set(manifest['files']) not in (set(FILES), set(READINESS_FILES), set(ACQUISITION_FILES), set(BUILD_PREPARATION_FILES), set(OPERATOR_BUILD_FILES), set(PLATFORM_BUILD_FILES), set(IMAGE_EVIDENCE_FILES), set(DOCKER_FILES),
-                                              set(SOURCE_FREE_FILES), set(LEGACY_FILES))
+            or set(manifest['files']) != set(FILES)
             or any(not isinstance(value, str) or not re.fullmatch('[a-f0-9]{64}', value)
                    for value in manifest['files'].values())):
         raise Refused('Invalid controller package manifest')

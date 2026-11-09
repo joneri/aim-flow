@@ -128,7 +128,7 @@ class SourceFreeReleaseTests(unittest.TestCase):
         self.assertIsNone(readiness['checkout'])
         self.assertTrue(readiness['toolsOnPath'])
         self.assertFalse(any(readiness['toolsOnPath'].values()))
-        explicit = json.loads(self.run_python(manager, 'readiness', '--product', 'fakeatg', '--manifest-sha256',
+        explicit = json.loads(self.run_python(manager, 'readiness', '--product', 'catalog', '--manifest-sha256',
                                               installed['manifestSha256'], expected=3))
         self.assertEqual(explicit, readiness)
         catalog = json.loads(self.run_python(manager, 'readiness', '--product', 'catalog', '--manifest-sha256',

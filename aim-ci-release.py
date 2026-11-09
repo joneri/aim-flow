@@ -64,7 +64,7 @@ def main():
     gate.add_argument('--recovery', action='store_true')
     inputs = sub.add_parser('hosted-inputs')
     for command in (build, unpack, gate, inputs):
-        command.add_argument('--product', default='fakeatg', help='Reviewed built-in product recipe')
+        command.add_argument('--product', default='catalog', help='Reviewed built-in product recipe')
     for command in (build, unpack):
         command.add_argument('--local', action='store_true', help='Local artifact verification only')
     args = p.parse_args()

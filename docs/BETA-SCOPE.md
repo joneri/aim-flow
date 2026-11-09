@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.1 scope
+# AIM Flow 0.1.0-beta.2 scope
 
 ## Available paths
 
@@ -32,7 +32,7 @@ These paths have different prerequisites and evidence. Their presence is not a g
 - Strict denial of container-internal loopback, which remains available in the qualified runtime.
 - Reusable issue-to-production delivery for arbitrary external projects.
 
-The upstream FakeATG route is separate historical evidence. It does not authorize a new repository's merge or deployment. The first AIWEBSITE pilot has not been performed as part of this release.
+Legacy project-specific delivery routes are excluded from this distribution. No new repository is granted merge or deployment authority. The first AIWEBSITE pilot has not been performed as part of this release.
 
 ## Pilot fit
 

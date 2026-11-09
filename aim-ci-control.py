@@ -41,7 +41,7 @@ def main():
     readiness = commands.add_parser('readiness')
     readiness.add_argument('--manifest-sha256', required=True)
     readiness_mode = readiness.add_mutually_exclusive_group()
-    readiness_mode.add_argument('--product', choices=['fakeatg', 'catalog'])
+    readiness_mode.add_argument('--product', choices=['catalog'])
     readiness_mode.add_argument('--workflow', choices=['preparation', 'acquisition', 'build'])
     readiness.add_argument('--checkout', type=Path)
     readiness.add_argument('--config', type=Path)
@@ -310,7 +310,7 @@ def main():
         print(json.dumps(result, indent=2))
         return code
     else:
-        result = control_package.readiness(ROOT, args.manifest_sha256, args.product or 'fakeatg', args.checkout)
+        result = control_package.readiness(ROOT, args.manifest_sha256, args.product or 'catalog', args.checkout)
     print(json.dumps(result, indent=2))
     return 3 if args.action == 'readiness' and not result['ready'] else 0
 

@@ -6,7 +6,7 @@
 
 AIM Flow is an experimental local controller for making AI-assisted delivery more deliberate and inspectable. It reads a repository's committed workflow, proposes a project-specific plan and binds approved operations to exact inputs. The goal is a repeatable path from intent to verified delivery, with clear boundaries rather than a blanket promise of autonomy.
 
-**Version:** `0.1.0-beta.1` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.2` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -18,7 +18,7 @@ AIM Flow is an experimental local controller for making AI-assisted delivery mor
 - **Explicit intake:** preview project-bound model intake. Actual API use requires its own grant, consent and existing budget history.
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-A real maintained-controller source-check qualification completed on 9 November 2026. Its check passed and its owned containers and derived image were removed. That proof covers one reviewed fixture and runtime, not arbitrary repositories, hostile code or product acceptance. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The cleaned beta.2 distribution is checked separately with offline regression and installation tests; this packaging change does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 
@@ -37,8 +37,8 @@ AIM Flow does **not** yet offer universal build support, unattended delivery for
 
 ## Compatibility and provenance
 
-The engine comes from [`joneri/agenticpipeline` at `783cb975`](https://github.com/joneri/agenticpipeline/tree/783cb975f897b3179f3a8492a98b24fcc48dead6). The 52 controller files are preserved byte for byte. `aim-ci-*` filenames, Python module names and archive formats remain unchanged for compatibility. `aim-flow.py` is a source-checkout convenience entry point for the control CLI. It is not included in the unchanged installed controller archive; installed users run `aim-ci-control.py`.
+The engine is derived from [`joneri/agenticpipeline` at `783cb975`](https://github.com/joneri/agenticpipeline/tree/783cb975f897b3179f3a8492a98b24fcc48dead6), with the public distribution separated from legacy project-specific integrations. The source inventory distinguishes retained upstream bytes from reviewed product changes. Earlier archive layouts are not accepted by this product-only distribution.
 
-The retained `aim-ci.py`, `aim-ci-release.py` and `api-story-probe.py` are legacy source entry points. Do not use them as a generic AIM Flow runtime: their original registered route targets the upstream repository. They are fenced in a verified installation. Profiles and the two FakeATG dependency manifests are package compatibility inputs, not a bundled demo application or a grant to deploy it.
+The `aim-ci` Python module and installed manager names remain for compatibility with the project inspection/build interface. `aim-flow.py` is the source-checkout entry point; installed users run `aim-ci-control.py`. Legacy project-specific API and production-release entry points are not part of this distribution. No unrelated application, dependency manifest or deployment target is bundled.
 
 [Artwork attribution and notices](THIRD-PARTY-NOTICES.md) · [Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)

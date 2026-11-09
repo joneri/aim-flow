@@ -16,8 +16,6 @@ from .artifacts import manifest
 from .artifacts import metadata as artifact_metadata, extract_verified as extract_artifact
 
 
-# Backwards-compatible first-adapter exports; product policy lives in products.
-from .products import fakeatg_metadata as metadata, fakeatg_extract as extract_verified
 
 
 def proof_from_body(body):

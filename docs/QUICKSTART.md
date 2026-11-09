@@ -16,10 +16,10 @@ The reference qualification used macOS with Python 3.14.8 and Apple Git 2.54.0. 
 From this repository, select your Python executable and a new output directory:
 
 ```sh
-python3 aim-flow.py build-release --version 0.1.0-beta.1 --output /absolute/path/to/new-beta-bundle
+python3 scripts/package_beta.py --output /absolute/path/to/new-beta-bundle
 ```
 
-The output contains the bootstrap, a versioned controller archive, `release.json` and the existing detailed onboarding guide. The historical archive name and CLI names are intentional. Building a package does not run project code, call a model or authorize execution.
+The output contains a branded ZIP and checksum. The ZIP includes the controller archive and bootstrap under `controller/`, current instructions and the MIT notice. The installed manager and inner archive retain their `aim-ci` names. Building a package does not run project code, call a model or authorize execution.
 
 ## Verify and install
 
@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.1.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.2.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.1.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.2.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 

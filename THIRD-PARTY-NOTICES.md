@@ -6,7 +6,7 @@ AIM Flow controller code, original project documentation and original website co
 
 The controller is extracted from the maintainer's `joneri/agenticpipeline` source at commit `783cb975f897b3179f3a8492a98b24fcc48dead6`. Its compatibility inventory is recorded in `provenance/upstream-files.json`.
 
-The two retained `fakeATG/package*.json` files are dependency metadata required by the unchanged controller package. This repository does not vendor those dependency packages or the FakeATG application. Packages acquired for a separately authorized build remain subject to their own licenses. The project MIT license does not relicense dependencies, external runtimes, GitHub, OpenAI or any other service.
+No application dependency bundle is included. Packages acquired for a separately authorized project build remain subject to their own licenses. The project MIT license does not relicense dependencies, external runtimes, GitHub, OpenAI or any other service.
 
 ## Official AIM identity
 

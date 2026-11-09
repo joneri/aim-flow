@@ -13,7 +13,7 @@ import tarfile
 import tempfile
 import zipfile
 
-from .control_archive import (FILES, FORMAT, MANIFEST, MAX_ARCHIVE, MAX_FILE, MIN_RUNTIME_PYTHON,
+from .control_archive import (FILES, FORMAT, SCHEMA_VERSION, MANIFEST, MAX_ARCHIVE, MAX_FILE, MIN_RUNTIME_PYTHON,
                               RUNTIME_PYTHON_REQUIREMENT, VERSION_PATTERN, check_digest, install,
                               parse_manifest, sha256, verification_receipt, verify)
 from .owned_paths import Refused, new_owned_directory, read_owned, safe_path, write_owned
@@ -53,7 +53,7 @@ def _payload(root):
 def _build_archive(payload, version):
     if not re.fullmatch(VERSION_PATTERN, version):
         raise Refused('Use a version such as 0.1.0-local.1')
-    manifest = {'format': FORMAT, 'schemaVersion': 1, 'version': version,
+    manifest = {'format': FORMAT, 'schemaVersion': SCHEMA_VERSION, 'version': version,
                 'files': {name: sha256(content) for name, content in payload.items()}}
     encoded = (json.dumps(manifest, sort_keys=True, indent=2) + '\n').encode()
     members = {**payload, MANIFEST: encoded}

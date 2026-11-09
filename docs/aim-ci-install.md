@@ -1,8 +1,6 @@
 # Local AIM CI control installation
 
-This package carries the current AIM CI controller, its registered profiles,
-the release and probe code, the independent product oracles and the FakeATG
-dependency manifests. The archive contains an explicit list of files and a
+This package carries the product-only AIM Flow controller, its neutral offline profile and independent validation helpers. Legacy application and production-release integrations are excluded. The archive contains an explicit list of files and a
 versioned manifest with a SHA-256 for each file. The archive digest identifies
 the packaged bytes, including local changes in the source checkout. The package
 is separate from the earlier `pilot.sh` demonstration.
@@ -126,53 +124,15 @@ inspection reads the manifest and its listed files and checks which tools are
 on PATH. It reports the minimum installed-runtime Python version and adds
 `unsupported-python-version` when the selected Python is too old. It performs
 no authentication, network request or credential read.
-The installed `aim-ci.py --help` lists the actual controller commands. The installed manager exposes the catalog-only offline command below. The
-source worker, release helper and API experiment are fenced in the installation. The install and readiness commands create no runtime state or budget.
+The installed manager exposes the actual available commands through `aim-ci-control.py --help`. Installation and readiness create no runtime state or budget.
 
-To inspect a product checkout, add `--product fakeatg --checkout /path/to/checkout`
-to readiness. The checkout must be an explicit Git worktree root with the
-product tree at HEAD. The FakeATG profile names the existing
-`joneri/agenticpipeline` repository. The catalog profile accepts a local origin
-for inspection and remains offline-only. Checkout inspection requires Git
-2.54.0 or later. It disables lazy object fetching and all Git transport
-protocols. If a partial clone lacks the selected product tree, readiness
-reports that the tree is unavailable locally. Profiles come from the verified
-package.
+The neutral catalog profile is an offline testing aid. Explicit project discovery and reviewed source/build workflows remain the user-facing paths. Git reads require Git 2.54+ and disable lazy fetching and all transport protocols. Profiles and installed bytes must match the reviewed package manifest.
 
 ## Runtime requirements and support
 
-The bootstrap requires Python 3.11 or newer and POSIX descriptor-relative
-filesystem operations. Installed project inspection also requires Git 2.54.0
-or newer. The local reference toolchain is macOS 27.3, Python 3.14.8 and Apple
-Git 2.54.0. The installed readiness check lists tool availability. Runtime
-qualification is separate. A second operator and machine still need qualification.
+The bootstrap requires Python 3.11+ and POSIX descriptor-relative filesystem operations. Project inspection additionally requires an independently pinned Git 2.54+ executable. Local packaging regression uses macOS, Python 3.14.8 and Apple Git 2.54.0. Runtime qualification is a separate claim.
 
-The existing controller runs from a Git control checkout. Its isolated
-validation depends on macOS `sandbox-exec`. FakeATG builds depend on Node and
-npm, a dependency cache matching the packaged `package-lock.json`, and the
-matching Playwright Chromium installation. The source worker uses Homebrew's
-Node path and the macOS Playwright cache under `~/Library/Caches/ms-playwright`.
-The development environment has Node 26.7.0 and Playwright 1.62.1. The existing
-hosted workflow pins Node 24.3.0. The catalog recipe uses Python's standard
-library and shares the existing Playwright dependency for browser proof.
-This archive ships the dependency manifests and browser recipes.
-
-The worker expects the committed control files in the control and target
-checkouts to match. Its existing live route also requires the approved
-repository, a `gh` identity authorized by its profile and current repository
-rules, the locally provisioned OpenAI credential, and the original aggregate
-and legacy budget histories. The GitHub CLI on the development host is 2.89.0.
-Provide credentials only through a separately approved setup on the operator's
-machine. The current archive contains neither authentication data nor journals.
-
-In an authorized control checkout, `aim-ci.py status --diagnostics` reads
-retained worker evidence. Stop a running watcher with Ctrl-C and inspect the
-retained stage before deciding what to do next. A lost response can leave a
-reservation or GitHub effect outstanding. Retain the original journals and
-effect IDs. The existing production observation command is limited to an
-already merged delivery. The current controller rejects general live replay.
-The package inspection itself leaves the existing worker and state outside
-the installation.
+Reviewed execution needs pinned Node/npm and the reviewed Linux runtime described in the preparation configuration. No application dependency manifests, credentials, budgets or journals are included. Setup on another operator's machine requires its own review. Existing consent and budget history must be preserved; installation grants no execution or provider authority.
 
 ## Installed local task intake
 

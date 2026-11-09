@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a deterministic branded wrapper around the unchanged controller bundle."""
+"""Build a deterministic branded wrapper around the product-only controller bundle."""
 import argparse
 import hashlib
 import json

@@ -153,13 +153,3 @@ def merge_ready(pr, head, baseline, profile):
             and pr.get('base', {}).get('sha') == baseline
             and pr.get('base', {}).get('ref') == profile['branch']
             and pr.get('base', {}).get('repo', {}).get('full_name') == profile['repository'])
-
-
-def baseline_oracle_status(exit_code, log):
-    # A bootstrap baseline can expose the missing number behavior; later stories
-    # may already preserve it. Every candidate must pass the frozen oracle.
-    if exit_code == 0:
-        return 'invariant_preserved'
-    if exit_code == 1 and 'toHaveAccessibleName' in log:
-        return 'number_behavior_missing'
-    raise Refused('Independent baseline oracle failed unexpectedly')
