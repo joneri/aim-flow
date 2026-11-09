@@ -617,11 +617,11 @@ def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_
     return config, reviewed
 
 
-def require_candidate_profile(reviewed):
-    if reviewed.get('kind') == INTAKE_PROFILE_KIND:
-        raise Refused('Proposal-only intake profile cannot prepare or validate a candidate; '
-                      'separately qualified bindings and new explicit consent are required. '
-                      'Retained proposal conversion is not supported')
+def require_candidate_profile(reviewed, *, preparation_only=False):
+    if reviewed.get('kind') == INTAKE_PROFILE_KIND and not preparation_only:
+        raise Refused('Proposal-only intake profile cannot execute or validate a candidate; '
+                      'candidate preparation requires an independently reviewed retained intake '
+                      'and separate explicit consent')
 
 
 def local_task_key(repository, task_id, *, continuation=False):
@@ -845,9 +845,9 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
                'intentSha256': fingerprint(intent), 'intent': intent, 'modelRequest': request, 'budget': budget}
     if 'intakeScope' in config:
         preview['handoff'] = {
-            'status': 'proposal-only', 'available': ['inspect-retained-proposal'],
-            'blocked': ['candidate-preparation', 'technical-validation', 'project-execution'],
-            'nextRequirement': 'Separately qualified bindings and new explicit consent; retained proposal conversion is not supported',
+            'status': 'proposal-only', 'available': ['inspect-retained-proposal', 'preview-reviewed-private-candidate'],
+            'blocked': ['technical-validation', 'project-execution'],
+            'nextRequirement': 'Independently pinned retained intake review and separate exact candidate consent',
         }
     if local_task and runtime is None and live_grant is None:
         from .budget import verified_history
@@ -888,8 +888,8 @@ def root_git(*args, cwd, executable='git'):
                     '-c', 'protocol.file.allow=always', *args], cwd=cwd, isolated_git=True).rstrip('\n')
 
 
-def root_candidate(directory, state, config, reviewed, *, prepare=False):
-    require_candidate_profile(reviewed)
+def root_candidate(directory, state, config, reviewed, *, prepare=False, preparation_only=False):
+    require_candidate_profile(reviewed, preparation_only=preparation_only)
     checkout = directory / 'candidate'
     baseline = state['baseline']
     branch = 'aim-ci-review-' + state['key']
@@ -932,7 +932,7 @@ def root_candidate(directory, state, config, reviewed, *, prepare=False):
     return {'repository': remote, 'branch': branch, 'commit': head, 'tree': tree, 'checkout': str(checkout)}
 
 
-def commit_root_proposal(directory, state, config, reviewed, original, replacements, frozen):
+def commit_root_proposal(directory, state, config, reviewed, original, replacements, frozen, *, preparation_only=False):
     checkout = directory / 'candidate'
     if source(checkout, config['allowedPaths']) != original or probe.frozen_inputs(checkout) != frozen:
         raise Refused('Root candidate changed before applying the admitted proposal')
@@ -942,11 +942,12 @@ def commit_root_proposal(directory, state, config, reviewed, original, replaceme
             write_owned(checkout, path, replacements[path])
     executable = reviewed['git']['path']
     root_git('add', '--', *paths, cwd=checkout, executable=executable)
+    message = 'Prepare private unvalidated code candidate' if preparation_only else 'Prepare local technical review candidate'
     root_git('-c', 'user.name=AIM CI Local Candidate', '-c', 'user.email=aim-ci@invalid',
-             'commit', '--no-gpg-sign', '-m', 'Prepare local technical review candidate', cwd=checkout,
+             'commit', '--no-gpg-sign', '-m', message, cwd=checkout,
              executable=executable)
     state['candidateSha256'] = fingerprint(replacements)
-    return root_candidate(directory, state, config, reviewed)
+    return root_candidate(directory, state, config, reviewed, preparation_only=preparation_only)
 
 
 def retained_intake_review(selection, reviewed, controller_sha):
@@ -1046,7 +1047,7 @@ def inspect_intake_candidate(root_profile, root_issue, root_task, retained_intak
         raise Refused('Retained intake candidate requires one explicitly selected offline root input')
     config, reviewed, requirement, intake = inspect_root_admission(
         root_profile, root_issue, root_task=root_task, intake_only=True)
-    require_candidate_profile(reviewed)
+    require_candidate_profile(reviewed, preparation_only=historical)
     field = 'task' if root_task is not None else 'issue'
     identity = {key: value for key, value in requirement.items() if key != 'updatedAt'}
     current = intake['intent']
@@ -1124,6 +1125,9 @@ def inspect_intake_candidate(root_profile, root_issue, root_task, retained_intak
               'output': str(directory / 'candidate'), 'publicationAuthorized': False}
     if historical:
         intent.update(originControllerSha256=review['originControllerSha256'], retainedIntakeReviewSha256=retained_intake[1])
+    if reviewed.get('kind') == INTAKE_PROFILE_KIND:
+        intent['candidateScope'] = {'scope': 'preparation-only', 'technicalValidation': 'not-performed',
+                                    'projectExecutionAuthorized': False, 'productAccepted': False}
     if 'controllerInstallation' in candidate_controller:
         intent['controllerInstallation'] = candidate_controller['controllerInstallation']
     preview = {'status': 'preview', 'executionAuthorized': False, 'intent': intent, 'intentSha256': fingerprint(intent)}
@@ -1134,8 +1138,8 @@ def preview_intake_candidate(root_profile, root_issue=None, *, root_task=None, r
     return inspect_intake_candidate(root_profile, root_issue, root_task, retained_intake)[-1]
 
 
-def verify_private_candidate(directory, fields, config, reviewed, result):
-    target = root_candidate(directory, fields, config, reviewed)
+def verify_private_candidate(directory, fields, config, reviewed, result, *, preparation_only=False):
+    target = root_candidate(directory, fields, config, reviewed, preparation_only=preparation_only)
     paths = set(fields['triage']['paths'])
     untouched = {path: digest for path, digest in probe.frozen_inputs(Path(target['checkout'])).items()
                  if path not in paths}
@@ -1157,6 +1161,8 @@ def private_candidate_state(intake, intent, fields, result, original, consent):
     if historical:
         expected['retainedIntakeReviewSha256'] = intent['retainedIntakeReviewSha256']
         expected['candidateInstallation'] = intent.get('controllerInstallation')
+    if 'candidateScope' in intent:
+        expected['candidateScope'] = intent['candidateScope']
     return expected
 
 
@@ -1184,6 +1190,10 @@ def run_intake_candidate(root_profile, root_issue, root_task, action, consent, r
         if consent != preview['intentSha256']:
             raise Refused('Consent must match this exact private candidate preview')
         intent = preview['intent']
+        preparation_only = 'candidateScope' in intent
+        if preparation_only and (recipe_evidence is not None or technical_decision is not None
+                                 or getattr(runtime, 'human_decision_file', None) is not None):
+            raise Refused('Preparation-only candidate cannot attach technical validation or execute project code')
         authorization = {'intent': intent, 'intentSha256': consent, 'consent': 'explicit-local-os-principal'}
         is_new = not os.path.lexists(directory)
         if is_new:
@@ -1220,12 +1230,15 @@ def run_intake_candidate(root_profile, root_issue, root_task, action, consent, r
 
         def dispatch(key, request):
             fresh()
-            checkout = root_candidate(directory, retained_fields, config, reviewed, prepare=True)
+            checkout = root_candidate(directory, retained_fields, config, reviewed, prepare=True,
+                                      preparation_only=preparation_only)
             frozen = probe.frozen_inputs(checkout)
             fresh()
-            target = commit_root_proposal(directory, dict(retained_fields), config, reviewed, original, replacements, frozen)
+            target = commit_root_proposal(directory, dict(retained_fields), config, reviewed, original, replacements,
+                                          frozen, preparation_only=preparation_only)
             result = {'recipeCandidate': target, 'frozenInputs': frozen}
-            verify_private_candidate(directory, retained_fields, config, reviewed, result)
+            verify_private_candidate(directory, retained_fields, config, reviewed, result,
+                                     preparation_only=preparation_only)
             fresh()
             boundary('before-retained-candidate-receipt')
             receipt = journal.receipt(key, fingerprint(request), result)
@@ -1237,33 +1250,36 @@ def run_intake_candidate(root_profile, root_issue, root_task, action, consent, r
             if not os.path.lexists(receipt_path):
                 return {'state': 'unknown'}
             receipt = json.loads(read_owned_content(receipt_path.parent, receipt_path.name))
-            verify_private_candidate(directory, retained_fields, config, reviewed, receipt['result'])
+            verify_private_candidate(directory, retained_fields, config, reviewed, receipt['result'],
+                                     preparation_only=preparation_only)
             return {'state': 'completed', 'receipt': receipt}
 
         effect = 'candidate:prepare'
         result = journal.perform(effect, intent, None if resume else dispatch, lookup=lookup)
         if json.loads(read_owned_content(receipt_path.parent, receipt_path.name)) != journal.inspect(effect)['receipt']:
             raise Refused('Private candidate receipt differs from its completed effect')
-        verify_private_candidate(directory, retained_fields, config, reviewed, result)
+        verify_private_candidate(directory, retained_fields, config, reviewed, result,
+                                 preparation_only=preparation_only)
         fresh()
         state_path = directory / 'state.json'
         expected = private_candidate_state(intake_state, intent, retained_fields, result, original, consent)
+        stages = (('candidate_prepared_unvalidated',) if preparation_only else
+                  ('awaiting_recipe_evidence', 'review', 'awaiting_human_review', 'human_reviewed', 'human_review_rejected'))
         if os.path.lexists(state_path):
             state = json.loads(read_owned_content(directory, state_path.name))
             if (any(state.get(key) != value for key, value in expected.items())
                     or 'candidateValidation' in state
-                    or state.get('stage') not in ('awaiting_recipe_evidence', 'review', 'awaiting_human_review',
-                                                  'human_reviewed', 'human_review_rejected')):
+                    or state.get('stage') not in stages):
                 raise Refused('Retained private candidate state differs')
         else:
-            state = {**expected, 'stage': 'awaiting_recipe_evidence'}
+            state = {**expected, 'stage': stages[0]}
             atomic_json(state_path, state)
 
         def record(stage, **fields):
             state.update(stage=stage, **fields)
             atomic_json(state_path, state)
 
-        if resume:
+        if resume and not preparation_only:
             return resume_root_review(directory, state, config, reviewed, runtime, recipe_evidence, record, fresh,
                                       technical_decision=technical_decision)
         return state
@@ -1448,6 +1464,7 @@ def resume_root_review(directory, state, config, reviewed, runtime, recipe_evide
     from .operator_build import canonical_path, overlaps, owned_input, verify_named_test_evidence
     from .platform_build import report_json
 
+    require_candidate_profile(reviewed)
     admitted_triage(state.get('triage'), config)
     validation = state['candidateValidation'] if candidate_directory is not None else None
     candidate_directory = directory if candidate_directory is None else candidate_directory

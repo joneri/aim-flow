@@ -69,6 +69,17 @@ def main():
     local_intake.add_argument('--live-grant-sha256')
     for option in ('manifest-sha256', 'profile-sha256', 'task-sha256'):
         local_intake.add_argument('--' + option, required=True)
+    local_candidate = commands.add_parser('prepare-local-candidate',
+        description='Preview or separately authorize an isolated private candidate from an independently reviewed retained intake.')
+    candidate_modes = local_candidate.add_mutually_exclusive_group(required=True)
+    candidate_modes.add_argument('--preview', action='store_true')
+    candidate_modes.add_argument('--authorize-intent')
+    candidate_modes.add_argument('--withdraw-intent')
+    local_candidate.add_argument('--resume', action='store_true', help='Reconcile the retained preparation without replay')
+    for option in ('profile', 'task-file', 'retained-intake', 'state-dir', 'legacy-budget'):
+        local_candidate.add_argument('--' + option, type=Path, required=True)
+    for option in ('manifest-sha256', 'profile-sha256', 'task-sha256', 'retained-intake-sha256'):
+        local_candidate.add_argument('--' + option, required=True)
     adapt = commands.add_parser('propose-adaptation')
     adapt.add_argument('--npm-docs', type=Path)
     draft = commands.add_parser('draft-build-preparation', description='Draft an editable preparation configuration without effects.')
@@ -171,6 +182,8 @@ def main():
     args = parser.parse_args()
     if args.action == 'run-local-intake' and args.resume and args.preview:
         parser.error('--resume requires --authorize-intent and cannot be combined with --preview')
+    if args.action == 'prepare-local-candidate' and args.resume and args.authorize_intent is None:
+        parser.error('--resume requires --authorize-intent')
     if args.action == 'run-local-intake':
         if (args.live_grant is None) != (args.live_grant_sha256 is None):
             parser.error('--live-grant and --live-grant-sha256 must be supplied together')
@@ -195,6 +208,7 @@ def main():
     offline_commands = ('build-development-candidate', 'pin-runtime', 'run-installed-offline', 'status-installed-offline',
                         'setup-offline', 'plan-recipe', 'check-recipe-execution',
                         'discover-project', 'install-project', 'preview-root-admission', 'run-local-intake',
+                        'prepare-local-candidate',
                         'propose-adaptation', 'run-reviewed-build',
                         'status-reviewed-build', 'cleanup-reviewed-build', 'prepare-reviewed-build',
                         'cleanup-build-preparation', 'draft-build-preparation', 'acquire-npm-tarballs', *configured_commands)
@@ -243,6 +257,19 @@ def main():
                 result = preview_root_admission(**inputs)
             else:
                 result = run_issue(**inputs, authorize_root_intent=args.authorize_intent, resume=args.resume)
+    elif args.action == 'prepare-local-candidate':
+        control_package.verify_installation(ROOT, args.manifest_sha256)
+        from aim_ci.controller import installed_root_context, preview_intake_candidate, run_issue
+        inputs = {'root_profile': (args.profile, args.profile_sha256),
+                  'root_task': (args.task_file, args.task_sha256),
+                  'retained_intake': (args.retained_intake, args.retained_intake_sha256)}
+        with installed_root_context(args.manifest_sha256, args.state_dir, args.legacy_budget):
+            if args.preview:
+                result = preview_intake_candidate(**inputs)
+            else:
+                result = run_issue(**inputs, candidate_action='withdraw' if args.withdraw_intent else 'prepare',
+                                   authorize_candidate_intent=args.withdraw_intent or args.authorize_intent,
+                                   resume=args.resume)
     elif args.action == 'propose-adaptation':
         manifest = control_package.verify_installation(ROOT, args.manifest_sha256)
         from aim_ci.project_adaptation import propose_adaptation

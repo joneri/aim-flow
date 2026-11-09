@@ -1,12 +1,14 @@
-# AIM Flow 0.1.0-beta.4 scope
+# AIM Flow 0.1.0-beta.5 scope
 
 ## Available paths
 
 1. Read-only project discovery and adaptation from committed files.
 2. Project-aware installation with a frozen, hashed project receipt.
 3. Explicit schema 3 `npm-source-check` planning and reviewed execution.
-4. Project-bound intake preview, including a proposal-only profile before build selection. Actual OpenAI dispatch requires a separate project grant, consent and retained shared budget history. Proposal-only profiles cannot prepare candidates, attach validation or execute project code.
+4. Project-bound intake preview, including a proposal-only profile before build selection. Actual OpenAI dispatch requires a separate project grant, consent and retained shared budget history. Preparing an unvalidated private candidate requires an independently reviewed retained intake and new exact consent. Proposal-only profiles still cannot attach validation or execute project code.
 5. A reviewed npm/Vite offline-build route with prior evidence for one pilot project and pinned environment.
+
+6. Preview or separately authorize preparation of an isolated private candidate. Preparation clones the pinned local commit without hardlinks and applies only the reviewed proposal there. It does not change the original checkout, call a model, run project code, push or open a pull request. Resume reconciles the same effect; withdrawal blocks later resume without deleting the candidate.
 
 These paths have different prerequisites and evidence. Their presence is not a general readiness or execution guarantee.
 

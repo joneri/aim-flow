@@ -345,15 +345,15 @@
     }
   },
   "files": {
-    "aim-ci-control.py": "462b446aaa484a68bd2cc323b711e72544c0f46caddc18282901b1cb8bc2a8de",
+    "aim-ci-control.py": "cade98d10d4ce55b0d8a71e77dd8d157923337f4e3fef0108017fd34a19ac2f6",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
-    "docs/aim-ci-onboarding.md": "e015fec56f0a6bdd44dcdaf07bed27080c320fb58426237a6f308bc4367dd668",
+    "docs/aim-ci-onboarding.md": "2bfd0596bae333cfbd8e939b7a32e230a0173ea03bdbc403824f5864ab3125a7",
     "docs/aim-ci-plan-recipe.md": "d16821bb4624f26897e4ce127b8ee0879470306211106219a0219cc11c259bb0",
     "docs/aim-ci-propose-adaptation.md": "1a42306a5cc8b4396b548316ae17641ba130a56f67091dc6f32a7ab07e427d1c",
-    "docs/aim-ci-python-test-matrix.md": "fb30addba9ee9a33cfc7456b3cca839c214dfa7e720ac1a0d3a33329583c6665",
+    "docs/aim-ci-python-test-matrix.md": "22125c950f440878e694abedf912c1dba9076f8d88e5d9439eab326019563cc2",
     "docs/aim-ci-size-handling.md": "3bfabc842e652631207cc727d91acba689b20a829d6a337e6fcbb885569ba6b8",
     "fixtures/products/catalog-oracle.py": "c66350ab4d96eafffa943e559a41936009a56ee781af17390cb778707e2fd45e",
     "fixtures/products/catalog/catalog.py": "8fdf097ef42419ae21ded44bc93d4d0bc1f7e7263532b7a2706c220111ea4c3e",
@@ -366,7 +366,7 @@
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
     "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
     "lib/aim_ci/control_package.py": "2adb70c2d45c164ddd5cd0ef4e43fabfe93bfacf787a04a7627f1de2d98ea091",
-    "lib/aim_ci/controller.py": "c3c859605469ab6da4cb5c7c4172c88dfcc2bad6fa6c75ccc51efe418254d131",
+    "lib/aim_ci/controller.py": "081a51877724be7367fce3455368c554003a12e44e3761d98d906c101fab2a4a",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
     "lib/aim_ci/docker_engine.py": "60439c9101daa706ec4066327093bdc7b852402dad6649c369703afaf2faec88",
     "lib/aim_ci/docker_image_evidence.py": "59115c01f2f77309ddb1252d5b1327bac81dbc727437f307a47f5c3bdded9d9a",
@@ -403,7 +403,7 @@
     "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
-    "tests/test_intake_profile.py": "a5645f46ce138324d947329a919f977866bcc6928c5753b21b0a94c219d3a94d",
+    "tests/test_intake_profile.py": "2b12954eb7ff60da42118324d4097efaf93d5d3b789dc55a98853f24bab58b5a",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
@@ -473,6 +473,17 @@
         "tests/test_source_subset.py"
       ],
       "summary": "Remove inherited project content size caps; preserve approved budgets, provider and resource defenses."
+    },
+    {
+      "commit": "f08cefe759fd8ebee68566890708e679fa3ef7be",
+      "paths": [
+        "aim-ci-control.py",
+        "lib/aim_ci/controller.py",
+        "tests/test_intake_profile.py",
+        "docs/aim-ci-onboarding.md",
+        "docs/aim-ci-python-test-matrix.md"
+      ],
+      "summary": "Prepare an independently reviewed retained proposal as an unvalidated private candidate with new exact consent."
     }
   ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",

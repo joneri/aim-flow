@@ -1,3 +1,37 @@
+# AIM Flow 0.1.0-beta.5
+
+Prepare an independently reviewed proposal as an isolated private code candidate.
+
+## Changes
+
+- Added the installed `prepare-local-candidate` command with preview, exact-intent authorization, resume and withdrawal modes.
+- Required an independently pinned review of the retained proposal, state, receipt, journal and controller identities. The original intake consent cannot authorize candidate preparation.
+- Rechecked selected source, task/profile pins, original grant and completed budget evidence before preparation. No new model call or spending reservation is made.
+- Preparation creates a no-hardlink local clone and private commit, leaving the original checkout unchanged. Its state is `candidate_prepared_unvalidated`.
+- Preserved the refusal of formatter/build/test execution, technical validation, product acceptance and publication for proposal-only profiles. Existing version 2 profiles retain their prior behavior.
+- Resume reconciles the same durable effect without replaying an unknown preparation. Withdrawal blocks later resume and leaves the private candidate available for inspection.
+- Ported the five applicable source/doc/test changes from upstream commit `f08cefe759fd8ebee68566890708e679fa3ef7be`. No customer files or private evidence are included.
+
+See the [private-candidate guide](aim-ci-onboarding.md#prepare-an-unvalidated-private-candidate) for required review pins and separate consent. Build and deployment still require their own supported path and authorization.
+
+## Verification
+
+Local validation on 9 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **319 tests run, 318 passed, 1 skipped**, 368.334 seconds.
+- Existing skip: separate-candidate validation requires two verified fixture packages. No claim is made for the skipped path.
+- Profile suite: **13 tests passed**, including installed CLI preview, old-consent refusal, private preparation, resume, withdrawal and post-withdrawal refusal using synthetic retained proposals.
+- Node: **16 tests passed**, no failures or skips.
+- Independent read-only port review found no blockers in exact consent, retained evidence/budget checks, isolated cloning, execution refusal or non-replaying recovery.
+- Source inventory: 72 files verified. All 50 controller payload files match current reviewed source.
+- Branded download: nine payload hashes, trusted-source bootstrap match, fresh installation and expected unconfigured readiness exit 3 passed.
+- Static website: 18 local links/assets checked. Recursive current-file and nested-archive scan: 188 members, no excluded legacy-demo matches.
+- Controller archive SHA-256: `911556f29c6fb80e425cad4121c2ceaba07added32833503e62f54d23856757c`.
+- Controller manifest SHA-256: `dab51304c986faeb99b7090769aceecadc9c015ca43397c5eccc61ea4bf527ac`.
+- Download ZIP SHA-256: `44841e8dfba3ecf767aba28dce7e1feef3cf7a9ed182d9081da355349bb77a8b`.
+
+The publication workflow runs the complete offline Python suite and Node tests before deployment. Release verification used generated fixtures and temporary local Git repositories, with no live provider call, VM or project-script execution. It does not establish a real customer change or an end-to-end build result.
+
 # AIM Flow 0.1.0-beta.4
 
 Remove inherited product-size caps while preserving reviewed scope, spending and resource controls.

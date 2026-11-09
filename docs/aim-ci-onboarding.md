@@ -48,14 +48,72 @@ transfer source or call a model. One actual proposal still requires a
 separately approved project-bound v3 grant, exact live intent and existing
 shared-budget capacity. Exhausted history remains exhausted.
 
-After a separately authorized proposal, the supported handoff is local
-inspection of the retained proposal and receipt. Nothing is applied.
-This profile cannot prepare a candidate, attach technical validation,
-execute project code or establish product acceptance. A build needs
-separately qualified bindings and new explicit consent. Conversion of a
-retained proposal from this profile to an execution profile is not
-supported; changing profile fields does not upgrade its consent.
-Existing root profile v2 and legacy grant/recovery behavior are unchanged.
+After a separately authorized proposal, inspect the retained proposal and
+receipt. Nothing has been applied. An independently reviewed proposal can
+then become an isolated private code candidate with separate exact consent,
+without selecting a build. This does not upgrade the proposal's original
+consent or qualify the project for execution or technical validation.
+
+## Prepare an unvalidated private candidate
+
+Independently inspect and pin this review outside the source, controller and
+worker state. Each digest binds the exact retained file bytes. The origin
+controller digest comes from the retained intake's `resumeContractSha256`;
+the candidate digest is `intent.controllerSha256` from that consumer's
+verified no-key `preview-root-admission` output.
+Do not invent receipts, grants or digests to make an incomplete intake pass.
+
+```json
+{
+  "version": 1,
+  "grantVersion": 3,
+  "originControllerSha256": "<reviewed producer controller contract digest>",
+  "candidateControllerSha256": "<reviewed consumer controller contract digest>",
+  "stateSha256": "<retained local-tasks/task-*/state.json SHA-256>",
+  "proposalSha256": "<retained intake.json SHA-256>",
+  "receiptSha256": "<retained effects/intake.receipt.json SHA-256>",
+  "journalSha256": "<retained effects/effects.json SHA-256>"
+}
+```
+
+Preview using the same pinned intake profile and task, existing worker state
+and original legacy budget. No key file is needed or read. The preview
+rechecks source, profile, task, proposal, receipt, journal, original grant and
+completed budget reservation, without changing them or reserving another call.
+
+```sh
+"$python" -IBS "$installation/aim-ci-control.py" prepare-local-candidate --preview \
+  --manifest-sha256 "$manifest_sha256" \
+  --state-dir "$existing_worker_state" --legacy-budget "$original_legacy_budget" \
+  --profile "$profile" --profile-sha256 "$profile_sha256" \
+  --task-file "$local_task" --task-sha256 "$local_task_sha256" \
+  --retained-intake "$review" --retained-intake-sha256 "$review_sha256"
+```
+
+Inspect the full returned intent, patch and output path. To approve only
+that private candidate, repeat the command replacing `--preview` with
+`--authorize-intent "$candidate_intent_sha256"`, using the returned
+`intentSha256`. The intake's old consent is not valid candidate consent.
+Preparation clones the pinned local commit without hardlinks, applies the
+reviewed patch there and creates a private local commit. It does not edit the
+source checkout, push, open a PR, call a model, run project code or modify the
+budget. Selected source files must still match their pinned committed bytes;
+unselected dirty source files remain untouched.
+
+The result is `candidate_prepared_unvalidated`, with preparation-only scope,
+no technical validation, no product acceptance and no publication authority.
+Repeat the authorized command with `--resume` to inspect/reconcile the same
+effect without replay. An unknown outcome without a durable matching receipt
+stays blocked; preserve the candidate for inspection. To withdraw consent,
+replace `--authorize-intent` with `--withdraw-intent` and the same digest.
+Withdrawal blocks later resume and does not delete the private candidate.
+
+This intake profile still cannot attach recipe evidence or technical decisions,
+execute a formatter/build/test, or enter candidate validation. A build needs
+separately qualified bindings and new explicit consent. Conversion to an
+execution profile is not supported; changing profile fields does not upgrade
+retained state or consent. Existing root profile v2 and legacy grant/recovery
+behavior are unchanged.
 
 ## Obtain the Beta bundle
 

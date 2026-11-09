@@ -1,4 +1,4 @@
-"""Proposal-only onboarding with local Astro-shaped fixtures, never project code or live transports."""
+"""Local proposal and reviewed private-candidate fixtures, never project code or live transports."""
 from contextlib import contextmanager, redirect_stdout
 import hashlib
 import io
@@ -115,6 +115,16 @@ class IntakeProfileTests(unittest.TestCase):
     def preview(self, selection=None):
         return c.preview_root_admission(selection or self.selection, root_task=self.task_selection, intake_only=True)
 
+    @contextmanager
+    def candidate_guarded(self):
+        command = c.command
+        def git_only(argv, *args, **kwargs):
+            self.assertEqual(argv[0], str(self.git_tool))
+            return command(argv, *args, **kwargs)
+        with self.guarded(), patch.object(c, 'model_call', side_effect=AssertionError('Model forbidden')), \
+                patch.object(c, 'command', side_effect=git_only):
+            yield
+
     def test_real_installed_no_key_preview_is_read_only_and_scope_bound(self):
         before = snapshot(self.root)
         installed_before = snapshot(self.installed)
@@ -169,7 +179,8 @@ runpy.run_path(entry, run_name='__main__')
         self.assertEqual(preview['projectGrantRequirements']['status'], 'approval-required')
         self.assertEqual(preview['projectGrantRequirements']['usedCallSlots'], 0)
         self.assertEqual(preview['handoff']['blocked'],
-                         ['candidate-preparation', 'technical-validation', 'project-execution'])
+                         ['technical-validation', 'project-execution'])
+        self.assertIn('preview-reviewed-private-candidate', preview['handoff']['available'])
 
     def select_large_css(self, raw):
         self.source_path = 'src/styles/site.css'
@@ -315,6 +326,215 @@ runpy.run_path(entry, run_name='__main__')
                                          live_grant=(grant_file, sha(grant_file.read_bytes())))
         self.assertEqual(self.budget.path.read_bytes(), before)
         self.assertFalse((self.worker / 'local-tasks').exists())
+
+    def reviewed_retained_fixture(self):
+        """A live-shaped receipt, using a provider double and a temporary fixture ledger only."""
+        with self.guarded():
+            base = self.preview()
+            requirements = base['projectGrantRequirements']
+            names = ('operation', 'model', 'requestSha256', 'scopeSha256', 'target', 'taskSha256',
+                     'sourceSha256', 'originalLedgerSha256', 'markerSha256', 'legacyBytesSha256')
+            grant = {key: requirements[key] for key in names}
+            grant.update(version=3, extraNanoUsd=0, extraGenerations=0, maxOperationNanoUsd=50_000_000,
+                         maxLedgerNanoUsd=requirements['existingLimitNanoUsd'],
+                         maxLedgerCalls=requirements['existingCallCeiling'])
+            self.grant_file = self.root / 'fixture-grant.json'
+            self.grant_file.write_bytes(encoded(grant))
+            grant_selection = self.grant_file, sha(self.grant_file.read_bytes())
+            preview = c.preview_root_admission(self.selection, root_task=self.task_selection, intake_only=True,
+                                               live_grant=grant_selection)
+
+            def provider(endpoint, payload):
+                if endpoint == 'responses/input_tokens':
+                    return {'input_tokens': 100}
+                self.assertEqual(endpoint, 'responses')
+                proposal = {'triage': {'ready': True, 'reason': 'Local fixture', 'risk': 'low',
+                    'paths': [self.source_path], 'acceptance': ['Show the reviewed greeting']},
+                    'patch': {'summary': 'Local fixture', 'edits': [{'path': self.source_path,
+                        'old': 'Hello reader', 'new': 'Hello reviewer'}]}}
+                return {'id': 'fixture_retained_intake_response', 'model': MODEL, 'status': 'completed',
+                    'usage': {'input_tokens': 100, 'output_tokens': 100},
+                    'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(proposal)}]}]}
+
+            with patch.object(c, 'transport_from_key_file', return_value=provider):
+                state = c.run_issue(root_profile=self.selection, root_task=self.task_selection, intake_only=True,
+                                    live_grant=grant_selection, authorize_root_intent=preview['intentSha256'])
+        retained = self.worker / 'local-tasks' / state['key']
+        paths = {'stateSha256': retained / 'state.json', 'proposalSha256': retained / 'intake.json',
+                 'receiptSha256': retained / 'effects/intake.receipt.json',
+                 'journalSha256': retained / 'effects/effects.json'}
+        self.review = {'version': 1, 'grantVersion': 3, 'originControllerSha256': state['resumeContractSha256'],
+            'candidateControllerSha256': c.resume_contract_sha(),
+            **{key: sha(path.read_bytes()) for key, path in paths.items()}}
+        self.review_file = self.root / 'independent-review.json'
+        return self.candidate_inputs(), state, paths
+
+    def candidate_inputs(self, review=None):
+        self.review_file.write_bytes(encoded(self.review if review is None else review))
+        return {'root_profile': self.selection, 'root_task': self.task_selection,
+                'retained_intake': (self.review_file, sha(self.review_file.read_bytes()))}
+
+    def test_reviewed_proposal_prepares_only_private_unvalidated_candidate(self):
+        args, intake, paths = self.reviewed_retained_fixture()
+        (self.checkout / 'unselected-dirty.txt').write_text('Keep this local work\n')
+        preserved = {path: path.read_bytes() for path in (*paths.values(), self.budget.path, self.legacy)}
+        source_before = snapshot(self.checkout)
+        with self.candidate_guarded():
+            before = snapshot(self.root)
+            preview = c.preview_intake_candidate(**args)
+            self.assertEqual(snapshot(self.root), before)
+            self.assertFalse(preview['executionAuthorized'])
+            self.assertEqual(preview['intent']['candidateScope']['technicalValidation'], 'not-performed')
+            for consent in (None, intake['rootAdmission']['intentSha256'], '0' * 64):
+                with self.assertRaisesRegex(Refused, 'separate explicit consent|Consent must match'):
+                    c.run_issue(**args, candidate_action='prepare', authorize_candidate_intent=consent)
+            launch = {**args, 'candidate_action': 'prepare', 'authorize_candidate_intent': preview['intentSha256']}
+            result = c.run_issue(**launch)
+            self.assertEqual(result['stage'], 'candidate_prepared_unvalidated')
+            self.assertFalse(result['productAccepted'] or result['publicationAuthorized'])
+            self.assertEqual(result['validation'], [])
+            self.assertEqual(result['candidateScope'], preview['intent']['candidateScope'])
+            candidate = Path(result['recipeCandidate']['checkout'])
+            self.assertEqual((candidate / self.source_path).read_text(), '<h1>Hello reviewer</h1>\n')
+            self.assertFalse((candidate / 'unselected-dirty.txt').exists())
+            source_objects = self.checkout / '.git/objects'
+            for obj in source_objects.glob('*/*'):
+                copied = candidate / '.git/objects' / obj.relative_to(source_objects)
+                if copied.exists():
+                    self.assertNotEqual((obj.stat().st_dev, obj.stat().st_ino),
+                                        (copied.stat().st_dev, copied.stat().st_ino))
+            self.assertEqual(c.run_issue(**launch, resume=True), result)
+            for evidence in ({'recipe_evidence': ('unused',) * 4}, {'technical_decision': ('unused', '0' * 64)}):
+                with self.assertRaisesRegex(Refused, 'Preparation-only candidate cannot'):
+                    c.run_issue(**launch, resume=True, **evidence)
+            self.assertEqual(c.run_issue(**{**launch, 'candidate_action': 'withdraw'})['status'], 'withdrawn')
+            with self.assertRaisesRegex(Refused, 'was withdrawn'):
+                c.run_issue(**launch, resume=True)
+        self.assertEqual(snapshot(self.checkout), source_before)
+        self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
+
+    def test_reviewed_candidate_rejects_source_profile_task_grant_and_receipt_drift(self):
+        args, _, paths = self.reviewed_retained_fixture()
+        with self.candidate_guarded():
+            before = self.budget.path.read_bytes()
+            preview = c.preview_intake_candidate(**args)
+            for name, path in (*paths.items(), ('grant', self.grant_file), ('task', self.task_file)):
+                raw = path.read_bytes()
+                path.write_bytes(raw + b' ')
+                with self.subTest(name=name), self.assertRaises(Refused):
+                    c.preview_intake_candidate(**args)
+                path.write_bytes(raw)
+            changed = {**self.profile, 'allowedPaths': ['package.json']}
+            selection = self.save_profile(changed)
+            with self.assertRaises(Refused):
+                c.preview_intake_candidate(**{**args, 'root_profile': selection})
+            self.save_profile(self.profile)
+            selected = self.checkout / self.source_path
+            original = selected.read_bytes()
+            selected.write_bytes(original.replace(b'reader', b'writer'))
+            with self.assertRaisesRegex(Refused, 'differs from its committed source'):
+                c.preview_intake_candidate(**args)
+            selected.write_bytes(original)
+            # Even a fresh independent pin cannot turn altered patch bytes into the completed effect.
+            proposal = paths['proposalSha256']
+            original = proposal.read_bytes()
+            proposal.write_bytes(original.replace(b'Hello reviewer', b'Hello attacker'))
+            with self.assertRaisesRegex(Refused, 'patch or receipt differs'):
+                c.preview_intake_candidate(**self.candidate_inputs({**self.review,
+                    'proposalSha256': sha(proposal.read_bytes())}))
+            proposal.write_bytes(original)
+            self.candidate_inputs()
+            self.assertEqual(c.preview_intake_candidate(**args), preview)
+            self.assertEqual(self.budget.path.read_bytes(), before)
+        self.assertFalse((self.worker / 'intake-candidates').exists())
+
+    def test_reviewed_candidate_recovery_never_replays_unknown_preparation(self):
+        class Interrupted(BaseException):
+            pass
+        for point in ('before-retained-candidate-receipt', 'after-retained-candidate-receipt'):
+            with self.subTest(point=point):
+                self.setUp()
+                args, _, _ = self.reviewed_retained_fixture()
+                with self.candidate_guarded():
+                    preview = c.preview_intake_candidate(**args)
+                    launch = {**args, 'candidate_action': 'prepare',
+                              'authorize_candidate_intent': preview['intentSha256']}
+                    def interrupt(name):
+                        if name == point:
+                            raise Interrupted()
+                    with patch.object(c, 'boundary', side_effect=interrupt), self.assertRaises(Interrupted):
+                        c.run_issue(**launch)
+                    candidate = Path(preview['intent']['output'])
+                    head = (candidate / '.git/refs/heads' / ('aim-ci-review-' + c.local_task_key(
+                        self.repository, self.task['id']))).read_bytes()
+                    with patch.object(c, 'root_candidate', wraps=c.root_candidate) as operation:
+                        if point.startswith('before'):
+                            with self.assertRaisesRegex(Refused, 'Effect outcome unknown'):
+                                c.run_issue(**launch, resume=True)
+                            operation.assert_not_called()
+                        else:
+                            result = c.run_issue(**launch, resume=True)
+                            self.assertEqual(result['stage'], 'candidate_prepared_unvalidated')
+                            self.assertTrue(all(not call.kwargs.get('prepare') for call in operation.call_args_list))
+                    self.assertEqual((candidate / '.git/refs/heads' / ('aim-ci-review-' + c.local_task_key(
+                        self.repository, self.task['id']))).read_bytes(), head)
+
+    def test_installed_candidate_cli_preview_prepare_resume_and_withdraw_without_key(self):
+        args, intake, paths = self.reviewed_retained_fixture()
+        preserved = {path: path.read_bytes() for path in (*paths.values(), self.budget.path, self.legacy)}
+        (self.checkout / 'unselected-dirty.txt').write_text('Keep local edits\n')
+        source_before, installed_before = snapshot(self.checkout), snapshot(self.installed)
+        driver = '''import runpy, socket, subprocess, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[1]) / 'lib'))
+from aim_ci import controller as c
+def forbidden(*args, **kwargs):
+    raise AssertionError('Credential, provider, project execution or publication forbidden')
+c.transport_from_key_file = c.model_call = c.github = c.human_review_pause = c.publish_candidate = forbidden
+c.probe.validate = forbidden
+socket.socket = forbidden
+git_pin, run = sys.argv[2], subprocess.run
+def git_only(argv, *args, **kwargs):
+    assert argv[0] == git_pin, argv
+    return run(argv, *args, **kwargs)
+subprocess.run = git_only
+entry = str(Path(sys.argv[1]) / 'aim-ci-control.py')
+sys.argv = [entry, *sys.argv[3:]]
+runpy.run_path(entry, run_name='__main__')
+'''
+        common = ['prepare-local-candidate', '--manifest-sha256', self.package['manifestSha256'],
+            '--state-dir', str(self.worker), '--legacy-budget', str(self.legacy),
+            '--profile', str(self.profile_file), '--profile-sha256', self.selection[1],
+            '--task-file', str(self.task_file), '--task-sha256', self.task_selection[1],
+            '--retained-intake', str(args['retained_intake'][0]),
+            '--retained-intake-sha256', args['retained_intake'][1]]
+
+        def cli(*options, success=True):
+            result = subprocess.run([sys.executable, '-IBS', '-c', driver, str(self.installed),
+                str(self.git_tool), *common, *options], cwd=self.root,
+                env={'PATH': str(self.git_tool.parent) + ':/usr/bin:/bin', 'HOME': str(self.root)},
+                capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0 if success else 1, result.stderr)
+            return json.loads(result.stdout) if success else result.stderr
+
+        before = snapshot(self.root)
+        preview = cli('--preview')
+        self.assertEqual(snapshot(self.root), before)
+        self.assertFalse(preview['executionAuthorized'])
+        self.assertEqual(preview['intent']['controllerInstallation']['manifestSha256'], self.package['manifestSha256'])
+        self.assertEqual(preview['intent']['candidateScope']['scope'], 'preparation-only')
+        self.assertIn('Consent must match', cli('--authorize-intent', intake['rootAdmission']['intentSha256'], success=False))
+        self.assertFalse(Path(preview['intent']['output']).exists())
+        consent = preview['intentSha256']
+        prepared = cli('--authorize-intent', consent)
+        self.assertEqual(prepared['stage'], 'candidate_prepared_unvalidated')
+        self.assertFalse(prepared['productAccepted'] or prepared['publicationAuthorized'])
+        self.assertEqual(cli('--authorize-intent', consent, '--resume'), prepared)
+        self.assertEqual(cli('--withdraw-intent', consent)['status'], 'withdrawn')
+        self.assertIn('was withdrawn', cli('--authorize-intent', consent, '--resume', success=False))
+        self.assertEqual(snapshot(self.checkout), source_before)
+        self.assertEqual(snapshot(self.installed), installed_before)
+        self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
 
     def test_synthetic_proposal_retains_narrow_scope_and_cannot_become_candidate(self):
         # Retained source-containing state/journals must not inherit metadata byte caps.
