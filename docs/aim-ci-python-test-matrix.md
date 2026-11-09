@@ -26,6 +26,8 @@ python3 scripts/verify_provenance.py
 
 - `test_output_allowance.py`: default/legacy separation, positive integer/provider bounds, parser propagation and refusal outside explicit intake admission. Profile regressions cover grant/consent binding, resume, incomplete/unknown outcomes and retained candidate reconstruction.
 
+- `test_terminal_diagnostics.py`: private incomplete terminal evidence, allowlisting, ownership/modes/link refusal, interruption, pessimistic accounting and no-replay proposal/receipt separation. Uses portable generated fixtures and synthetic provider replies. Run against a fresh installed controller with `python3 -B tests/test_terminal_diagnostics.py --installed-controller /absolute/path/to/controller`. This proves no provider or project execution qualification.
+
 ## Evidence boundaries
 
 Mocked Docker and provider results are not real runtime or live-model qualification. Local Git fixture tests do not execute project scripts. Skipped cases provide no evidence for their skipped path. The public CI workflow requires Git 2.54+ and runs the complete offline Python suite plus the Node helper tests before publication. The full Mac suite and exact totals are recorded in [release notes](RELEASE-NOTES.md).
@@ -33,7 +35,7 @@ Mocked Docker and provider results are not real runtime or live-model qualificat
 The separate package smoke check verifies the branded ZIP against trusted source bootstrap bytes, checks all payload hashes, installs a fresh controller and expects unconfigured readiness exit 3:
 
 ```sh
-python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.6.zip
+python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.7.zip
 ```
 
 A passed source check is not an application build, browser-test result or product acceptance. This packaging cleanup does not repeat a real execution qualification. See [Beta scope](BETA-SCOPE.md) and [verification](VERIFICATION.md).

@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.6 scope
+# AIM Flow 0.1.0-beta.7 scope
 
 ## Available paths
 

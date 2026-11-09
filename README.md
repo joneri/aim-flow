@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.6` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.7` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -18,9 +18,10 @@ AIM Flow helps you understand a software project, choose the next step and check
 - **Proposal-only task intake:** preview a project-bound request before choosing a build setup. No model call or change is made by the preview. Select an output allowance for the exact request. Actual API use requires a matching grant, consent, provider preflight and existing budget history.
 - **Project size:** read complete selected source and project definitions without fixed product file-size, file-count or request-byte caps. Provider, approved spending and reviewed runtime limits still apply. See [size handling](docs/aim-ci-size-handling.md).
 - **Reviewed private candidates:** prepare an isolated local code candidate from an independently reviewed retained proposal, with new exact consent. This leaves the source checkout untouched and does not run or publish the project.
+- **Private failure diagnostics:** retain selected metadata and visible output for new incomplete responses, separately from accepted proposals. This evidence stays private and cannot authorize a retry. See [handling and retention](docs/aim-ci-onboarding.md#concise-patches-and-private-incomplete-response-evidence).
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the output-allowance update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the diagnostic update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 

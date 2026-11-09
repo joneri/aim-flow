@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.6.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.6.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 

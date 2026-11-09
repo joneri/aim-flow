@@ -89,7 +89,7 @@ class IntakeProfileTests(unittest.TestCase):
             'allowedPaths': [self.source_path]}
         self.selection = self.save_profile(self.profile)
         self.task_file = self.root / 'local-card-fixture.json'
-        self.task = {'kind': 'local-task', 'version': 1, 'id': 'aiwebsite-local-card-fixture',
+        self.task = {'kind': 'local-task', 'version': 1, 'id': 'local-card-fixture',
             'title': 'Local card fixture: review the greeting',
             'body': '## Scope\nLocal card fixture only; the Kanban source is not built.\n'
                     '## Acceptance criteria\n- [ ] Show the reviewed greeting'}
@@ -399,14 +399,14 @@ subprocess.run = git_only
 def provider(endpoint, payload):
     assert '--resume' not in sys.argv, 'Provider replay forbidden'
     if endpoint == 'responses/input_tokens':
-        return {'input_tokens': 11179}
+        return {'input_tokens': 12000}
     assert endpoint == 'responses' and payload['max_output_tokens'] == 20000
     proposal = {'triage': {'ready': True, 'reason': 'Fixture', 'risk': 'low',
         'paths': ['src/pages/index.astro'], 'acceptance': ['Show reviewed greeting']},
         'patch': {'summary': 'Fixture', 'edits': [{'path': 'src/pages/index.astro',
             'old': 'Hello reader', 'new': 'Hello reviewer'}]}}
     return {'id': 'fixture-installed-response', 'model': MODEL, 'status': 'completed',
-        'usage': {'input_tokens': 11179, 'output_tokens': 100},
+        'usage': {'input_tokens': 12000, 'output_tokens': 100},
         'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(proposal)}]}]}
 def credentials(*args, **kwargs):
     assert '--resume' not in sys.argv, 'Credential replay forbidden'
@@ -462,7 +462,7 @@ runpy.run_path(entry, run_name='__main__')
         self.assertEqual(snapshot(self.checkout), source_before)
         entry = self.budget.read()['requests'][-1]
         self.assertEqual(entry['maxOutputTokens'], 20000)
-        self.assertEqual(entry['actualNanoUsd'], 11179 * 250 + 100 * 2000)
+        self.assertEqual(entry['actualNanoUsd'], 12000 * 250 + 100 * 2000)
 
     def test_output_allowance_binds_grant_consent_resume_and_candidate_without_replay(self):
         with self.guarded():
@@ -479,7 +479,7 @@ runpy.run_path(entry, run_name='__main__')
                                 default['projectGrantRequirements']['requestSha256'])
             self.assertNotEqual(selected['projectGrantRequirements']['scopeSha256'],
                                 default['projectGrantRequirements']['scopeSha256'])
-        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=11179)
+        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=12000)
         admission = intake['rootAdmission']
         inputs = dict(root_profile=self.selection, root_task=self.task_selection, intake_only=True,
                       live_grant=(self.grant_file, sha(self.grant_file.read_bytes())),
@@ -521,13 +521,13 @@ runpy.run_path(entry, run_name='__main__')
             self.candidate_inputs()
         entry = self.budget.read()['requests'][-1]
         self.assertEqual(entry['maxOutputTokens'], 20000)
-        self.assertEqual(entry['inputTokens'], 11179)
+        self.assertEqual(entry['inputTokens'], 12000)
         self.assertEqual(entry['reservedNanoUsd'], 50_000_000)
-        self.assertEqual(entry['actualNanoUsd'], 11179 * 250 + 100 * 2000)
+        self.assertEqual(entry['actualNanoUsd'], 12000 * 250 + 100 * 2000)
         self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
 
     def test_selected_allowance_incomplete_response_never_replays(self):
-        self.assert_stopped_output_selection(11179, 'incomplete', 'Model response incomplete')
+        self.assert_stopped_output_selection(12000, 'incomplete', 'Model response incomplete')
 
     def test_selected_allowance_over_cap_preflight_never_replays(self):
         self.assert_stopped_output_selection(40000, 'completed', 'Actual token count exceeds')
@@ -673,7 +673,7 @@ runpy.run_path(entry, run_name='__main__')
                         self.repository, self.task['id']))).read_bytes(), head)
 
     def test_installed_candidate_cli_preview_prepare_resume_and_withdraw_without_key(self):
-        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=11179)
+        args, intake, paths = self.reviewed_retained_fixture(output_tokens=20000, input_tokens=12000)
         preserved = {path: path.read_bytes() for path in (*paths.values(), self.budget.path, self.legacy)}
         (self.checkout / 'unselected-dirty.txt').write_text('Keep local edits\n')
         source_before, installed_before = snapshot(self.checkout), snapshot(self.installed)

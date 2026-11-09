@@ -78,6 +78,58 @@ then become an isolated private code candidate with separate exact consent,
 without selecting a build. This does not upgrade the proposal's original
 consent or qualify the project for execution or technical validation.
 
+### Concise patches and private incomplete-response evidence
+
+Root/local intake requests concise minimal old/new replacements with unique
+source context, without unchanged whole-file echoes or repeated operations.
+This is guidance, not a new source, patch, line or edit-count limit. Complete
+selected source, the strict response schema, output allowance selection and
+existing scope, grant, money and consent checks remain in force. Changed
+instructions change the exact request hash, so old approvals do not authorize
+this request. Model, pricing, low reasoning and `store: false` are unchanged.
+
+For a returned non-completed terminal response, the controller attempts one
+private record at `<operation>/triage/terminal-diagnostics/<sha256-of-phase>.json`
+(`intake` is the phase for local intake). Other model phases use their existing
+campaign directory in place of `triage`. The record binds the phase/operation ID,
+request digest and campaign-scope digest. It retains only a validated response
+ID/status, documented `incomplete_details.reason` (`max_output_tokens` or
+`content_filter`), non-negative integer input/output/total and cached/reasoning
+usage counts, and visible assistant message `output_text` strings in order.
+Unknown/malformed metadata is omitted or null. Request input/instructions,
+authentication, raw provider errors, other provider fields and all reasoning
+items, summaries and encrypted reasoning are excluded. Visible generated text
+is preserved verbatim: this is structural filtering, **not secret detection**,
+and that text can echo submitted source or other sensitive content.
+
+The directory is owned by the invoking OS user with mode 0700; files are owned
+single-link regular files with mode 0600. Linked, unowned or differently
+permissioned targets are refused, never followed, overwritten or chmodded.
+Complete identical records are a no-op. A fixed private `.pending` file is
+flushed before atomic no-replace publication. Identical complete staging may
+be reused; partial/mismatched staging stays inert. A hard interruption can
+leave pending or two-link evidence requiring manual inspection; the controller
+does not repair unsafe files or replay the call. There is no streaming log or
+additional output-content cap beyond the existing request/provider/transport
+bounds. Persistence failure never skips observed usage settlement or releases
+the pessimistic reservation, and raw partial output is never printed in logs.
+
+This diagnostic is not `intake.json`, a proposal receipt, candidate evidence,
+or approval/replay/refund authority. The operation still stops closed; resume
+cannot turn partial or even syntactically complete non-completed output into a
+proposal. Successful completed responses follow their existing path without a
+new diagnostic. Older operations with no record remain valid history; no prior
+generated content can be recovered by this change. `store: false` stays in force.
+
+Retention follows the private operation evidence: keep diagnostics and any
+pending staging with that operation until the operator explicitly chooses
+manual removal under their evidence policy. There is no automatic expiry,
+unattended deletion, upload, diagnostic sharing or provider retrieval. Removing
+a diagnostic does not remove budget/journal history or make an operation
+replayable. Do not publish these files or include them in support material
+without separately reviewing/redacting their visible generated content and
+authorizing that sharing.
+
 ## Prepare an unvalidated private candidate
 
 Independently inspect and pin this review outside the source, controller and

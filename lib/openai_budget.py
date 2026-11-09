@@ -8,6 +8,7 @@ import json
 import os
 import re
 import signal
+import stat
 import time
 from pathlib import Path
 import tempfile
@@ -69,6 +70,106 @@ def atomic_json(path, value):
             os.replace(temporary, path)
         finally:
             temporary.unlink(missing_ok=True)
+
+
+def terminal_diagnostic(response):
+    """Allowlist terminal metadata and visible text, never private reasoning/input.
+
+    This is structural filtering, not secret detection in generated visible text.
+    Unknown reasons/metadata are omitted rather than copying provider error text.
+    """
+    response = response if isinstance(response, dict) else {}
+    identifier, status = response.get('id'), response.get('status')
+    details = response.get('incomplete_details')
+    reason = details.get('reason') if isinstance(details, dict) else None
+    usage = response.get('usage')
+    observed = {}
+    if isinstance(usage, dict):
+        for field in ('input_tokens', 'output_tokens', 'total_tokens'):
+            if type(usage.get(field)) is int and usage[field] >= 0:
+                observed[field] = usage[field]
+        for field, count in (('input_tokens_details', 'cached_tokens'),
+                             ('output_tokens_details', 'reasoning_tokens')):
+            detail = usage.get(field)
+            if isinstance(detail, dict) and type(detail.get(count)) is int and detail[count] >= 0:
+                observed[field] = {count: detail[count]}
+    visible = []
+    output = response.get('output')
+    if isinstance(output, list):
+        for item in output:
+            if not isinstance(item, dict) or item.get('type') != 'message' or item.get('role', 'assistant') != 'assistant':
+                continue
+            content = item.get('content')
+            if isinstance(content, list):
+                visible.extend(part['text'] for part in content if isinstance(part, dict)
+                               and part.get('type') == 'output_text' and isinstance(part.get('text'), str))
+    return {'responseId': identifier if isinstance(identifier, str) and re.fullmatch(r'[A-Za-z0-9_-]{1,256}', identifier) else None,
+            'responseStatus': status if isinstance(status, str) and status in
+                ('completed', 'incomplete', 'failed', 'cancelled', 'queued', 'in_progress') else None,
+            'incomplete_details': {'reason': reason} if isinstance(reason, str) and reason in
+                ('max_output_tokens', 'content_filter') else None,
+            'usage': observed, 'visibleOutputText': visible}
+
+
+def private_terminal_record(root, name, value):
+    """Publish one no-clobber private record; interrupted staging stays inert.
+
+    Fixed per-operation staging prevents accumulating a streaming/temp log.
+    Existing identical final/staged bytes are reusable, never overwritten.
+    """
+    def check(info, mode):
+        if info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != mode:
+            raise Refused('Terminal diagnostic ownership or permissions are unsafe')
+
+    def read(directory, relative):
+        with os.fdopen(owned_file(directory, relative, os.O_RDONLY), 'rb') as stream:
+            check(os.fstat(stream.fileno()), 0o600)
+            return stream.read(len(encoded) + 1)  # Compare exact expected bytes, without trusting an existing file's size.
+
+    if not isinstance(name, str) or not re.fullmatch(r'[a-f0-9]{64}\.json', name):
+        raise Refused('Invalid terminal diagnostic name')
+    encoded = (json.dumps(value, sort_keys=True, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+    parent = owned_directory(root)
+    directory = None
+    try:
+        if os.fstat(parent).st_uid != os.geteuid():
+            raise Refused('Terminal diagnostic parent is not owned by the invoking user')
+        try:
+            os.mkdir('terminal-diagnostics', 0o700, dir_fd=parent)
+        except FileExistsError:
+            pass
+        directory = os.open('terminal-diagnostics', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+        check(os.fstat(directory), 0o700)
+        try:
+            os.stat(name, dir_fd=directory, follow_symlinks=False)
+        except FileNotFoundError:
+            existing = None
+        else:
+            existing = read(directory, name)
+        if existing is not None:
+            if existing != encoded:
+                raise Refused('Terminal diagnostic already exists with different evidence')
+            return
+        pending = name + '.pending'
+        try:
+            descriptor = owned_file(directory, pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+        except Refused:
+            if read(directory, pending) != encoded:
+                raise Refused('Interrupted terminal diagnostic differs; retain for manual reconciliation') from None
+        else:
+            with os.fdopen(descriptor, 'wb') as stream:
+                check(os.fstat(stream.fileno()), 0o600)
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+        # link is an atomic no-replace publication. No consumer reads a partial final file.
+        os.link(pending, name, src_dir_fd=directory, dst_dir_fd=directory, follow_symlinks=False)
+        os.unlink(pending, dir_fd=directory)
+        os.fsync(directory)
+    finally:
+        if directory is not None:
+            os.close(directory)
+        os.close(parent)
 
 
 class Campaign:
@@ -156,7 +257,8 @@ class Campaign:
             if failure_metadata:
                 item['failureMetadata'] = failure_metadata
             if isinstance(response, dict) and response.get("model") == MODEL:
-                usage = response.get("usage", {})
+                usage = response.get("usage")
+                usage = usage if isinstance(usage, dict) else {}
                 ins, outs = usage.get("input_tokens"), usage.get("output_tokens")
                 if type(ins) is int and type(outs) is int and min(ins, outs) >= 0:
                     actual = ins * INPUT_RATE + outs * OUTPUT_RATE
@@ -166,6 +268,13 @@ class Campaign:
             atomic_json(self.ledger, data)
             if item["status"] != "completed":
                 raise Refused("Unknown usage/model outcome; full reservation retained, no automatic retry")
+
+    def retain_terminal(self, request_id, response):
+        with self.lock():
+            item = next(item for item in self.read()['requests'] if item['id'] == request_id)
+            value = {'version': 1, 'operation': request_id, 'requestSha256': item['payloadSha256'],
+                     'campaignScopeSha256': fingerprint(self.scope), **terminal_diagnostic(response)}
+            private_terminal_record(self.directory, hashlib.sha256(request_id.encode()).hexdigest() + '.json', value)
 
     def call(self, request_id, payload, transport):
         allowed = {"model", "input", "instructions", "max_output_tokens", "reasoning", "text", "service_tier", "store", "stream"}
@@ -189,9 +298,18 @@ class Campaign:
                 detail = str(error) if isinstance(error, ApiFailure) else failure
                 raise Refused('API request failed (' + detail + '); full reservation retained, no automatic retry') from None
             raise
-        self.finish(request_id, response)
-        if response.get("status") != "completed":
-            raise Refused("Model response incomplete; paid call remains recorded")
+        incomplete = not isinstance(response, dict) or response.get('status') != 'completed'
+        diagnostic_failed = False
+        try:
+            if incomplete:
+                self.retain_terminal(request_id, response)
+        except Exception:
+            diagnostic_failed = True  # Never log raw response text or skip pessimistic settlement.
+        finally:
+            self.finish(request_id, response)
+        if incomplete:
+            detail = '; private terminal diagnostic unavailable' if diagnostic_failed else ''
+            raise Refused("Model response incomplete; paid call remains recorded" + detail)
         return response
 
 

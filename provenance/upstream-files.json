@@ -288,6 +288,7 @@
     },
     "tests/test_intake_profile.py": {
       "kind": "added",
+      "note": "Product-only fixtures; usage values and task labels are synthetic.",
       "upstreamCommit": "af7e45f744c6dd58f57cb714a4ed424f7a9077b1",
       "upstreamSha256": "ee64760e4d786d32acb0d2c3f829804ff4b23033a5bfdd20f28240bb28cfb1b1"
     },
@@ -347,6 +348,10 @@
     "tests/test_source_subset.py": {
       "kind": "modified",
       "upstreamSha256": "69894eda37b83e793144e3414cab9092362d250a9c2b1872484a9838aa3ca67b"
+    },
+    "tests/test_terminal_diagnostics.py": {
+      "kind": "added",
+      "note": "Portable upstream regressions with distinct synthetic usage figures; no private pilot evidence."
     }
   },
   "files": {
@@ -355,10 +360,10 @@
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
-    "docs/aim-ci-onboarding.md": "1387158eb803a6e2375462195cdfaf8a4d2a5bcd3f2a28bc505420303a93a27c",
+    "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
     "docs/aim-ci-plan-recipe.md": "d16821bb4624f26897e4ce127b8ee0879470306211106219a0219cc11c259bb0",
     "docs/aim-ci-propose-adaptation.md": "1a42306a5cc8b4396b548316ae17641ba130a56f67091dc6f32a7ab07e427d1c",
-    "docs/aim-ci-python-test-matrix.md": "52e8f549f533e44709cee57d0df7900b0f143a6599be125f8f9d01f84bf871ae",
+    "docs/aim-ci-python-test-matrix.md": "411f79c26793935b0536af8eb4a979504b83da84350d0b6ccc4c9bf3190bc40b",
     "docs/aim-ci-size-handling.md": "1a8ad614974d0a4a0aa40f5021c678f161ebf4bebec900f8162bba223dbf2fe5",
     "fixtures/products/catalog-oracle.py": "c66350ab4d96eafffa943e559a41936009a56ee781af17390cb778707e2fd45e",
     "fixtures/products/catalog/catalog.py": "8fdf097ef42419ae21ded44bc93d4d0bc1f7e7263532b7a2706c220111ea4c3e",
@@ -366,12 +371,12 @@
     "fixtures/products/catalog/tests/test_catalog.py": "c35de6c435c9393258247d6a322646e6846fd18313880e142cd3704faf7c6bb9",
     "lib/aim_ci/__init__.py": "0df40c8741e6e8e23f6223c91aa0533b155487f9f2431534ff5bee3e7b2d5660",
     "lib/aim_ci/artifacts.py": "0136b35b8855ddba3336152d5a6e50415a3461205b0a7de550d4ee17ba38ec11",
-    "lib/aim_ci/budget.py": "f225c8e4aba58459c6faa3f2203520df7f6ae7a96de083dd099298c45c00dcb9",
+    "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
     "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
-    "lib/aim_ci/controller.py": "c93b7b339e243426fa32c5d511ee5ac11d438d26f61b13b1aae12a10defb2a0d",
+    "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
     "lib/aim_ci/docker_engine.py": "60439c9101daa706ec4066327093bdc7b852402dad6649c369703afaf2faec88",
     "lib/aim_ci/docker_image_evidence.py": "59115c01f2f77309ddb1252d5b1327bac81dbc727437f307a47f5c3bdded9d9a",
@@ -397,7 +402,7 @@
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
-    "lib/openai_budget.py": "d30b620c96d3514fc32537381b39300234354161844a1fb510f01855f57dccf5",
+    "lib/openai_budget.py": "cf499e1642641eac99d8b13c117a39a2196833bd88725379096c6ad5ead10352",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
@@ -408,7 +413,7 @@
     "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
-    "tests/test_intake_profile.py": "fd4420df24c76252558b0ff2b25112e61b08eb4b53965c8b1639e33db7423104",
+    "tests/test_intake_profile.py": "89c497232c1582225be05fda4cd916dced617322bb31ac0130e4031d39372a81",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
@@ -422,7 +427,8 @@
     "tests/test_recipe_execution.py": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4",
     "tests/test_source_check.py": "d01e71f3cca32d3338bf941328a6b68f88091c9d1ac44137d703d26907d96cc3",
     "tests/test_source_free_release.py": "4113d5fa7515f68d7b9d557c7ba6a5dfcff894c70c04a93de979b21898e4d68c",
-    "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631"
+    "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631",
+    "tests/test_terminal_diagnostics.py": "011e9d53cc3aba8abe7888658cc193aae65a54e099e229220a33c7b7c6afab58"
   },
   "schemaVersion": 2,
   "scope": "Product-only controller; unrelated legacy integrations are excluded.",
@@ -506,6 +512,19 @@
         "tests/test_output_allowance.py"
       ],
       "summary": "Select output allowance for exact intake requests while preserving historical accounting and retained work."
+    },
+    {
+      "commit": "e57f493dfdea5e9c747de7b5df5e876698100078",
+      "paths": [
+        "lib/openai_budget.py",
+        "lib/aim_ci/budget.py",
+        "lib/aim_ci/controller.py",
+        "tests/test_terminal_diagnostics.py",
+        "docs/aim-ci-onboarding.md",
+        "docs/aim-ci-python-test-matrix.md",
+        "tests/test_intake_profile.py"
+      ],
+      "summary": "Keep inert private incomplete-response evidence, settle malformed usage pessimistically, and request concise minimal replacements."
     }
   ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",

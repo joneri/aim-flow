@@ -1,3 +1,37 @@
+# AIM Flow 0.1.0-beta.7
+
+Request concise replacements and retain private evidence when a new model response does not complete.
+
+## Changes
+
+- Ask local/root intake for minimal old/new replacements with unique source context, without unchanged whole-file echoes or repeated operations. This adds no source, patch, line or edit-count cap.
+- Retain allowlisted terminal metadata, usage and visible assistant output in private operation evidence. Input, instructions, raw provider errors and reasoning content are excluded. Visible text is preserved verbatim, not secret-scrubbed, and must not be published without separate review and permission.
+- Require owner-only diagnostic directories/files, reject links and unsafe targets, and publish without overwriting existing evidence. Interrupted staging remains inert for manual inspection.
+- Settle observed accounting even if diagnostic persistence fails. Malformed usage retains the pessimistic reservation instead of failing before accounting.
+- Keep incomplete output separate from proposals, receipts, candidate evidence and retry authority. No prior output is recovered and no stopped operation becomes replayable.
+- Preserve model, pricing, response schema, output allowance, approved spending and consent boundaries. Changed prompt bytes require matching new exact-request approval.
+- Port the applicable reviewed changes from upstream commit `e57f493dfdea5e9c747de7b5df5e876698100078`. Public fixtures use distinct synthetic usage figures and generic task labels; no customer diagnostics or private evidence are included.
+
+See [private diagnostics and retention](aim-ci-onboarding.md#concise-patches-and-private-incomplete-response-evidence). Diagnostics are local evidence, not automatic support uploads or a new model run.
+
+## Verification
+
+Local validation on 9 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **346 tests run, 345 passed, 1 skipped**, 335.038 seconds.
+- Existing skip: separate-candidate validation requires two verified fixture packages. No claim is made for the skipped path.
+- Final synthetic-fixture reruns: **18 terminal diagnostic tests passed** against source and **18 passed** against a freshly installed controller; **17 profile tests passed**.
+- Node: **16 tests passed**, no failures or skips.
+- Independent read-only port review found no blockers in private storage, pessimistic accounting, no-replay behavior or extraction fidelity. Only synthetic fixture values/labels changed after that review and their affected suites passed again.
+- Source inventory: 74 files verified. All 50 controller payload files match current reviewed source.
+- Branded download: nine payload hashes, trusted-source bootstrap match, fresh installation and expected unconfigured readiness exit 3 passed. Rebuilding after fixture updates produced identical download bytes.
+- Static website: 18 local links/assets checked. Recursive current-file and nested-archive scan: 190 members; excluded application content, private operation evidence and the separate delivery prototype absent.
+- Controller archive SHA-256: `15aa154d81039a5298f455402290d703908622ab3a264660dc648cfa11550e48`.
+- Controller manifest SHA-256: `81b2a3a3415ff83c5050ca3f8d85454dcc1581875225e23fb98e77a5fa879053`.
+- Download ZIP SHA-256: `5c286551db177e78da827f334b82558946934b1c19289222a8ff5d9cad3007bf`.
+
+The publication workflow runs the complete offline Python suite and Node tests before deployment. Verification used generated fixtures and temporary local repositories, with no live provider call, real budget mutation, VM or project-script execution.
+
 # AIM Flow 0.1.0-beta.6
 
 Select output capacity for one exact local intake without changing prior accounting.

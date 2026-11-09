@@ -411,7 +411,8 @@ class Budget:
             entry['status'] = 'unknown'
             if failure:
                 entry['failureClass'] = failure
-            usage = response.get('usage', {}) if isinstance(response, dict) else {}
+            usage = response.get('usage') if isinstance(response, dict) else None
+            usage = usage if isinstance(usage, dict) else {}
             ins, outs = usage.get('input_tokens'), usage.get('output_tokens')
             if (isinstance(response, dict) and response.get('model') == MODEL
                     and type(ins) is int and type(outs) is int and min(ins, outs) >= 0):
