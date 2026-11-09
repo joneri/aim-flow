@@ -210,13 +210,14 @@ class DockerImageEvidenceTests(unittest.TestCase):
             self.archives[role] = tar_bytes([regular(Path(name).name, data, mode)])
         return runtime
 
-    def source_check(self):
+    def source_check(self, extra=None, omitted=None):
         self.build(platform=True)
         package = canonical({'scripts': {SCRIPT: 'node check.cjs'}}).encode()
         lock = canonical({'lockfileVersion': 3, 'packages': {'': {}, 'node_modules/unused': {}}}).encode()
         selected = {'package.json': package, 'package-lock.json': lock, 'check.cjs': b'process.exit(0)\n'}
+        selected.update(extra or {})
         # The omitted sibling is represented only by Git membership, never selected bytes.
-        complete = {**selected, '.npmrc': b'must-never-be-staged'}
+        complete = {**selected, '.npmrc': b'must-never-be-staged', **(omitted or {})}
         raw_tree = b''.join(b'100644 ' + name.encode() + b'\0' + git_object(b'blob', data)
                             for name, data in sorted(complete.items()))
         tree = git_object(b'tree', raw_tree).hex()
@@ -234,6 +235,7 @@ class DockerImageEvidenceTests(unittest.TestCase):
         self.plan.update(recipeSchemaVersion=3, target={'commit': commit_pin, 'tree': tree},
                          committedInputs={name: manifest[name]['sha256'] for name in ('package.json', 'package-lock.json')},
                          artifact={'kind': 'none'}, sourceFiles=manifest, sourceProofSha256=fingerprint(proof),
+                         sourceProofBytes=len(canonical(proof).encode()),
                          sourceSelectionSha256=fingerprint(manifest),
                          execution={'kind': 'npm-source-check-v1', 'dependencies': 'none', 'outputs': 'none',
                                     'sourcePaths': sorted(selected)})
@@ -244,6 +246,88 @@ class DockerImageEvidenceTests(unittest.TestCase):
                              proof=tar_bytes([regular('source.proof.json', canonical(proof).encode())]),
                              store=tar_bytes([directory('dependency-store'), regular('dependency-store/index.json', index)]))
         return proof, index
+
+    def bind_full_source_inventory(self):
+        rows = {name.removeprefix('source/'): {'mode': mode, 'size': len(data),
+                'sha256': sha256(data).hexdigest(), 'blob': git_object(b'blob', data)}
+                for name, mode, kind, data in self.source_rows if kind == tarfile.REGTYPE}
+        tree = evidence._git_tree(rows)
+        commit = f'tree {tree}\n\nfull build source inventory\n'.encode()
+        manifest = {name: {key: row[key] for key in ('mode', 'size', 'sha256')} for name, row in rows.items()}
+        self.plan.update(sourceInventory=manifest, sourceInventorySha256=fingerprint(manifest),
+                         target={'commit': git_object(b'commit', commit).hex(), 'tree': tree})
+        self.plan['committedInputs'] = {name: manifest[name]['sha256'] for name in ('package.json', 'package-lock.json')}
+        self.archives.update(source=tar_bytes(self.source_rows), commit=tar_bytes([regular('source.commit', commit)]))
+        return manifest
+
+    def test_full_build_inventory_allows_large_source_many_files_and_retained_json(self):
+        self.build(platform=True, source_leaf=b'x' * (32 * 1024 * 1024 + 1))
+        self.source_rows.extend(regular(f'source/file-{i:04}.css', b'x') for i in range(4100))
+        # A large package manifest must also use its exact inventory allowance, not the JSON ceiling.
+        for index, (name, mode, kind, data) in enumerate(self.source_rows):
+            if name == 'source/package.json':
+                self.source_rows[index] = regular(name, data + b' ' * evidence.MAX_FILE)
+        manifest = self.bind_full_source_inventory()
+        result = self.local(platform_build=True)
+        self.assertEqual(result['measurements']['sourceInventory'], manifest)
+        self.assertEqual(result['binding']['sourceInventorySha256'], fingerprint(manifest))
+        self.assertEqual(result['measurements']['sourceFileCount'], 4104)
+        # Matching declared inventory alone never substitutes for the committed Git tree.
+        self.plan['target']['tree'] = '0' * 40
+        with self.assertRaisesRegex(Refused, 'pinned Git commit and tree'):
+            self.local(platform_build=True)
+
+    def test_full_build_inventory_is_never_silently_ignored_or_partially_accepted(self):
+        self.build(platform=True)
+        manifest = self.bind_full_source_inventory()
+        for changes in ({'sourceInventorySha256': '0' * 64}, {'sourceInventory': None},
+                        {'sourceInventory': {**manifest, 'extra.css': manifest['a.c']}}):
+            original = dict(self.plan)
+            self.plan.update(changes)
+            with self.subTest(changes=changes), self.assertRaises(Refused):
+                self.local(platform_build=True)
+            self.plan = original
+        self.plan.pop('sourceInventorySha256')
+        with self.assertRaisesRegex(Refused, 'inventory differs'):
+            self.local(platform_build=True)
+
+    def test_reviewed_large_source_and_many_members_stream_without_global_source_caps(self):
+        extra = {f'file-{index:04}.css': b'body{}' for index in range(4100)}
+        extra['large.css'] = b'x' * (32 * 1024 * 1024 + 1)
+        self.source_check(extra)
+        result = self.local(platform_build=True)
+        self.assertEqual(result['measurements']['sourceFileCount'], 4104)
+        self.assertEqual(result['measurements']['sourceFiles'], self.plan['sourceFiles'])
+        # No bytes need be supplied for a member whose size is not in the frozen inventory.
+        root = tarfile.TarInfo('source')
+        root.type, root.mode = tarfile.DIRTYPE, 0o755
+        member = tarfile.TarInfo('source/large.css')
+        member.size, member.mode = len(extra['large.css']) + 1, 0o644
+        self.archives['source'] = root.tobuf() + member.tobuf()
+        with self.assertRaisesRegex(Refused, 'unsafe image readback member|reviewed size'):
+            self.local(platform_build=True)
+
+    def test_complete_large_membership_proof_is_read_at_its_pinned_size(self):
+        self.source_check(omitted={f'omitted-{index:06}.bin': b'x' for index in range(40000)})
+        self.assertGreater(self.plan['sourceProofBytes'], evidence.MAX_FILE)
+        result = self.local(platform_build=True)
+        self.assertEqual(result['measurements']['sourceProofSha256'], self.plan['sourceProofSha256'])
+        self.plan['sourceProofBytes'] -= 1
+        with self.assertRaisesRegex(Refused, 'unsafe image readback member'):
+            self.local(platform_build=True)
+
+    def test_reviewed_archive_refuses_extra_paths_modes_hashes_and_missing_files(self):
+        raw = b'body{}'
+        manifest = {'main.css': {'mode': 0o644, 'size': len(raw), 'sha256': sha256(raw).hexdigest()}}
+        cases = ([directory('source'), regular('source/extra.css', raw)],
+                 [directory('source'), regular('source/main.css', raw, 0o755)],
+                 [directory('source'), regular('source/main.css', b'changed')],
+                 [directory('source'), regular('source/main.css', b'body[]')],
+                 [directory('source')])
+        for rows in cases:
+            with self.subTest(rows=rows), self.assertRaises(Refused):
+                evidence._archive(io.BytesIO(tar_bytes(rows)), 'source', 20_000, len(raw), (),
+                                  directory=True, reviewed_files=manifest)
 
     def test_source_check_verifies_exact_subset_and_no_install_store(self):
         self.source_check()
@@ -503,7 +587,7 @@ class DockerImageEvidenceTests(unittest.TestCase):
 
     def test_large_source_member_and_retained_json_limits_refuse_before_body(self):
         for name, size, reason in (
-                ('asset.bin', evidence._MAX_SOURCE + 1, 'unsafe image readback member'),
+                ('asset.bin', evidence._MAX_UNREVIEWED_SOURCE + 1, 'unsafe image readback member'),
                 ('package-lock.json', evidence.MAX_FILE + 1, 'source input exceeds its size bound')):
             with self.subTest(name=name):
                 root = tarfile.TarInfo('source')
@@ -512,12 +596,12 @@ class DockerImageEvidenceTests(unittest.TestCase):
                 member.size, member.mode = size, 0o644
                 stream = io.BytesIO(root.tobuf() + member.tobuf())
                 with self.assertRaisesRegex(Refused, reason):
-                    evidence._archive(stream, 'source', evidence._MAX_SOURCE + 2 * 1024 * 1024,
-                                      evidence._MAX_SOURCE, {'package-lock.json'}, directory=True)
+                    evidence._archive(stream, 'source', evidence._MAX_UNREVIEWED_SOURCE + 2 * 1024 * 1024,
+                                      evidence._MAX_UNREVIEWED_SOURCE, {'package-lock.json'}, directory=True)
 
     def test_source_payload_budget_is_separate_from_tar_framing(self):
         rows = [directory('source'), regular('source/asset-a', b'1234'), regular('source/asset-b', b'5678')]
-        with patch.object(evidence, '_MAX_SOURCE', 7):
+        with patch.object(evidence, '_MAX_UNREVIEWED_SOURCE', 7):
             with self.assertRaisesRegex(Refused, 'cumulative file size bound'):
                 evidence._archive(io.BytesIO(tar_bytes(rows)), 'source', 20_000, 7, (), directory=True)
 

@@ -15,7 +15,7 @@ from threading import Lock, Thread
 import time
 
 from openai_budget import Refused, canonical, fingerprint
-from .build_preparation import MAX_FILE, PreparationInputs, dependency_inventory
+from .build_preparation import PreparationInputs, dependency_inventory
 from .effects import EffectJournal
 from .image_preparation import measure_file
 from .npm_platform import platform_partition
@@ -271,10 +271,10 @@ class NpmAcquisition(PreparationInputs):
 
     def before_request(self, directory):
         self.verify_inputs()
-        self.reader.checked_object('commit', self.reader.commit, MAX_FILE)
-        self.reader.checked_object('tree', self.reader.tree, MAX_FILE)
+        self.reader.checked_object('commit', self.reader.commit)
+        self.reader.checked_object('tree', self.reader.tree)
         for name in self.committed:
-            self.reader.checked_object('blob', self.source[name]['blob'].hex(), MAX_FILE)
+            self.reader.checked_object('blob', self.source[name]['blob'].hex())
         self.check_output(directory)
 
     def record(self, key, phase, details):

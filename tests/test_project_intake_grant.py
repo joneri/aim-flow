@@ -172,6 +172,71 @@ class ProjectIntakeGrantTests(unittest.TestCase):
             with self.assertRaisesRegex(Refused, 'Aggregate USD10'):
                 self.budget.reserve('unrelated', approved['modelRequest'], 0)
 
+    def test_actual_count_above_old_100k_ceiling_uses_only_approved_operation_hold(self):
+        c = self.controller
+        with self.project() as (inputs, _, _, grant):
+            calls = []
+            def provider(endpoint, payload):
+                calls.append(endpoint)
+                if endpoint == 'responses/input_tokens':
+                    return {'input_tokens': 120000}
+                response = self.runtime.transport(endpoint, payload)
+                response['usage']['input_tokens'] = 120000
+                return response
+            with patch.object(c, 'transport_from_key_file', return_value=provider):
+                result = c.run_issue(**inputs)
+            self.assertEqual(result['stage'], 'intake_proposed')
+            self.assertEqual(calls, ['responses/input_tokens', 'responses'])
+            entry = self.budget.read()['requests'][-1]
+            self.assertEqual(entry['inputTokens'], 120000)
+            self.assertEqual(entry['reservedNanoUsd'], grant['maxOperationNanoUsd'])
+            self.assertEqual(entry['reservationPolicy'], 'approved-operation-cap-v1')
+            self.assertLessEqual(entry['actualNanoUsd'], entry['reservedNanoUsd'])
+
+    def test_count_exceeding_granted_money_is_retained_without_generation_or_retry(self):
+        c = self.controller
+        with self.project() as (inputs, _, _, grant):
+            calls = []
+            def provider(endpoint, payload):
+                calls.append(endpoint)
+                self.assertEqual(endpoint, 'responses/input_tokens', 'Generation must not be dispatched')
+                return {'input_tokens': 200000}
+            with patch.object(c, 'transport_from_key_file', return_value=provider):
+                with self.assertRaisesRegex(Refused, 'Actual token count exceeds'):
+                    c.run_issue(**inputs)
+            self.assertEqual(calls, ['responses/input_tokens'])
+            entry = self.budget.read()['requests'][-1]
+            self.assertEqual(entry['status'], 'unknown')
+            self.assertEqual(entry['reservedNanoUsd'], grant['maxOperationNanoUsd'])
+            self.assertEqual(entry['failureClass'], 'TokenPreflightRefused')
+            with patch.object(c, 'transport_from_key_file', side_effect=AssertionError('No retry')):
+                with self.assertRaisesRegex(Refused, 'already dispatched|cannot be resumed'):
+                    c.run_issue(**inputs)
+
+    def test_request_output_allowance_is_reviewed_financial_input_not_universal_8192_cap(self):
+        from openai_budget import Campaign
+        with self.project() as (_, _, preview, grant):
+            request = {**preview['modelRequest'], 'input': 'large input\n' * 25000, 'max_output_tokens': 16000}
+            grant = {**grant, 'requestSha256': fingerprint(request)}
+            calls = []
+            def provider(endpoint, payload):
+                calls.append(endpoint)
+                if endpoint == 'responses/input_tokens':
+                    self.assertEqual(payload['input'], request['input'])
+                    self.assertEqual(payload['text'], request['text'])
+                    return {'input_tokens': 1000}
+                self.assertEqual(payload, request)
+                return {'model': MODEL, 'status': 'completed',
+                        'usage': {'input_tokens': 1000, 'output_tokens': 12000}}
+            campaign = Campaign(self.root / 'large-output-campaign', 'large-output')
+            campaign.call('intake', request, self.budget.transport(grant['operation'], provider,
+                amendment=grant, request=request))
+            self.assertEqual(calls, ['responses/input_tokens', 'responses'])
+            entry = self.budget.read()['requests'][-1]
+            self.assertEqual(entry['maxOutputTokens'], 16000)
+            self.assertEqual(entry['status'], 'completed')
+            self.assertEqual(entry['reservedNanoUsd'], grant['maxOperationNanoUsd'])
+
     def test_claim_fences_parallel_token_counts_and_other_endpoints(self):
         from concurrent.futures import ThreadPoolExecutor
         with self.project() as (_, _, preview, grant):

@@ -52,6 +52,36 @@ class NpmPlatformTests(unittest.TestCase):
         binding = {'committedInputs': {'package-lock.json': self.lock_pin}, 'dependencyStoreSha256': encoded['sha256']}
         return _check_store({'index.json': encoded, **files}, self.lock, binding)
 
+    def test_literal_paths_have_no_arbitrary_length_ceiling(self):
+        from aim_ci.recipe_plan import policy_path
+        long_name = 'assets/' + 'directory/' * 30 + 'a' * 150 + '.css'
+        self.assertTrue(project_path(long_name))
+        self.assertTrue(policy_path(long_name))
+        for name in ('', '../' + long_name, long_name + '/../x', long_name + '/.','/' + long_name,
+                     long_name + '//x', long_name + ';command'):
+            with self.subTest(name=name):
+                self.assertFalse(project_path(name))
+                self.assertFalse(policy_path(name))
+
+    def test_artifact_inventory_accepts_many_files_but_enforces_reviewed_bytes_and_hashes(self):
+        row = {'size': 1, 'sha256': sha256(b'x').hexdigest(), 'data': b64encode(b'x').decode()}
+        files = {'index.html': row, **{f'file-{i:04}.css': row for i in range(4100)}}
+        policy = {'requiredFiles': ['index.html', *[f'file-{i:04}.css' for i in range(125)]],
+                  'maximumBytes': 40 * 1024 * 1024}
+        result = artifact_inventory(files, policy)
+        self.assertEqual(len(result['files']), 4101)
+        self.assertEqual(result['bytes'], 4101)
+        with self.assertRaises(Refused):
+            artifact_inventory(files, policy | {'maximumBytes': 4100})
+        changed = dict(files)
+        changed['file-4099.css'] = row | {'sha256': '0' * 64}
+        with self.assertRaisesRegex(Refused, 'declared bytes'):
+            artifact_inventory(changed, policy)
+        changed = dict(files)
+        del changed['file-0124.css']
+        with self.assertRaisesRegex(Refused, 'absent'):
+            artifact_inventory(changed, policy)
+
     def test_platform_store_is_an_exact_subset_and_full_store_remains_full(self):
         platform = self.check(*self.store())
         self.assertEqual((platform['lockPackageCount'], platform['packageCount'], platform['excludedPackageCount']),

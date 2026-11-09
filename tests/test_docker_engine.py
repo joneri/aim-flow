@@ -309,6 +309,32 @@ class DockerEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(Refused, 'differs from the journal'):
             self.advance_platform()
 
+    def test_platform_log_transport_uses_reviewed_report_allowance(self):
+        from aim_ci.platform_build import report_limit
+        self.platform_fixture()
+        original = docker_engine.DockerEngine.build_log
+        with patch.object(docker_engine.DockerEngine, 'build_log', autospec=True, side_effect=original) as read:
+            self.assertEqual(self.platform_terminal()['platformBuild']['status'], 'build-passed')
+        read.assert_called_once()
+        self.assertEqual(read.call_args.args[2], report_limit(self.entry('create')['intent']))
+
+    def test_streaming_log_accepts_large_reviewed_payload_and_still_refuses_excess(self):
+        from aim_ci.platform_build import report_limit
+        intent = {'binding': {}, 'platformBuild': {'artifact': {'maximumBytes': 24_000_000}}}
+        limit = report_limit(intent)
+        raw = b'x' * 32_000_000
+        @contextmanager
+        def response(*args):
+            framed = b'\x01\0\0\0' + len(raw).to_bytes(4, 'big') + raw
+            stream = io.BytesIO(framed)
+            stream.status = 200
+            stream.getheader = lambda name: 'application/vnd.docker.raw-stream' if name == 'Content-Type' else None
+            yield stream
+        engine = docker_engine.DockerEngine(ENDPOINT, lambda *_: self.fail('Unexpected request'), response=response)
+        self.assertEqual(engine.build_log(CONTAINER, limit), raw)
+        with self.assertRaisesRegex(Refused, 'oversized'):
+            engine.build_log(CONTAINER, len(raw) - 1)
+
     def test_platform_refuses_legacy_late_pass_without_rewriting_or_replaying(self):
         from aim_ci import platform_build
 

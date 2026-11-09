@@ -8,13 +8,12 @@ import sys
 import tempfile
 
 from . import control_package
-from .owned_paths import Refused, owned_directory, read_owned, safe_path, write_owned
+from .owned_paths import Refused, owned_directory, read_owned_content, safe_path, write_owned
 from .project_discovery import CommitReader, unique_json
 
 
 FORMAT = 'aim-ci-project-installation'
 MODULE = 'lib/aim_ci/project_installation.py'
-MAX_PROJECT_PLAN = 16_000_000
 
 
 def _canonical(path):
@@ -71,10 +70,15 @@ def _installed_adaptation(destination, args, manifest_pin):
             result = subprocess.run(command, cwd=scratch, env=environment, stdout=stdout,
                                     stderr=stderr, timeout=180)
             stdout.seek(0)
-            encoded = stdout.read(MAX_PROJECT_PLAN + 1)
+            before = os.fstat(stdout.fileno())
+            encoded = stdout.read(before.st_size + 1)
+            after = os.fstat(stdout.fileno())
+            identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+            if len(encoded) != before.st_size or identity(before) != identity(after):
+                raise Refused('Installed project inspection changed while being read')
             stderr.seek(0)
             error = stderr.read(4097)
-    if result.returncode or error or len(encoded) > MAX_PROJECT_PLAN:
+    if result.returncode or error:
         detail = error.decode('utf-8', errors='replace').strip() if len(error) <= 4096 else 'inspection error exceeds bound'
         raise Refused('Installed project inspection failed' + (': ' + detail if detail else ''))
     try:
@@ -115,7 +119,7 @@ def verify_project_plan(root, args, reader, *, adaptation=None):
     root, path = _canonical(root), _canonical(path)
     if any(_overlaps(path, other) for other in (root, reader.checkout)):
         raise Refused('Project plan receipt must be outside the controller and checkout')
-    encoded = read_owned(path.parent, path.name, MAX_PROJECT_PLAN)
+    encoded = read_owned_content(path.parent, path.name)
     control_package.check_digest(encoded, pin, 'Project plan receipt')
     try:
         receipt = unique_json(encoded)
@@ -191,10 +195,8 @@ def install_project(root, args):
                 'Qualify an execution contract and obtain separate approval of its exact effects.']},
         }
         encoded = (json.dumps(receipt, sort_keys=True, indent=2, ensure_ascii=True) + '\n').encode()
-        if len(encoded) > MAX_PROJECT_PLAN:
-            raise Refused('Project installation receipt exceeds the size bound')
         write_owned(output.parent, output.name, encoded, exclusive=True)
-        if read_owned(output.parent, output.name, MAX_PROJECT_PLAN) != encoded:
+        if read_owned_content(output.parent, output.name) != encoded:
             raise Refused('Project installation receipt changed while being written')
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         detail = str(error) if isinstance(error, Refused) else type(error).__name__

@@ -115,7 +115,7 @@ class ProjectMetadataTests(unittest.TestCase):
             with self.subTest(declared=declared, locked=locked):
                 self.assertEqual(version_relation(declared, locked), relation)
 
-    def test_repository_footprint_reads_only_complete_bounded_metadata(self):
+    def test_repository_footprint_reads_complete_metadata_without_project_size_ceiling(self):
         reader = Mock(commit='a' * 40, tree='b' * 40)
         reader.read.return_value = (
             b'100644 blob ' + b'c' * 40 + b' 123\tpublic/space name.png\0'
@@ -128,8 +128,7 @@ class ProjectMetadataTests(unittest.TestCase):
         self.assertFalse(result['buildInputsSelected'])
         self.assertEqual(result['topLevelBytes'], {'(root files)': 7, 'public': 123})
         self.assertEqual(result['largestFiles'][0]['path'], 'public/space name.png')
-        reader.read.assert_called_once_with('ls-tree', '-r', '-l', '-z', '--full-tree', reader.commit,
-                                            maximum=512_000)
+        reader.read.assert_called_once_with('ls-tree', '-r', '-l', '-z', '--full-tree', reader.commit)
         reader.blob.assert_not_called()
         for raw in (b'not complete', b'100644 blob ' + b'c' * 40 + b' -1\tfile\0',
                     b'100644 blob ' + b'c' * 40 + b' 5\tbad/../path\0'):
@@ -143,7 +142,7 @@ class ProjectMetadataTests(unittest.TestCase):
         self.assertEqual(repository_footprint(reader)['status'], 'unknown')
         reader.read.return_value = b''.join(b'100644 blob ' + b'c' * 40 + b' 5\t' + str(i).encode() + b'\0'
                                           for i in range(4097))
-        self.assertEqual(repository_footprint(reader)['status'], 'unknown')
+        self.assertEqual(repository_footprint(reader)['regularFileCount'], 4097)
         for error in (Refused('bounded Git read'), subprocess.TimeoutExpired('git ls-tree', 20)):
             reader.read.side_effect = error
             self.assertEqual(repository_footprint(reader)['status'], 'unknown')
@@ -328,10 +327,13 @@ class ProjectPlanningTests(unittest.TestCase):
         self.assertEqual(vite['sources'], [{'path': 'package.json', 'locator': 'devDependencies.vite'}])
         unknown = {item['code']: item['sources'] for item in discovery['openItems']}
         self.assertEqual(unknown['document-script-unresolved'], [{'path': 'README.md', 'locator': 'line 4'}])
-        self.assertEqual(unknown['definition-size-limit'], [{'path': 'AGENTS.md'}])
+        self.assertNotIn('definition-size-limit', unknown)
         self.assertIn('node-test-undefined', unknown)
         agents = next(file for file in discovery['files'] if file['path'] == 'AGENTS.md')
-        self.assertEqual((agents['status'], agents['maximumBytes']), ('size-limit', 24000))
+        self.assertEqual(agents['status'], 'reference-scan')
+        self.assertEqual(agents['bytes'], len(('Untrusted synthetic text\n' * 1100).encode()))
+        self.assertEqual(agents['sha256'], sha(checkout / 'AGENTS.md'))
+        self.assertNotIn('maximumBytes', agents)
 
         unselected = self.observe('propose-adaptation', checkout, head, *docs)
         self.assertEqual(unselected['proposal']['status'], 'needs-investigation')
@@ -395,7 +397,7 @@ class ProjectPlanningTests(unittest.TestCase):
         self.assertEqual(missing['projectPlan']['testSelection'], {
             'requested': 'test:missing', 'selected': None, 'status': 'missing-or-unselected'})
 
-    def test_workflow_excerpt_does_not_claim_truncated_source_is_complete(self):
+    def test_workflow_review_preserves_source_beyond_former_line_and_byte_ceilings(self):
         checkout, _ = self.fixture('long-workflow', '7.3.3')
         workflows = checkout / '.github/workflows'
         workflows.mkdir(parents=True)
@@ -405,19 +407,75 @@ class ProjectPlanningTests(unittest.TestCase):
         head = self.git(checkout, 'rev-parse', 'HEAD').strip()
         report = self.observe('propose-adaptation', checkout, head, '--test-script', TEST_SCRIPT)
         excerpt = report['projectPlan']['buildDefinitions'][0]['excerpt']
-        self.assertFalse(excerpt['complete'])
-        self.assertEqual(excerpt['lastLine'], 300)
-        self.assertTrue(any(row['code'] == 'definition-excerpt-limit'
-                            for row in report['observations']['openItems']))
+        self.assertTrue(excerpt['complete'])
+        self.assertEqual(excerpt['lastLine'], 302)
+        self.assertEqual(excerpt['text'], (workflows / 'checks.yml').read_text())
+        self.assertFalse(any(row['code'] in ('definition-excerpt-limit', 'reference-line-limit')
+                             for row in report['observations']['openItems']))
         (workflows / 'checks.yml').write_text('name: checks\n# ' + 'é' * 13_000 + '\n')
         self.git(checkout, 'add', '.')
         self.git(checkout, 'commit', '-m', 'Byte-bounded workflow fixture')
         head = self.git(checkout, 'rev-parse', 'HEAD').strip()
         report = self.observe('propose-adaptation', checkout, head, '--test-script', TEST_SCRIPT)
         excerpt = report['projectPlan']['buildDefinitions'][0]['excerpt']
-        self.assertFalse(excerpt['complete'])
-        self.assertEqual(excerpt['lastLine'], 1)
-        self.assertLessEqual(len(excerpt['text'].encode()), 24_000)
+        self.assertTrue(excerpt['complete'])
+        self.assertEqual(excerpt['lastLine'], 2)
+        self.assertEqual(excerpt['text'], (workflows / 'checks.yml').read_text())
+        self.assertGreater(len(excerpt['text'].encode()), 24_000)
+
+    def test_discovery_reads_all_large_committed_definitions_documents_and_inventory(self):
+        checkout, _ = self.fixture('large-discovery', '7.3.3')
+        package = json.loads((checkout / 'package.json').read_text())
+        package['description'] = 'large committed manifest ' * 25_000
+        write_json(checkout / 'package.json', package)
+        workflows = checkout / '.github/workflows'
+        workflows.mkdir(parents=True)
+        workflow_names = [f'{index:03d}-' + 'w' * 200 + '.yml' for index in range(170)]
+        for name in workflow_names:
+            (workflows / name).write_text('run: npm run build\n')
+        long_workflow = '# ' + 'é' * 260_000 + '\n' + '# retained line\n' * 301 + 'run: npm run build\n'
+        (workflows / workflow_names[-1]).write_text(long_workflow)
+        docs = checkout / 'docs' / ('selected-' + 'd' * 190)
+        docs.mkdir(parents=True)
+        selected = []
+        for index in range(9):
+            doc = docs / f'check-{index}.md'
+            doc.write_text('# retained documentation\n' * 1100 + f'Run `npm run {TEST_SCRIPT}`.\n')
+            selected.append(doc.relative_to(checkout).as_posix())
+        inventory = checkout / ('inventory-' + 'i' * 150)
+        inventory.mkdir()
+        for index in range(4100):
+            (inventory / f'{index}.txt').write_text('count every committed file\n')
+        self.git(checkout, 'add', '.')
+        self.git(checkout, 'commit', '-m', 'Complete large discovery fixture')
+        head = self.git(checkout, 'rev-parse', 'HEAD').strip()
+        tree_size = int(self.git(checkout, 'cat-file', '-s', f'{head}:.github/workflows'))
+        self.assertGreater(tree_size, 32_768)
+        self.assertGreater((checkout / 'package.json').stat().st_size, 512_000)
+        self.assertGreater(len(self.git(checkout, 'ls-tree', '-r', '-l', head).encode()), 512_000)
+        before = self.state(checkout)
+        (checkout / 'package.json').write_text('dirty local content must not be read')
+        report = self.observe('discover-project', checkout, head,
+                              *[arg for name in selected for arg in ('--project-doc', name)])
+        files = {row['path']: row for row in report['files']}
+        self.assertEqual(files['package.json']['status'], 'parsed')
+        self.assertEqual(len([name for name in files if name.startswith('.github/workflows/')]), 170)
+        references = [fact for fact in report['facts'] if fact['code'] == 'document-script-reference']
+        self.assertEqual({row['sources'][0]['path'] for row in references}, set(selected))
+        self.assertTrue(all(row['sources'][0]['locator'] == 'line 1101' for row in references))
+        workflow_path = '.github/workflows/' + workflow_names[-1]
+        excerpt = next(row['value'] for row in report['facts']
+                       if row['code'] == 'definition-review-excerpt' and row['sources'][0]['path'] == workflow_path)
+        self.assertTrue(excerpt['complete'])
+        self.assertEqual(excerpt['text'], long_workflow)
+        self.assertTrue(any(row['code'] == 'definition-line-indicator' and row['value'] == 'run'
+                            and row['sources'][0] == {'path': workflow_path, 'locator': 'line 303'}
+                            for row in report['facts']))
+        self.assertEqual(report['repositoryFootprint']['regularFileCount'], len(before[2]))
+        self.assertGreater(report['repositoryFootprint']['regularFileCount'], 4096)
+        self.assertFalse(any(row['code'].endswith('-limit') for row in report['openItems']))
+        self.assertEqual((checkout / 'package.json').read_text(), 'dirty local content must not be read')
+        self.assertEqual(sha(checkout / '.git/index'), before[0])
 
     def test_locked_version_subset_through_discovery_and_actual_planner(self):
         for name, declaration, relation, refusal in (

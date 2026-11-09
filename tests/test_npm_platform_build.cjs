@@ -68,6 +68,38 @@ test('source-only named check dispatches once without install, build, artifact o
   assert.throws(() => sourceCheckConfig({ ...config, testScript: 'check:unit;echo' }), /literal/)
 })
 
+test('large exact source manifests retain every selected file and verify streamed hashes', t => {
+  const { sourceCheckConfig, verifySourceFiles } = require('../lib/aim_ci/npm_platform_build.cjs')
+  const canonical = value => JSON.stringify(value && typeof value === 'object' ?
+    Array.isArray(value) ? value.map(item => JSON.parse(canonical(item))) :
+      Object.fromEntries(Object.keys(value).sort().map(key => [key, JSON.parse(canonical(value[key]))])) : value)
+  const directory = temp(t)
+  const sourceFiles = {}
+  const add = (name, data) => {
+    fs.writeFileSync(directory + '/' + name, data, { mode: 0o644 })
+    sourceFiles[name] = { mode: 0o644, size: data.length, sha256: hash('sha256', data, 'hex') }
+  }
+  for (let index = 0; index < 125; index++) add('file-' + index + '.css', Buffer.from('body{}'))
+  add('package.json', Buffer.from('{}'))
+  add('package-lock.json', Buffer.from('{}'))
+  add('large.css', Buffer.alloc(32 * 1024 * 1024 + 1, 65))
+  const execution = { kind: 'npm-source-check-v1', dependencies: 'none', outputs: 'none',
+    sourcePaths: Object.keys(sourceFiles).sort() }
+  const binding = { sourceProofSha256: '1'.repeat(64),
+    sourceSelectionSha256: hash('sha256', canonical(sourceFiles), 'hex'),
+    executionSha256: hash('sha256', canonical(execution), 'hex'),
+    committedInputs: Object.fromEntries(['package.json', 'package-lock.json'].map(name => [name, sourceFiles[name].sha256])) }
+  const config = { execution, sourceFiles, binding, artifact: { kind: 'none' }, testScript: 'check:source' }
+  assert.deepEqual(sourceCheckConfig(config), execution)
+  verifySourceFiles(directory, sourceFiles)
+  const fd = fs.openSync(directory + '/large.css', 'r+')
+  fs.writeSync(fd, Buffer.from('B'), 0, 1, sourceFiles['large.css'].size - 1)
+  fs.closeSync(fd)
+  assert.throws(() => verifySourceFiles(directory, sourceFiles), /changed/)
+  delete sourceFiles['file-124.css']
+  assert.throws(() => sourceCheckConfig(config), /manifest differs/)
+})
+
 test('fixed npm argv suppresses install and run lifecycle hooks', () => {
   assert.deepEqual(installArgv, ['ci', '--offline', '--ignore-scripts', '--no-audit', '--no-fund'])
   assert.deepEqual(buildArgv, ['--ignore-scripts', 'run', 'build'])
@@ -298,7 +330,23 @@ test('fresh artifact collection accepts font spaces and rejects linked files and
   assert.throws(() => collectArtifacts(directory, policy), /link/)
 })
 
-test('source copy accepts streamed assets above the JSON cap and preserves the cumulative bound', t => {
+test('artifact inventory accepts more than 4096 files and preserves the reviewed byte limit', t => {
+  const directory = temp(t)
+  fs.writeFileSync(directory + '/index.html', 'x')
+  for (let index = 0; index < 4100; index++) fs.writeFileSync(directory + '/file-' + index + '.css', 'x')
+  const policy = { requiredFiles: ['index.html', ...Array.from({ length: 125 }, (_, i) => 'file-' + i + '.css')],
+    maximumBytes: 40 * 1024 * 1024 }
+  for (const maximumBytes of [0, -1, true, Number.MAX_SAFE_INTEGER + 1])
+    assert.throws(() => collectArtifacts(directory, { ...policy, maximumBytes }), /exactly representable/)
+  const files = collectArtifacts(directory, policy)
+  assert.equal(Object.keys(files).length, 4101)
+  assert.equal(files['file-4099.css'].sha256, hash('sha256', 'x', 'hex'))
+  assert.throws(() => collectArtifacts(directory, { ...policy, maximumBytes: 4100 }), /oversized/)
+  fs.symlinkSync(directory + '/index.html', directory + '/linked.css')
+  assert.throws(() => collectArtifacts(directory, policy), /link/)
+})
+
+test('source copy accepts large assets and more than 4096 files without truncation', t => {
   const directory = temp(t)
   const input = directory + '/source'
   fs.mkdirSync(input)
@@ -308,7 +356,48 @@ test('source copy accepts streamed assets above the JSON cap and preserves the c
   assert.deepEqual(fs.readFileSync(directory + '/project/Fixture Font.woff2'), fs.readFileSync(file))
   fs.writeFileSync(input + '/a-extra', 'extra')
   fs.truncateSync(file, 32 * 1024 * 1024)
-  assert.throws(() => copySource(input, directory + '/overflow'), /oversized/)
+  for (let index = 0; index < 4100; index++) fs.writeFileSync(input + '/source-' + index, 'body{}')
+  copySource(input, directory + '/large')
+  assert.equal(fs.readdirSync(directory + '/large').length, 4102)
+  assert.equal(fs.statSync(directory + '/large/Fixture Font.woff2').size, 32 * 1024 * 1024)
+  assert.equal(hash('sha256', fs.readFileSync(directory + '/large/Fixture Font.woff2'), 'hex'),
+    hash('sha256', fs.readFileSync(file), 'hex'))
+  fs.symlinkSync(file, input + '/linked.css')
+  assert.throws(() => copySource(input, directory + '/linked'), /link/)
+})
+
+test('source copy accepts long literal paths while the filesystem enforces its own format', t => {
+  const directory = temp(t)
+  const input = directory + '/source'
+  const relative = 'directory/'.repeat(30) + 'a'.repeat(150) + '.css'
+  fs.mkdirSync(require('node:path').dirname(input + '/' + relative), { recursive: true })
+  fs.writeFileSync(input + '/' + relative, 'body{}')
+  copySource(input, directory + '/project')
+  assert.equal(fs.readFileSync(directory + '/project/' + relative, 'utf8'), 'body{}')
+})
+
+test('source copy stops at measured bytes and refuses growth during the read', t => {
+  const directory = temp(t)
+  const input = directory + '/source'
+  fs.mkdirSync(input)
+  const file = input + '/main.css'
+  fs.writeFileSync(file, 'body{}')
+  const original = fs.readSync
+  let changed = false
+  fs.readSync = (...args) => {
+    const count = original(...args)
+    if (!changed && count > 0) {
+      changed = true
+      fs.appendFileSync(file, 'must-not-be-copied')
+    }
+    return count
+  }
+  try {
+    assert.throws(() => copySource(input, directory + '/project'), /changed while reading/)
+  } finally {
+    fs.readSync = original
+  }
+  assert.equal(fs.statSync(directory + '/project/main.css').size, 6)
 })
 
 test('mountinfo separates the effective mount and super options from execution assessment', () => {

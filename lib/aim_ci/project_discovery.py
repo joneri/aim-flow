@@ -1,4 +1,4 @@
-"""Bounded, network-free observations of an explicit local Git commit."""
+"""Complete, network-free observations of an explicit local Git commit."""
 from hashlib import sha1
 import json
 import os
@@ -12,12 +12,6 @@ from .control_package import sha256
 from .installed_runtime import file_sha
 
 
-MAX_BLOB = 512_000
-MAX_DOCUMENT = 24_000
-MAX_WORKFLOW_TREE = 32_768
-MAX_WORKFLOWS = 32
-MAX_DEFINITION_EXCERPT = 24_000
-MAX_FOOTPRINT_ENTRIES = 4096
 LOCKS = {'package-lock.json': 'npm', 'npm-shrinkwrap.json': 'npm',
          'pnpm-lock.yaml': 'pnpm', 'yarn.lock': 'yarn'}
 PYTHON_FILES = ('requirements.txt', 'poetry.lock', 'uv.lock', 'Pipfile.lock')
@@ -64,7 +58,7 @@ class CommitReader:
         self.verify_head()
         self.tree = self.read('rev-parse', f'{commit}^{{tree}}').decode().strip()
 
-    def read(self, *args, maximum=MAX_BLOB, missing_ok=False):
+    def read(self, *args, maximum=None, missing_ok=False):
         environment = {'PATH': '/usr/bin:/bin', 'GIT_CONFIG_GLOBAL': os.devnull, 'GIT_CONFIG_NOSYSTEM': '1',
                        'GIT_OPTIONAL_LOCKS': '0', 'GIT_TERMINAL_PROMPT': '0', 'GIT_NO_LAZY_FETCH': '1',
                        'GIT_ALLOW_PROTOCOL': '', 'GIT_NO_REPLACE_OBJECTS': '1'}
@@ -72,7 +66,7 @@ class CommitReader:
         result = subprocess.run(command, cwd=self.checkout, env=environment, capture_output=True, timeout=20)
         if missing_ok and result.returncode == 1 and not result.stdout and not result.stderr:
             return None
-        if result.returncode or len(result.stdout) > maximum:
+        if result.returncode or (maximum is not None and len(result.stdout) > maximum):
             raise Refused(f'Local Git could not read {args[0]} from the selected commit')
         return result.stdout
 
@@ -80,26 +74,36 @@ class CommitReader:
         if self.read('rev-parse', 'HEAD').decode().strip() != self.commit:
             raise SourceBindingMismatch('Checkout HEAD differs from the selected discovery commit')
 
-    def entries(self, tree, *paths, recursive=False, maximum=MAX_BLOB):
+    def entries(self, tree, *paths, recursive=False, maximum=None):
         suffix = ('--', *paths) if paths else ()
         options = ('-r',) if recursive else ()
-        for entry in self.read('ls-tree', '-z', '--full-tree', *options, tree, *suffix, maximum=maximum).split(b'\x00'):
+        raw = self.read('ls-tree', '-z', '--full-tree', *options, tree, *suffix, maximum=maximum)
+        if raw and not raw.endswith(b'\0'):
+            raise Refused('Committed Git tree listing is incomplete')
+        for entry in raw.split(b'\0'):
             if entry:
                 metadata, path = entry.split(b'\t', 1)
                 mode, kind, oid = metadata.decode('ascii').split()
                 yield path.decode('utf-8', errors='surrogateescape'), mode, kind, oid
 
     def size(self, oid):
-        return int(self.read('cat-file', '-s', oid))
+        raw = self.read('cat-file', '-s', oid)
+        if not re.fullmatch(rb'[0-9]+\n', raw):
+            raise Refused('Invalid committed Git object size')
+        return int(raw)
 
-    def blob(self, oid, *, maximum=MAX_BLOB):
-        return self.read('cat-file', 'blob', oid, maximum=maximum)
+    def blob(self, oid, *, maximum=None):
+        return self.checked_object('blob', oid, maximum)
 
-    def checked_object(self, kind, oid, maximum=MAX_BLOB):
-        if not re.fullmatch('[a-f0-9]{40}', oid):
+    def checked_object(self, kind, oid, maximum=None):
+        if kind not in ('blob', 'tree', 'commit') or not re.fullmatch('[a-f0-9]{40}', oid):
             raise Refused('Invalid committed Git object identity')
-        raw = self.read('cat-file', kind, oid, maximum=maximum)
-        if sha1(f'{kind} {len(raw)}\0'.encode() + raw).hexdigest() != oid:
+        size = self.size(oid)
+        if type(size) is not int or size < 0 or (maximum is not None and size > maximum):
+            raise Refused('Committed Git object exceeds its expected read size')
+        # Use the pinned object's measured size, never a project-size ceiling.
+        raw = self.read('cat-file', kind, oid, maximum=size)
+        if len(raw) != size or sha1(f'{kind} {len(raw)}\0'.encode() + raw).hexdigest() != oid:
             raise Refused('Committed Git object bytes differ from their identity')
         return raw
 
@@ -119,7 +123,7 @@ class Observations:
         self.open.append({'code': code, 'status': 'open', 'detail': detail,
                           'sources': sources, 'next': next_step})
 
-    def content(self, path, mode, kind, oid, maximum=MAX_BLOB):
+    def content(self, path, mode, kind, oid):
         record = {'path': path, 'commit': self.reader.commit, 'gitObject': oid,
                   'mode': mode, 'gitType': kind, 'status': 'detected'}
         self.files[path] = record
@@ -130,19 +134,15 @@ class Observations:
             return None
         size = self.reader.size(oid)
         record['bytes'] = size
-        record['maximumBytes'] = maximum
-        if size > maximum:
-            record['status'] = 'size-limit'
-            self.unknown('definition-size-limit', f'Definition has {size} bytes and exceeds the {maximum}-byte discovery read limit.',
-                         [{'path': path}], 'Review this file separately with an approved bounded parser.')
-            return None
-        data = self.reader.checked_object('blob', oid, maximum)
+        data = self.reader.checked_object('blob', oid, size)
+        if len(data) != size:
+            raise Refused('Committed definition differs from its measured size')
         record['sha256'] = sha256(data)
         try:
             return data.decode('utf-8')
         except UnicodeDecodeError:
             record['status'] = 'unsupported-encoding'
-            self.unknown('definition-encoding', f'Definition is not UTF-8 within the {maximum}-byte discovery read limit.', [{'path': path}],
+            self.unknown('definition-encoding', 'Definition is not UTF-8.', [{'path': path}],
                          'Confirm the file format and encoding with the operator.')
             return None
 
@@ -250,7 +250,7 @@ def inspect_node(report, texts):
             report.files[name].update(status='detected', parser='lock-header')
             for number, line in enumerate(texts[name].splitlines(), 1):
                 if re.match(r'^(?:lockfileVersion:|# yarn lockfile v\d+|__metadata:)', line):
-                    report.fact('lock-header-indicator', line[:120], name, f'line {number}', 'detected')
+                    report.fact('lock-header-indicator', line, name, f'line {number}', 'detected')
                     break
             report.unknown('unsupported-lock-format', f'{LOCKS[name]} lockfile contents are outside the qualified parser.',
                            [{'path': name}], 'Review the matching package-manager lockfile documentation or adapter.')
@@ -325,25 +325,24 @@ def inspect_direct_versions(report, lock_path, packages, package):
 def inspect_project_documents(report, selected):
     if not selected:
         return
-    if (len(selected) > 8 or len(set(selected)) != len(selected)
-            or any(len(path) > 200 or not re.fullmatch(PROJECT_DOC_PATH, path) for path in selected)):
-        raise Refused('Select up to eight distinct root README.md or AGENTS.md files, or Markdown files under docs/')
+    if (len(set(selected)) != len(selected)
+            or any(not re.fullmatch(PROJECT_DOC_PATH, path) for path in selected)):
+        raise Refused('Select distinct root README.md or AGENTS.md files, or Markdown files under docs/')
     reader = report.reader
     entries = {path: (mode, kind, oid) for path, mode, kind, oid in reader.entries(reader.commit, *selected)}
     scripts = {fact['value']: fact['sources'][0] for fact in report.facts if fact['code'] == 'node-named-script'}
     for path in selected:
         if path not in entries:
-            report.files[path] = {'path': path, 'commit': reader.commit, 'status': 'missing',
-                                  'maximumBytes': MAX_DOCUMENT}
+            report.files[path] = {'path': path, 'commit': reader.commit, 'status': 'missing'}
             report.unknown('project-document-missing', 'Selected document is absent from the commit.',
                            [{'path': path}], 'Select a committed project document or supply evidence separately.')
             continue
         try:
-            content = report.content(path, *entries[path], maximum=MAX_DOCUMENT)
+            content = report.content(path, *entries[path])
         except (Refused, subprocess.TimeoutExpired):
-            report.files[path].update(status='not-readable', maximumBytes=MAX_DOCUMENT)
+            report.files[path].update(status='not-readable')
             report.unknown('project-document-unreadable',
-                           f'Selected document could not be read within the {MAX_DOCUMENT}-byte local read boundary.',
+                           'Selected document could not be read completely from its pinned Git object.',
                            [{'path': path}], 'Review the pinned Git object and selected documentation separately.')
             continue
         if content is None:
@@ -408,24 +407,12 @@ def inspect_references(report, path, text):
     report.files[path].update(status='detected', parser='literal-line-indicators')
     # Preserve the actual definition for agent review, not an interpreted command.
     # Multiline run bodies, conditions, action inputs and shells matter together.
-    lines, excerpt, size = text.splitlines(keepends=True), [], 0
-    for line in lines[:300]:
-        if size + len(line.encode()) > MAX_DEFINITION_EXCERPT:
-            break
-        excerpt.append(line)
-        size += len(line.encode())
+    lines = text.splitlines(keepends=True)
     report.fact('definition-review-excerpt', {
-        'text': ''.join(excerpt), 'firstLine': 1, 'lastLine': len(excerpt),
-        'complete': len(excerpt) == len(lines), 'semantics': 'uninterpreted-source',
-    }, path, 'lines 1-' + str(len(excerpt)), 'detected')
-    if len(excerpt) != len(lines):
-        report.unknown('definition-excerpt-limit', 'The review excerpt is incomplete.', [{'path': path}],
-                       'Read the remaining committed definition through a separately bounded review.')
+        'text': text, 'firstLine': 1, 'lastLine': len(lines),
+        'complete': True, 'semantics': 'uninterpreted-source',
+    }, path, 'lines 1-' + str(len(lines)), 'detected')
     for number, line in enumerate(text.splitlines(), 1):
-        if number > 300:
-            report.unknown('reference-line-limit', 'Only the first 300 definition lines are scanned.', [{'path': path}],
-                           'Inspect the remaining lines in a reviewed parser.')
-            break
         stripped = line.strip()
         if not stripped or stripped.startswith('#'):
             continue
@@ -443,13 +430,13 @@ def inspect_references(report, path, text):
 
 
 def repository_footprint(reader):
-    """Read bounded tree metadata only; no source blob or project code is read."""
+    """Read complete tree metadata only; no source blob or project code is read."""
     unknown = {'status': 'unknown', 'scope': 'committed-tree-metadata', 'buildInputsSelected': False}
     try:
-        raw = reader.read('ls-tree', '-r', '-l', '-z', '--full-tree', reader.commit, maximum=MAX_BLOB)
+        raw = reader.read('ls-tree', '-r', '-l', '-z', '--full-tree', reader.commit)
         rows = raw.split(b'\0')
-        if rows[-1] != b'' or len(rows) - 1 > MAX_FOOTPRINT_ENTRIES:
-            return {**unknown, 'reason': 'Tree inventory exceeds its entry bound or is incomplete.'}
+        if rows[-1] != b'':
+            return {**unknown, 'reason': 'Tree inventory is incomplete.'}
         total, regular, other, groups, largest, names = 0, 0, 0, {}, [], set()
         for row in rows[:-1]:
             metadata, raw_path = row.split(b'\t', 1)
@@ -463,7 +450,7 @@ def repository_footprint(reader):
             if kind != b'blob' or mode not in (b'100644', b'100755'):
                 other += 1
                 continue
-            if not re.fullmatch(rb'[0-9]{1,16}', size):
+            if not re.fullmatch(rb'[0-9]+', size):
                 raise ValueError('Invalid blob size')
             count = int(size)
             total += count
@@ -477,7 +464,7 @@ def repository_footprint(reader):
                 'topLevelBytes': dict(sorted(groups.items())),
                 'largestFiles': sorted(largest, key=lambda row: (-row['bytes'], row['path']))[:10]}
     except (Refused, ValueError, UnicodeError, subprocess.TimeoutExpired):
-        return {**unknown, 'reason': 'Committed tree metadata could not be fully read within the discovery bounds.'}
+        return {**unknown, 'reason': 'Committed tree metadata could not be read completely.'}
 
 
 def discover_project(root, args, control, *, reader=None):
@@ -490,15 +477,8 @@ def discover_project(root, args, control, *, reader=None):
         if path == WORKFLOWS and kind == 'tree':
             report.files[path] = {'path': path, 'commit': reader.commit, 'gitObject': oid, 'mode': mode,
                                   'gitType': kind, 'status': 'detected'}
-            if reader.size(oid) > MAX_WORKFLOW_TREE:
-                report.unknown('workflow-inventory-limit', 'Workflow tree exceeds the discovery bound.',
-                               [{'path': path}], 'Select a narrower reviewed workflow inventory.')
-                continue
             workflows = [entry for entry in reader.entries(oid) if entry[0].endswith(('.yml', '.yaml'))]
-            if len(workflows) > MAX_WORKFLOWS:
-                report.unknown('workflow-inventory-limit', 'Only the first 32 workflow files are inspected.',
-                               [{'path': path}], 'Review the remaining workflows separately.')
-            for name, wf_mode, wf_kind, wf_oid in workflows[:MAX_WORKFLOWS]:
+            for name, wf_mode, wf_kind, wf_oid in workflows:
                 full = f'{path}/{name}'
                 content = report.content(full, wf_mode, wf_kind, wf_oid)
                 if content is not None:

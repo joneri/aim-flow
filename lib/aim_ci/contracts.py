@@ -1,4 +1,4 @@
-"""Small explicit first profile and strict data boundaries."""
+"""Explicit project scope and strict data boundaries."""
 import difflib
 import re
 import json
@@ -6,10 +6,10 @@ from openai_budget import Refused, fingerprint
 
 
 def requirement_text(title, body, label):
-    if (not isinstance(title, str) or not isinstance(body, str) or len(title.encode()) > 1000 or len(body.encode()) > 12000
+    if (not isinstance(title, str) or not isinstance(body, str)
             or not title.strip() or '## Acceptance criteria' not in body
             or '## Scope' not in body or '- [ ]' not in body):
-        raise Refused('A small requirement needs Scope and observable Acceptance criteria')
+        raise Refused('A requirement needs Scope and observable Acceptance criteria')
     if re.search(r'sk-[A-Za-z0-9_-]{20,}|BEGIN .*PRIVATE KEY', title + '\n' + body):
         raise Refused(f'Potential credential in {label}; do not send to model')
 
@@ -53,7 +53,7 @@ def admitted_triage(value, profile):
             or not isinstance(value['paths'], list) or not value['paths']
             or len(set(value['paths'])) != len(value['paths'])
             or any(p not in profile['allowedPaths'] for p in value['paths'])):
-        raise Refused('Triage requires assessment: only clear small low-risk permitted product changes are autonomous')
+        raise Refused('Triage requires assessment: only clear low-risk permitted product changes are autonomous')
     return value
 
 
@@ -61,8 +61,8 @@ def bounded_patch(original, value, profile):
     if not isinstance(value, dict) or set(value) != {'summary', 'edits'} or not isinstance(value['summary'], str):
         raise Refused('Invalid patch envelope')
     edits = value['edits']
-    if not isinstance(edits, list) or not 1 <= len(edits) <= 16:
-        raise Refused('Patch needs 1-16 small exact replacements')
+    if not isinstance(edits, list) or not edits:
+        raise Refused('Patch needs at least one exact replacement')
     proposed = dict(original)
     previous = None
     for edit in edits:
@@ -75,9 +75,8 @@ def bounded_patch(original, value, profile):
         if edit == previous:
             continue
         if (not isinstance(old, str) or not isinstance(new, str) or not old or old == new
-                or len(old.encode()) + len(new.encode()) > 2400
                 or proposed[edit['path']].count(old) != 1):
-            raise Refused('Ambiguous or excessive replacement; use a short unique source context')
+            raise Refused('Invalid or ambiguous replacement; use unique source context')
         proposed[edit['path']] = proposed[edit['path']].replace(old, new, 1)
         previous = edit
     check_change_size(original, proposed, profile)
@@ -87,7 +86,8 @@ def bounded_patch(original, value, profile):
 def check_change_size(original, proposed, profile):
     changed = sum(sum(1 for line in difflib.unified_diff(original[p].splitlines(), proposed[p].splitlines())
                       if line.startswith(('+', '-')) and not line.startswith(('+++', '---'))) for p in original)
-    if not 1 <= changed <= profile['maximumChangedLines']:
+    maximum = profile.get('maximumChangedLines')
+    if changed < 1 or maximum is not None and changed > maximum:
         raise Refused('Change exceeds admitted story size')
 
 

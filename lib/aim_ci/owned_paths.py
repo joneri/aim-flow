@@ -87,6 +87,22 @@ def read_owned(root, relative, limit=2_000_000):
     return data
 
 
+def read_owned_content(root, relative):
+    """Read complete selected content, bounded by its opened descriptor's size.
+
+    Control metadata keeps read_owned's separate parser/resource bound. Product
+    content has no fixed size ceiling, but cannot grow while being consumed.
+    """
+    with os.fdopen(owned_file(root, relative, os.O_RDONLY), 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        data = stream.read(before.st_size + 1)
+        after = os.fstat(stream.fileno())
+    identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    if len(data) != before.st_size or identity(before) != identity(after):
+        raise Refused('Selected content changed while being read')
+    return data
+
+
 def write_owned(root, relative, data, *, exclusive=False):
     data = data.encode('utf-8') if isinstance(data, str) else data
     flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if exclusive else os.O_TRUNC)

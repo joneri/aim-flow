@@ -7,13 +7,17 @@ import re
 import subprocess
 import sys
 
-from openai_budget import Refused, fingerprint, read_owned, safe_path
+from openai_budget import Refused, canonical, fingerprint, read_owned, safe_path
+from .owned_paths import read_owned_content
 from .budget import Budget
 from .control_package import MAX_FILE, VERSION_PATTERN, check_digest, sha256
 from .effects import EffectJournal
 from .installed_runtime import file_sha
 from .project_discovery import SCRIPT_NAME, SourceBindingMismatch, unique_json, version_relation
 
+
+# The shared Python/JavaScript JSON contract must preserve integer byte counts exactly.
+MAX_SAFE_INTEGER = (1 << 53) - 1
 
 OPERATIONS = {
     'dependencies': ['ci', '--offline', '--ignore-scripts', '--no-audit', '--no-fund'],
@@ -68,7 +72,7 @@ def pinned_bytes(path, expected, label):
         raise Refused(f'Invalid expected {label} SHA-256')
     safe_path(path)
     path = path.resolve()
-    data = read_owned(path.parent, path.name, MAX_FILE)
+    data = read_owned_content(path.parent, path.name)
     check_digest(data, expected, label)
     return data
 
@@ -79,13 +83,13 @@ def version_one(value, label):
 
 
 def policy_path(value):
-    return (isinstance(value, str) and len(value) <= 200
+    return (isinstance(value, str)
             and re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*', value)
             and all(part not in ('.', '..') for part in value.split('/')))
 
 
 def exact_paths(paths, label, *, path_validator=policy_path):
-    if not isinstance(paths, list) or not paths or len(paths) > 100:
+    if not isinstance(paths, list) or not paths:
         raise Refused(f'Invalid {label} paths')
     if not all(path_validator(value) for value in paths):
         raise Refused(f'Invalid {label} path')
@@ -195,7 +199,7 @@ def validate_recipe(recipe, oracle):
     fields(artifact, 'directory requiredFiles maximumBytes', 'artifact policy')
     from .npm_platform import project_path
     if (artifact['directory'] != 'dist' or type(artifact['maximumBytes']) is not int
-            or not 1 <= artifact['maximumBytes'] <= 20_000_000
+            or not 1 <= artifact['maximumBytes'] <= MAX_SAFE_INTEGER
             or 'index.html' not in exact_paths(artifact['requiredFiles'], 'artifact', path_validator=project_path)):
         raise Refused('Invalid static artifact policy')
     limits = recipe['limits']
@@ -360,10 +364,10 @@ def inspect_target(checkout, target, git, input_pins, allowed):
                    'GIT_OPTIONAL_LOCKS': '0', 'GIT_TERMINAL_PROMPT': '0',
                    'GIT_NO_LAZY_FETCH': '1', 'GIT_ALLOW_PROTOCOL': '', 'GIT_NO_REPLACE_OBJECTS': '1'}
 
-    def read(*args):
+    def read(*args, maximum=MAX_FILE):
         command = [git, '--no-replace-objects', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', *args]
         proc = subprocess.run(command, cwd=checkout, env=environment, capture_output=True, timeout=20)
-        if proc.returncode or len(proc.stdout) > MAX_FILE:
+        if proc.returncode or len(proc.stdout) > maximum:
             raise Refused(f'Local Git could not read {args[0]} from the pinned target')
         return proc.stdout
 
@@ -389,7 +393,13 @@ def inspect_target(checkout, target, git, input_pins, allowed):
         tracked_file(path)
     inputs = {}
     for name in INPUT_FILES:
-        encoded = read('cat-file', 'blob', f"{target['commit']}:{name}")
+        spec = f"{target['commit']}:{name}"
+        size = int(read('cat-file', '-s', spec))
+        if size < 0:
+            raise Refused('Invalid measured committed input size')
+        encoded = read('cat-file', 'blob', spec, maximum=size)
+        if len(encoded) != size:
+            raise Refused('Committed input changed while reading its measured bytes')
         expected = input_pins[name]
         if not digest(expected):
             raise Refused(f'Invalid approved digest for {name}')
@@ -595,10 +605,21 @@ def plan_recipe(root, args, control):
         execution = {'kind': 'npm-source-check-v1', 'dependencies': 'none', 'outputs': 'none',
                      'sourcePaths': recipe['sourcePaths']}
         source_record = {'sourceFiles': selected_manifest, 'sourceProofSha256': fingerprint(proof),
+                         'sourceProofBytes': len(canonical(proof).encode()),
                          'sourceSelectionSha256': fingerprint(selected_manifest), 'execution': execution}
         identity.update(sourceProofSha256=source_record['sourceProofSha256'],
                         sourceSelectionSha256=source_record['sourceSelectionSha256'],
                         executionSha256=fingerprint(execution))
+        reader.verify_head()
+    elif container:
+        from .project_discovery import CommitReader
+        from .build_preparation import source_inventory, source_manifest
+
+        reader = CommitReader(root, checkout, Path(host_tools['git']['path']),
+                              host_tools['git']['sha256'], target['commit'])
+        source, _ = source_inventory(reader)
+        inventory = source_manifest(source)
+        source_record = {'sourceInventory': inventory, 'sourceInventorySha256': fingerprint(inventory)}
         reader.verify_head()
     runtime = {'tools': tools, 'sha256': identity['runtimeSha256'], 'plannerPython': sys.version.split()[0]}
     container_record = {}
@@ -636,6 +657,11 @@ def plan_recipe(root, args, control):
                            'committedInputs': approval['committedInputs']}
         if version == 3:
             expected_review['sourceFiles'] = source_record['sourceFiles']
+        if 'sourceInventory' in review_data or 'sourceInventorySha256' in review_data:
+            if 'sourceInventory' not in source_record:
+                raise Refused('Full source inventory requires a container build review')
+            expected_review.update(sourceInventory=source_record['sourceInventory'],
+                                   sourceInventorySha256=source_record['sourceInventorySha256'])
         if selector is not None:
             expected_review['testSelector'] = selector
         fields(review_data, ' '.join(expected_review), 'recipe review')
@@ -649,6 +675,9 @@ def plan_recipe(root, args, control):
     elif args.review is not None or args.review_sha256 is not None:
         raise Refused('Recipe schema v1 uses its original approval contract')
     state = inspect_state(approval['state'], identity, (root, checkout, recipe_root))
+    # Existing planning state already pins the complete Git tree. The new plan also pins its measured inventory.
+    if 'sourceInventorySha256' in source_record:
+        identity['sourceInventorySha256'] = source_record['sourceInventorySha256']
     return {
         'version': approval_version, 'status': 'planned-only', 'executionAuthorized': False,
         **selection, **review, **container_record, **source_record,
@@ -705,7 +734,6 @@ def planned_source_check(plan):
     manifest = plan.get('sourceFiles')
     if not isinstance(manifest, dict) or set(manifest) != set(paths):
         raise Refused('Source check manifest differs from the exact selected paths')
-    total = 0
     for path, row in manifest.items():
         fields(row, 'mode size sha256', 'selected source file')
         if (type(row['mode']) is not int or row['mode'] not in (0o644, 0o755)
@@ -713,12 +741,36 @@ def planned_source_check(plan):
                 or any(part in ('.git', 'node_modules', '.npmrc', 'dist')
                        or re.match(r'^\.env(?:\.|$)', part) for part in PurePosixPath(path).parts)):
             raise Refused('Invalid selected source file or protected input')
-        total += row['size']
-    if (total > 32 * 1024 * 1024 or not digest(plan.get('sourceProofSha256'))
+    if (not digest(plan.get('sourceProofSha256'))
             or plan.get('sourceSelectionSha256') != fingerprint(manifest)
             or any(manifest[name]['sha256'] != plan.get('committedInputs', {}).get(name) for name in INPUT_FILES)):
-        raise Refused('Source check lacks exact bounded source and proof pins')
+        raise Refused('Source check lacks exact source and proof pins')
+    if 'sourceProofBytes' in plan and (type(plan['sourceProofBytes']) is not int or plan['sourceProofBytes'] < 1):
+        raise Refused('Invalid measured source proof size')
     return execution
+
+
+def planned_source_inventory(plan):
+    """Validate the complete build inventory, including both optional compatibility fields."""
+    if not any(key in plan for key in ('sourceInventory', 'sourceInventorySha256')):
+        return None
+    from .npm_platform import project_path
+
+    inventory = plan.get('sourceInventory')
+    if (plan.get('recipeSchemaVersion') == 3 or plan.get('version') != 2
+            or not isinstance(inventory, dict) or not set(INPUT_FILES) <= inventory.keys()):
+        raise Refused('Invalid complete build source inventory')
+    for name, row in inventory.items():
+        fields(row, 'mode size sha256', 'build source inventory file')
+        if (not project_path(name) or type(row['mode']) is not int or row['mode'] not in (0o644, 0o755)
+                or type(row['size']) is not int or row['size'] < 0 or not digest(row['sha256'])
+                or any(part in ('.git', 'node_modules', '.npmrc') or re.match(r'^\.env(?:\.|$)', part)
+                       for part in name.split('/'))):
+            raise Refused('Invalid complete build source inventory file')
+    if (plan.get('sourceInventorySha256') != fingerprint(inventory)
+            or any(inventory[name]['sha256'] != plan.get('committedInputs', {}).get(name) for name in INPUT_FILES)):
+        raise Refused('Complete build source inventory differs from its pinned inputs')
+    return inventory
 
 
 def _execution_plan(path, pin, control_pin):
@@ -742,6 +794,9 @@ def _execution_plan(path, pin, control_pin):
                'controlManifestSha256': control_pin, 'recipeManifestSha256': recipe['manifestSha256'],
                'sourceCommit': target['commit'], 'sourceTree': target['tree'], 'committedInputs': inputs,
                'runtimeSha256': runtime['sha256']}
+    inventory = planned_source_inventory(plan)
+    if inventory is not None:
+        binding['sourceInventorySha256'] = plan['sourceInventorySha256']
     execution = planned_source_check(plan)
     if execution is not None:
         if plan.get('version') != 2:
@@ -749,6 +804,8 @@ def _execution_plan(path, pin, control_pin):
         binding.update(sourceProofSha256=plan['sourceProofSha256'],
                        sourceSelectionSha256=plan['sourceSelectionSha256'],
                        executionSha256=fingerprint(execution))
+        if 'sourceProofBytes' in plan:
+            binding['sourceProofBytes'] = plan['sourceProofBytes']
     plan_version = plan.get('version', 1)
     if type(plan_version) is not int or plan_version not in (1, 2):
         raise Refused('Unsupported execution plan version')

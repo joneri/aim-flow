@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.3.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.4.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.3.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.4.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 
@@ -61,3 +61,9 @@ Never paste credentials into issues or commit them. Model intake is optional, se
 ## Preview a task before selecting a build
 
 If a project does not yet have a qualified build setup, use the [proposal-only local task profile](aim-ci-onboarding.md#preview-a-local-task-before-build-selection). The preview checks the selected committed source and shows the request without calling a model or changing the project. A separately approved proposal can only be inspected; it cannot be converted into an execution candidate.
+
+## Larger source files
+
+The beta no longer imposes the former 50 KB source-file or 100 KB request-byte caps. A preview reads all explicitly selected committed content and checks the same source identities and allowed paths. It does not call a model or expand an existing budget.
+
+Actual generation still needs separately approved money and call slots plus provider token preflight. The default output allowance is not a universal maximum; this release adds no CLI/profile switch for choosing another allowance. Read [size handling and retained resource controls](aim-ci-size-handling.md) before changing runtime settings.

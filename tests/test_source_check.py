@@ -10,7 +10,8 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'lib'))
-from aim_ci.platform_build import runner_arguments, validate_report
+from aim_ci.platform_build import (MAX_REPORT, capture_report, reconcile_report, report_limit,
+                                   reviewed_artifact, runner_arguments, validate_report)
 from aim_ci.recipe_plan import (_execution_plan, inspect_npm, planned_operations, planned_source_check,
                                 reviewed_platform_operations, validate_recipe)
 from openai_budget import Refused, canonical, fingerprint
@@ -109,6 +110,41 @@ class SourceCheckTests(unittest.TestCase):
         with self.assertRaisesRegex(Refused, 'schema v3'):
             planned_source_check(changed)
 
+    def test_large_source_selection_is_pinned_without_size_or_path_count_ceiling(self):
+        for index in range(125):
+            self.files[f'large-{index:03}.css'] = {'mode': 0o644, 'size': 32 * 1024 * 1024 + 1,
+                                                 'sha256': '9' * 64}
+        self.recipe['sourcePaths'] = sorted(self.files)
+        self.plan['execution']['sourcePaths'] = sorted(self.files)
+        self.plan['sourceSelectionSha256'] = fingerprint(self.files)
+        self.plan['sourceProofBytes'] = 3_000_001
+        validate_recipe(self.recipe, self.oracle)
+        self.assertEqual(planned_source_check(self.plan)['sourcePaths'], sorted(self.files))
+        self.assertEqual(self.binding()['sourceProofBytes'], 3_000_001)
+        changed = copy.deepcopy(self.plan)
+        changed['sourceFiles'].pop('large-124.css')
+        with self.assertRaisesRegex(Refused, 'exact selected paths'):
+            self.binding(changed)
+        for invalid in (0, True, -1):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(Refused, 'proof size'):
+                self.binding(self.plan | {'sourceProofBytes': invalid})
+
+    def test_artifact_policy_has_only_its_explicit_reviewed_size_limit(self):
+        artifact = {'directory': 'dist', 'requiredFiles': ['index.html', *[f'file-{i}.css' for i in range(125)]],
+                    'maximumBytes': 40 * 1024 * 1024}
+        recipe = {key: value for key, value in self.recipe.items() if key not in ('sourcePaths', 'dependencies')}
+        recipe.update(version=2, stack='npm-vite-static', artifact=artifact)
+        oracle = {'kind': 'static-heading-v1', 'file': 'index.html', 'heading': 'Hello'}
+        validate_recipe(recipe, oracle)
+        plan = {'recipeSchemaVersion': 2, 'artifact': artifact | {'linksAllowed': False, 'status': 'not-built'}}
+        self.assertEqual(reviewed_artifact(plan), {key: artifact[key] for key in ('requiredFiles', 'maximumBytes')})
+        for invalid in (0, -1, True, 1 << 53):
+            with self.subTest(invalid=invalid), self.assertRaises(Refused):
+                validate_recipe(recipe | {'artifact': artifact | {'maximumBytes': invalid}}, oracle)
+        for invalid in (0, 1 << 53):
+            with self.subTest(invalid=invalid), self.assertRaises(Refused):
+                reviewed_artifact(plan | {'artifact': plan['artifact'] | {'maximumBytes': invalid}})
+
     def report_fixture(self):
         binding = self.binding()
         review = {'tools': self.tools, 'artifact': {'kind': 'none'}, 'execution': self.plan['execution'],
@@ -128,6 +164,40 @@ class SourceCheckTests(unittest.TestCase):
                   'build': None, 'artifacts': None, 'error': None,
                   'test': {'exitCode': 0, 'signal': None, 'error': None, 'stdout': 'b2sK', 'stderr': ''}}
         return intent, report, {'exitCode': 0, 'oom': False, 'deadlineExceeded': False}
+
+    def test_artifact_report_above_thirty_megabytes_roundtrips_with_reviewed_budget(self):
+        import base64
+        intent, report, terminal = self.report_fixture()
+        review = intent['platformBuild']
+        review.pop('execution')
+        review.pop('sourceFiles')
+        review['store'].update(kind='npm-v3-platform-tarballs-v1', tarballCount=1, packageCount=1)
+        data = b'x' * (24 * 1024 * 1024)
+        review['artifact'] = {'requiredFiles': ['index.html'], 'maximumBytes': len(data)}
+        operation = {'exitCode': 0, 'signal': None, 'error': None, 'stdout': '', 'stderr': ''}
+        report.pop('execution')
+        report.update(version=2, materialized=1, installedPackages=1, install=operation, build=operation,
+                      buildTools={'tsc': None, 'vite': None}, artifacts={'index.html': {
+                          'size': len(data), 'sha256': sha256(data).hexdigest(),
+                          'data': base64.b64encode(data).decode()}})
+        raw = canonical(report).encode()
+        self.assertGreater(len(raw), MAX_REPORT)
+        self.assertLess(len(raw), report_limit(intent))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            result = capture_report(root, lambda: raw, intent, terminal)
+            self.assertEqual(result['status'], 'build-and-test-passed')
+            self.assertEqual(result['artifacts']['bytes'], len(data))
+            self.assertEqual(reconcile_report(root, intent, terminal), result)
+            smaller = copy.deepcopy(intent)
+            smaller['platformBuild']['artifact']['maximumBytes'] -= 1
+            refused = reconcile_report(root, smaller, terminal)
+            self.assertEqual(refused['status'], 'unverified')
+            self.assertRegex(refused['reason'], 'Oversized|oversized')
+        small = copy.deepcopy(intent)
+        small['platformBuild']['artifact']['maximumBytes'] = 1
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(Refused, 'oversized'):
+            capture_report(Path(directory).resolve(), lambda: b'x' * (report_limit(small) + 1), small, terminal)
 
     def test_source_check_reports_no_install_build_or_artifact_success(self):
         intent, report, terminal = self.report_fixture()

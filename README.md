@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.3` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.4` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -16,9 +16,10 @@ AIM Flow helps you understand a software project, choose the next step and check
 - **Project-aware installation:** retain a source-bound adaptation draft separately from the immutable controller.
 - **Bounded source checks:** explicitly select one supported npm script and its committed inputs, then separately review preparation and execution. This mode installs no dependencies and produces no application build.
 - **Proposal-only task intake:** preview a project-bound request before choosing a build setup. No model call or change is made by the preview. Actual API use requires its own grant, consent and existing budget history; this profile cannot prepare or execute a candidate.
+- **Project size:** read complete selected source and project definitions without fixed product file-size, file-count or request-byte caps. Provider, approved spending and reviewed runtime limits still apply. See [size handling](docs/aim-ci-size-handling.md).
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The beta.3 distribution is checked separately with offline regression and installation tests; its proposal-only intake change does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the size-handling update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 

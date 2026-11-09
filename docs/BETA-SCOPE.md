@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.3 scope
+# AIM Flow 0.1.0-beta.4 scope
 
 ## Available paths
 
@@ -13,7 +13,7 @@ These paths have different prerequisites and evidence. Their presence is not a g
 ## Source-check contract
 
 - One explicitly selected existing npm script.
-- At most 100 explicitly selected committed source files and 32 MiB of source.
+- Explicitly selected committed source files with measured sizes, modes and hashes. There is no fixed product file-count or total-source-byte ceiling.
 - Exact committed root `package.json` and `package-lock.json`; no npm workspaces.
 - Pinned Node/npm runtime, no dependency installation, no application build/artifacts.
 - Selected pre/post hooks are rejected, not silently skipped.
@@ -36,4 +36,12 @@ Legacy project-specific delivery routes are excluded from this distribution. No 
 
 ## Pilot fit
 
-A responsible operator, a trusted project, a small committed source set and one useful existing source-only check are a good starting point. Projects requiring dependency installation, services, browser tests or builds need a separately reviewed path and qualification.
+A responsible operator, a trusted project, an explicitly reviewed source set and one useful existing source-only check are a good starting point. Projects requiring dependency installation, services, browser tests or builds need a separately reviewed path and qualification.
+
+## Size and resources
+
+Fixed source-file, request-byte, patch-size/count and default changed-line caps are removed. Discovery reads complete committed definitions and repository inventories. New whole-build plans pin a measured source inventory; older inventory-less plans retain their compatibility envelope.
+
+This does not mean unlimited computer or model capacity. Actual provider constraints, approved money/call limits, per-run artifact/resource budgets and untrusted archive/protocol defenses still apply. Token preflight must fit the approved reservation before generation. Preview estimates cannot authorize or increase spending.
+
+The former formatter file-size guard was also removed. Its sandbox, protected inputs and deadline remain, but independent formatter disk-space enforcement is unqualified. Use trusted, reviewed projects. See [project size handling](aim-ci-size-handling.md) for the exact boundaries.

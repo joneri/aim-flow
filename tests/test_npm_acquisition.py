@@ -1,7 +1,7 @@
 """Network-free npm acquisition protocol, retention and recovery regressions."""
 from base64 import b64encode
 from email.message import Message
-from hashlib import sha512
+from hashlib import sha1, sha512
 import io
 import json
 import os
@@ -13,11 +13,12 @@ from threading import Event
 import time
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'lib'))
 from aim_ci import npm_acquisition as acquisition
 from aim_ci.operator_build import operator_lock
+from aim_ci.project_discovery import CommitReader
 from openai_budget import Refused
 
 
@@ -181,6 +182,43 @@ class NpmAcquisitionContractTests(unittest.TestCase):
     def evidence(self, phase):
         path, = self.state.glob(f'*-{phase}.json')
         return json.loads(path.read_bytes())
+
+    def test_pre_request_rechecks_large_committed_objects_without_archive_file_ceiling(self):
+        objects = {kind: (kind.encode() + b' ') * 400_001 for kind in ('commit', 'tree', 'blob')}
+        # All three selected object kinds exceed the former 2 MB controller-file cap.
+        objects['tree'] += b'x'
+        objects['blob'] += b'x'
+        pins = {kind: sha1(f'{kind} {len(data)}\0'.encode() + data).hexdigest()
+                for kind, data in objects.items()}
+        sizes = {pins[kind]: len(data) for kind, data in objects.items()}
+        reader = object.__new__(CommitReader)
+        reader.commit, reader.tree = pins['commit'], pins['tree']
+
+        def read(*args, maximum=None):
+            if args[1] == '-s':
+                return f'{sizes[args[2]]}\n'.encode()
+            kind, pin = args[1:]
+            self.assertEqual(pin, pins[kind])
+            self.assertEqual(maximum, sizes[pin])
+            return objects[kind]
+
+        reader.read = Mock(side_effect=read)
+        self.job.reader = reader
+        self.job.source = {'package-lock.json': {'blob': bytes.fromhex(pins['blob'])}}
+        self.job.verify_inputs = Mock()
+        self.job.check_output = Mock()
+        with patch('socket.socket', side_effect=AssertionError('No network expected')), \
+                patch('subprocess.Popen', side_effect=AssertionError('No subprocess expected')):
+            acquisition.NpmAcquisition.before_request(self.job, 123)
+        self.assertTrue(all(size > 2_000_000 for size in sizes.values()))
+        self.job.verify_inputs.assert_called_once_with()
+        self.job.check_output.assert_called_once_with(123)
+        self.assertEqual(reader.read.call_count, 6)
+        objects['blob'] = b'!' + objects['blob'][1:]
+        self.job.check_output.reset_mock()
+        with self.assertRaisesRegex(Refused, 'bytes differ from their identity'):
+            acquisition.NpmAcquisition.before_request(self.job, 123)
+        self.job.check_output.assert_not_called()
 
     def test_approved_verified_bytes_are_reused_and_tampered_receipt_refuses(self):
         with patch.object(acquisition, 'fetch_bytes', side_effect=self.http_success) as fetch:

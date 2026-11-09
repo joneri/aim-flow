@@ -66,7 +66,7 @@
       "upstreamSha256": "55b97d6197df219a1141acc36b13625f701a25e8d3a9df3a4c75bf91f6b6bde5"
     },
     "docs/aim-ci-discover-project.md": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "c79e8fffb0aab00283431fa81ae8508dd680e3cb864b7c509c268bb06a809e73"
     },
     "docs/aim-ci-install.md": {
@@ -88,6 +88,11 @@
     "docs/aim-ci-python-test-matrix.md": {
       "kind": "modified",
       "upstreamSha256": "078a09c5a3e64a1eb0891c2a600d0bcd179ee6f1c5ef2c7825e29b660640e9ca"
+    },
+    "docs/aim-ci-size-handling.md": {
+      "kind": "added",
+      "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
+      "upstreamSha256": "8f9b74ba71a2e186f7a011363fd1160177307512956c05867ae4ae29e202f51e"
     },
     "fixtures/products/catalog-oracle.py": {
       "kind": "unchanged",
@@ -114,11 +119,11 @@
       "upstreamSha256": "0136b35b8855ddba3336152d5a6e50415a3461205b0a7de550d4ee17ba38ec11"
     },
     "lib/aim_ci/budget.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "6d1b52d9a0d2af088eb85c6e344ebca9fdb5ae269d26d04fdfd48aa52ab6b0cf"
     },
     "lib/aim_ci/build_preparation.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "c57a4a2fb9123833c8d941e67b6c3414597d2a8f72fad77ed219734335b8b5ee"
     },
     "lib/aim_ci/contracts.py": {
@@ -142,11 +147,11 @@
       "upstreamSha256": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd"
     },
     "lib/aim_ci/docker_engine.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "a77c968f8551ee15c1aca004497fad1d03707a17d344e1e1363b58c104b0951b"
     },
     "lib/aim_ci/docker_image_evidence.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "36b74c0ffc6ddadfcd7c4b009a2b41c8c246ee99502847c5de1e036a63f794b8"
     },
     "lib/aim_ci/effects.py": {
@@ -173,15 +178,15 @@
       "kind": "added"
     },
     "lib/aim_ci/npm_acquisition.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "33f1412278edcc113661ad0f5c7b80cf2a6ec3d7a7eeec3adbe45622971f8a4e"
     },
     "lib/aim_ci/npm_platform.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "01488b05e7e5ecd9da6d38c3a9ea0beea4e7cb0e6bba243afe60c40a496e7af8"
     },
     "lib/aim_ci/npm_platform_build.cjs": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "17fba9789b6e9ff3eaa41a3c3ea757cad7d44b49192b70e3f9f0851a9d34c4fd"
     },
     "lib/aim_ci/offline.py": {
@@ -193,7 +198,7 @@
       "upstreamSha256": "80fa35ca7bf1d56626a1fff75903ecb0be573af15ffd991cb9da1b29320be7a5"
     },
     "lib/aim_ci/operator_build.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "bf48579bc12450ffa8c32eec7322122d9c9338e8ba34beb9428a044b426e061a"
     },
     "lib/aim_ci/operator_readiness.py": {
@@ -201,11 +206,11 @@
       "upstreamSha256": "876bd2f6bdf158eee6d664b9d7314a0f9c71456179ad265d0d8cbdc26218983a"
     },
     "lib/aim_ci/owned_paths.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "43a4ec3e89abd961536500ae4f783605577910120356cd953ee3e662044ec950"
     },
     "lib/aim_ci/platform_build.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "17d241c872f322d93e379046aff5362290380199053b5ca2d291d0b7ccbe0dc4"
     },
     "lib/aim_ci/products.py": {
@@ -217,15 +222,15 @@
       "upstreamSha256": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282"
     },
     "lib/aim_ci/project_discovery.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "18fdbd5345317353225a868a802da589c5501cd3268d5660896844b723833dab"
     },
     "lib/aim_ci/project_installation.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "457a8ce7046a021d4c8c39c3859d17e5a4fbe00d4308f2caf69da586803ce553"
     },
     "lib/aim_ci/recipe_plan.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "af58d7873119611750a64d91f32dd5f7b827fbe365dadb67a492bb637253b6b7"
     },
     "lib/aim_ci/release.py": {
@@ -233,11 +238,11 @@
       "upstreamSha256": "18ff145223c40d251710ee1ef93aa8f4b02ac29b46462f763ff8bcbaf2ba8896"
     },
     "lib/aim_ci/source_subset.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "bc9f7ee1bdd0f4516fb8957037e7e7327e0df3806fbac6923aa8a67d92dde228"
     },
     "lib/openai_budget.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "86fbae433114037019a1975d437ed144f420e04ac22dd4f2f2bc82dbcf0185e8"
     },
     "lib/review-policy.sh": {
@@ -245,7 +250,7 @@
       "upstreamSha256": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03"
     },
     "profiles/catalog.json": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "c054a3ef52413e2e520c8e09a2eafeae05b7dbda95138a6764c55b75e305027c"
     },
     "tests/production/artifact-probe.mjs": {
@@ -257,8 +262,13 @@
       "upstreamSha256": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e"
     },
     "tests/test_build_preparation.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "5d0c1a32d1e2c59c45931b8b4d097536b6ba995a163eb087f81f31c25f36dcf0"
+    },
+    "tests/test_content_size_contracts.py": {
+      "kind": "added",
+      "note": "Generated product-only regression cases for content size and provider boundaries.",
+      "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb"
     },
     "tests/test_control_package.py": {
       "kind": "modified",
@@ -269,7 +279,7 @@
       "upstreamSha256": "092dd77fe9f1a6209a517286951e897538cf28af7a4d4b41ab6307b3ad4b567c"
     },
     "tests/test_docker_image_evidence.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "bce2ab73a6e94fc78e57d43dbcde607de0f717c2b400d8dba442f447949a3569"
     },
     "tests/test_docker_recipe.py": {
@@ -285,31 +295,36 @@
       "kind": "added"
     },
     "tests/test_npm_acquisition.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "03c7526e6f5bb3efd5098098f77943964fbfa4a4fb3dc9a93a86c381198da7d0"
     },
     "tests/test_npm_platform.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "02e1b243058ab424a08045c78bb71534ca310df2d36bf1a9d54608a3948aca71"
     },
     "tests/test_npm_platform_build.cjs": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "86a582d8e9e56e3a5f9b686f7fa2b4ac42e96f862d67e245e756fcafd30afcad"
     },
     "tests/test_operator_build.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "3b244070eed86743fe66b745c26fe2e9372331927e95c82b3613f083df846ed3"
+    },
+    "tests/test_project_discovery_sizes.py": {
+      "kind": "added",
+      "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
+      "upstreamSha256": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0"
     },
     "tests/test_project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "fd04a40c373ff787801bf49575d6c119fb2e56cce23bf8975c1405b2891c4990"
     },
     "tests/test_project_intake_grant.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "0898d60cdeac39eea39b572f876ac9ead6115bccf788977114ebeceb8332cbd2"
     },
     "tests/test_project_planning.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "6967571de046f9e7049bc2c37a0711d75c398da450469ead6de020d228fcfb15"
     },
     "tests/test_recipe_execution.py": {
@@ -317,7 +332,7 @@
       "upstreamSha256": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4"
     },
     "tests/test_source_check.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "ab5b1698a2d8467f5e84e847b5e78de81e879d73d5b6f6c9ea4e97e5813fc1be"
     },
     "tests/test_source_free_release.py": {
@@ -325,7 +340,7 @@
       "upstreamSha256": "1279934a50b9979e46bc010c3b433dd7952b25aa0654e8c900e8f3a3460c5b57"
     },
     "tests/test_source_subset.py": {
-      "kind": "unchanged",
+      "kind": "modified",
       "upstreamSha256": "69894eda37b83e793144e3414cab9092362d250a9c2b1872484a9838aa3ca67b"
     }
   },
@@ -333,72 +348,75 @@
     "aim-ci-control.py": "462b446aaa484a68bd2cc323b711e72544c0f46caddc18282901b1cb8bc2a8de",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
-    "docs/aim-ci-discover-project.md": "c79e8fffb0aab00283431fa81ae8508dd680e3cb864b7c509c268bb06a809e73",
+    "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "e015fec56f0a6bdd44dcdaf07bed27080c320fb58426237a6f308bc4367dd668",
     "docs/aim-ci-plan-recipe.md": "d16821bb4624f26897e4ce127b8ee0879470306211106219a0219cc11c259bb0",
     "docs/aim-ci-propose-adaptation.md": "1a42306a5cc8b4396b548316ae17641ba130a56f67091dc6f32a7ab07e427d1c",
-    "docs/aim-ci-python-test-matrix.md": "50affeba97c4b84cf2553c7026f59ee94d4938615ad4c35f585de40258302de3",
+    "docs/aim-ci-python-test-matrix.md": "fb30addba9ee9a33cfc7456b3cca839c214dfa7e720ac1a0d3a33329583c6665",
+    "docs/aim-ci-size-handling.md": "3bfabc842e652631207cc727d91acba689b20a829d6a337e6fcbb885569ba6b8",
     "fixtures/products/catalog-oracle.py": "c66350ab4d96eafffa943e559a41936009a56ee781af17390cb778707e2fd45e",
     "fixtures/products/catalog/catalog.py": "8fdf097ef42419ae21ded44bc93d4d0bc1f7e7263532b7a2706c220111ea4c3e",
     "fixtures/products/catalog/fixtures/items.csv": "e2212a8405f0bd5c08b5db14f035650da4678eb5c5acb8734308cc145b79faa0",
     "fixtures/products/catalog/tests/test_catalog.py": "c35de6c435c9393258247d6a322646e6846fd18313880e142cd3704faf7c6bb9",
     "lib/aim_ci/__init__.py": "0df40c8741e6e8e23f6223c91aa0533b155487f9f2431534ff5bee3e7b2d5660",
     "lib/aim_ci/artifacts.py": "0136b35b8855ddba3336152d5a6e50415a3461205b0a7de550d4ee17ba38ec11",
-    "lib/aim_ci/budget.py": "6d1b52d9a0d2af088eb85c6e344ebca9fdb5ae269d26d04fdfd48aa52ab6b0cf",
-    "lib/aim_ci/build_preparation.py": "c57a4a2fb9123833c8d941e67b6c3414597d2a8f72fad77ed219734335b8b5ee",
-    "lib/aim_ci/contracts.py": "b15744f62c821107e76c7208c6cc29d50c071a9077c52bdc38718979ce98a306",
+    "lib/aim_ci/budget.py": "f225c8e4aba58459c6faa3f2203520df7f6ae7a96de083dd099298c45c00dcb9",
+    "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
+    "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
     "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
     "lib/aim_ci/control_package.py": "2adb70c2d45c164ddd5cd0ef4e43fabfe93bfacf787a04a7627f1de2d98ea091",
-    "lib/aim_ci/controller.py": "5f87757c2465fef330fe92c476a48076da44b408e2e62be10cda350f0ed4c325",
+    "lib/aim_ci/controller.py": "c3c859605469ab6da4cb5c7c4172c88dfcc2bad6fa6c75ccc51efe418254d131",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
-    "lib/aim_ci/docker_engine.py": "a77c968f8551ee15c1aca004497fad1d03707a17d344e1e1363b58c104b0951b",
-    "lib/aim_ci/docker_image_evidence.py": "36b74c0ffc6ddadfcd7c4b009a2b41c8c246ee99502847c5de1e036a63f794b8",
+    "lib/aim_ci/docker_engine.py": "60439c9101daa706ec4066327093bdc7b852402dad6649c369703afaf2faec88",
+    "lib/aim_ci/docker_image_evidence.py": "59115c01f2f77309ddb1252d5b1327bac81dbc727437f307a47f5c3bdded9d9a",
     "lib/aim_ci/effects.py": "88c8f10f31dd70fcd8223367afe3047da0366aed9a91ac68f2a58a69a1557749",
     "lib/aim_ci/human_review.py": "df863605d07aba1989715f64c17e98aff0bde3334b00a99c09e6426f4735f858",
     "lib/aim_ci/image_preparation.py": "25559643a7dc2d26f30acc68b66b849961fd8bdb5e628998ddd386ed50cd7c8f",
     "lib/aim_ci/installed_runtime.py": "469f2b41c7b4e60a25733d1c50b0d8c9aaef3be9ca68e5441dc5bdb728109081",
     "lib/aim_ci/local_ci.py": "b33d491c7b4d0cb19d530625370c34641548a746465c19e8e5ac3fbcaa8e1a22",
-    "lib/aim_ci/model_support.py": "1efa4ecdeddd61a16825734a9fa485429caef9d020e060ed9a40fdcb5c3c4ee8",
-    "lib/aim_ci/npm_acquisition.py": "33f1412278edcc113661ad0f5c7b80cf2a6ec3d7a7eeec3adbe45622971f8a4e",
-    "lib/aim_ci/npm_platform.py": "01488b05e7e5ecd9da6d38c3a9ea0beea4e7cb0e6bba243afe60c40a496e7af8",
-    "lib/aim_ci/npm_platform_build.cjs": "17fba9789b6e9ff3eaa41a3c3ea757cad7d44b49192b70e3f9f0851a9d34c4fd",
+    "lib/aim_ci/model_support.py": "b828b88cc3c5915d0fd66673d1c9dc9729c0f40e492a7686593cc23ccfd60610",
+    "lib/aim_ci/npm_acquisition.py": "323b6448b7867368fab4d87539e4a22f96f04b157b42813394df6632988ab74d",
+    "lib/aim_ci/npm_platform.py": "8cd9314e421dbd8050230b6724eae1cffbbd0eb2d452d64c51a991ba3671df9b",
+    "lib/aim_ci/npm_platform_build.cjs": "5aa9b6d7891eeeaa93eb1cef9f34b82e643e11b187d432ab05ec08c68d28f4b7",
     "lib/aim_ci/offline.py": "ee2f6d7cc4fa1c310503f46f1b0a501601c305a132f68df5cbe169c8e5f21c25",
     "lib/aim_ci/offline_assignment.py": "80fa35ca7bf1d56626a1fff75903ecb0be573af15ffd991cb9da1b29320be7a5",
-    "lib/aim_ci/operator_build.py": "bf48579bc12450ffa8c32eec7322122d9c9338e8ba34beb9428a044b426e061a",
+    "lib/aim_ci/operator_build.py": "ad6586102e5a6464efb636c275eda738305acb73954520367b623f5c40db266c",
     "lib/aim_ci/operator_readiness.py": "876bd2f6bdf158eee6d664b9d7314a0f9c71456179ad265d0d8cbdc26218983a",
-    "lib/aim_ci/owned_paths.py": "43a4ec3e89abd961536500ae4f783605577910120356cd953ee3e662044ec950",
-    "lib/aim_ci/platform_build.py": "17d241c872f322d93e379046aff5362290380199053b5ca2d291d0b7ccbe0dc4",
+    "lib/aim_ci/owned_paths.py": "b5e0e4e78a5e75eea625d9c84d843ffc4e320c4db2fb8751a818b67766c2515e",
+    "lib/aim_ci/platform_build.py": "7e8055bc15b0fe57fe222f225492b91e5f53133114a6352f0af354bc71352c44",
     "lib/aim_ci/products.py": "50008fc9cdaa45ecb32b9e2c39eb763efe74889dd881b943be4430231592dc20",
     "lib/aim_ci/project_adaptation.py": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282",
-    "lib/aim_ci/project_discovery.py": "18fdbd5345317353225a868a802da589c5501cd3268d5660896844b723833dab",
-    "lib/aim_ci/project_installation.py": "457a8ce7046a021d4c8c39c3859d17e5a4fbe00d4308f2caf69da586803ce553",
-    "lib/aim_ci/recipe_plan.py": "af58d7873119611750a64d91f32dd5f7b827fbe365dadb67a492bb637253b6b7",
+    "lib/aim_ci/project_discovery.py": "57db6306a45240e9d0ba1aa0aa837badc3238c7d2be3ff40f3ecc51fa6d9c393",
+    "lib/aim_ci/project_installation.py": "db9e2a40daf937cb0a303ac0937ddd9a42f98951ea4668bd734602ac0ef0da6f",
+    "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
-    "lib/aim_ci/source_subset.py": "bc9f7ee1bdd0f4516fb8957037e7e7327e0df3806fbac6923aa8a67d92dde228",
-    "lib/openai_budget.py": "86fbae433114037019a1975d437ed144f420e04ac22dd4f2f2bc82dbcf0185e8",
+    "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
+    "lib/openai_budget.py": "8c6cdba1a34ae9fdd92c9c68ab5ff5ff97ba8b10b666e81104fa055811e05747",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
-    "profiles/catalog.json": "c054a3ef52413e2e520c8e09a2eafeae05b7dbda95138a6764c55b75e305027c",
+    "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
     "tests/production/catalog-verify.mjs": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e",
-    "tests/test_build_preparation.py": "5d0c1a32d1e2c59c45931b8b4d097536b6ba995a163eb087f81f31c25f36dcf0",
+    "tests/test_build_preparation.py": "60789968bbb448cf6f6b7f464f650a16aad66eb4a2e8157a15cb294c9277d3b7",
+    "tests/test_content_size_contracts.py": "5b5e1e0188ed779f5a7d3447d6e8f53baf093357a1b6780504a58bdae19a104e",
     "tests/test_control_package.py": "12219a7ab2094b3d189f0aefe1274ee6666b1d0417a08dc0933dec1a93474aa9",
-    "tests/test_docker_engine.py": "48496e211d66da53685cb522a65835aca07028998f6082f9fd5bb1370cfe9319",
-    "tests/test_docker_image_evidence.py": "bce2ab73a6e94fc78e57d43dbcde607de0f717c2b400d8dba442f447949a3569",
+    "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
+    "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
-    "tests/test_intake_profile.py": "ee64760e4d786d32acb0d2c3f829804ff4b23033a5bfdd20f28240bb28cfb1b1",
+    "tests/test_intake_profile.py": "a5645f46ce138324d947329a919f977866bcc6928c5753b21b0a94c219d3a94d",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
-    "tests/test_npm_acquisition.py": "03c7526e6f5bb3efd5098098f77943964fbfa4a4fb3dc9a93a86c381198da7d0",
-    "tests/test_npm_platform.py": "02e1b243058ab424a08045c78bb71534ca310df2d36bf1a9d54608a3948aca71",
-    "tests/test_npm_platform_build.cjs": "86a582d8e9e56e3a5f9b686f7fa2b4ac42e96f862d67e245e756fcafd30afcad",
-    "tests/test_operator_build.py": "3b244070eed86743fe66b745c26fe2e9372331927e95c82b3613f083df846ed3",
-    "tests/test_project_installation.py": "e176c11b72dc05c0034882b80c3e1d68283f0e70efcda795c5b2172bef48f225",
-    "tests/test_project_intake_grant.py": "0898d60cdeac39eea39b572f876ac9ead6115bccf788977114ebeceb8332cbd2",
-    "tests/test_project_planning.py": "6967571de046f9e7049bc2c37a0711d75c398da450469ead6de020d228fcfb15",
+    "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
+    "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
+    "tests/test_npm_platform_build.cjs": "6bc7b9e45e8894090e2fd287748901e5a1fb3728e0a89f4afdbb9af1d420b01e",
+    "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
+    "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
+    "tests/test_project_installation.py": "f6b11b76ebfd6ff81ba2da1ccb02517940bfd4ea139d3e341908b20b1185e16c",
+    "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
+    "tests/test_project_planning.py": "b4e2cb5b3c898bdcb62631465458cf15fbf3216a6861b6e0e41cbf781f1ab35a",
     "tests/test_recipe_execution.py": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4",
-    "tests/test_source_check.py": "ab5b1698a2d8467f5e84e847b5e78de81e879d73d5b6f6c9ea4e97e5813fc1be",
+    "tests/test_source_check.py": "d01e71f3cca32d3338bf941328a6b68f88091c9d1ac44137d703d26907d96cc3",
     "tests/test_source_free_release.py": "4113d5fa7515f68d7b9d557c7ba6a5dfcff894c70c04a93de979b21898e4d68c",
-    "tests/test_source_subset.py": "69894eda37b83e793144e3414cab9092362d250a9c2b1872484a9838aa3ca67b"
+    "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631"
   },
   "schemaVersion": 2,
   "scope": "Product-only controller; unrelated legacy integrations are excluded.",
@@ -412,6 +430,49 @@
         "tests/test_intake_profile.py"
       ],
       "summary": "Proposal-only local task profiles; applicable product changes only."
+    },
+    {
+      "commit": "6bdd87552dc62e382b45434c30c93328d09acccb",
+      "paths": [
+        "docs/aim-ci-discover-project.md",
+        "docs/aim-ci-python-test-matrix.md",
+        "docs/aim-ci-size-handling.md",
+        "lib/aim_ci/budget.py",
+        "lib/aim_ci/build_preparation.py",
+        "lib/aim_ci/contracts.py",
+        "lib/aim_ci/controller.py",
+        "lib/aim_ci/docker_engine.py",
+        "lib/aim_ci/docker_image_evidence.py",
+        "lib/aim_ci/model_support.py",
+        "lib/aim_ci/npm_acquisition.py",
+        "lib/aim_ci/npm_platform.py",
+        "lib/aim_ci/npm_platform_build.cjs",
+        "lib/aim_ci/operator_build.py",
+        "lib/aim_ci/owned_paths.py",
+        "lib/aim_ci/platform_build.py",
+        "lib/aim_ci/project_discovery.py",
+        "lib/aim_ci/project_installation.py",
+        "lib/aim_ci/recipe_plan.py",
+        "lib/aim_ci/source_subset.py",
+        "lib/openai_budget.py",
+        "profiles/catalog.json",
+        "tests/test_build_preparation.py",
+        "tests/test_content_size_contracts.py",
+        "tests/test_docker_engine.py",
+        "tests/test_docker_image_evidence.py",
+        "tests/test_intake_profile.py",
+        "tests/test_npm_acquisition.py",
+        "tests/test_npm_platform.py",
+        "tests/test_npm_platform_build.cjs",
+        "tests/test_operator_build.py",
+        "tests/test_project_discovery_sizes.py",
+        "tests/test_project_installation.py",
+        "tests/test_project_intake_grant.py",
+        "tests/test_project_planning.py",
+        "tests/test_source_check.py",
+        "tests/test_source_subset.py"
+      ],
+      "summary": "Remove inherited project content size caps; preserve approved budgets, provider and resource defenses."
     }
   ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",

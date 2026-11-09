@@ -7,7 +7,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'lib'))
-from aim_ci.source_subset import git_id, source_subset, verify_source_subset
+from aim_ci.source_subset import git_id, selected_paths, source_subset, verify_source_subset
 from openai_budget import Refused
 
 
@@ -91,18 +91,90 @@ class SourceSubsetTests(unittest.TestCase):
             with self.subTest(changed=changed), self.assertRaises(Refused):
                 verify_source_subset(rows, commit, changed)
 
+    def test_stale_head_refuses_after_complete_pinned_reads(self):
+        reader = Reader()
+        def stale():
+            raise Refused('Checkout HEAD differs from the selected commit')
+        reader.verify_head = stale
+        with self.assertRaisesRegex(Refused, 'HEAD differs'):
+            source_subset(reader, ['package.json'])
+
     def test_selection_rejects_links_missing_protected_and_nonliteral_paths(self):
         for paths in (['symlink'], ['missing'], ['scripts/missing'], ['../escape'], ['.env'], ['sub/.env.local'],
                       ['node_modules/pkg/a.js'], ['.npmrc'], [], ['package.json', 'package.json']):
             with self.subTest(paths=paths), self.assertRaises(Refused):
                 source_subset(Reader(), paths)
 
-    def test_declared_oversize_blob_is_refused_before_read(self):
+    def test_large_blob_and_more_than_one_hundred_paths_have_complete_proof(self):
         reader = Reader()
-        reader.size = lambda oid: 32 * 1024 * 1024 + 1
-        with self.assertRaisesRegex(Refused, 'source byte bound'):
+        data = b'x' * (32 * 1024 * 1024 + 1)
+        blob = reader.add('blob', data)
+        paths = [f'file-{index:04}.css' for index in range(125)]
+        small = reader.add('blob', b'body{}')
+        raw = b''.join(b'100644 ' + name.encode() + b'\0' + (blob if name == paths[0] else small) for name in paths)
+        reader.tree = reader.add('tree', raw).hex()
+        reader.commit = reader.add('commit', f'tree {reader.tree}\n\nlarge source\n').hex()
+        rows, commit, proof = source_subset(reader, paths)
+        self.assertEqual(set(rows), set(paths))
+        self.assertEqual(rows[paths[0]]['data'], data)
+        self.assertEqual(proof['selectedPaths'], sorted(paths))
+        verify_source_subset(rows, commit, proof)
+
+    def test_proof_keeps_large_ancestor_and_many_distinct_trees_without_omitted_reads(self):
+        reader = Reader()
+        root, paths = [], []
+        for index in range(260):
+            name = f'directory-{index:03}'
+            blob = reader.add('blob', str(index).encode())
+            tree = reader.add('tree', b'100644 check.js\0' + blob)
+            root.append(b'40000 ' + name.encode() + b'\0' + tree)
+            paths.append(name + '/check.js')
+        # Large membership proofs must remain complete, including omitted sibling IDs.
+        for index in range(40000):
+            root.append(f'100644 omitted-{index:06}.bin'.encode() + b'\0' + bytes.fromhex('f' * 40))
+        reader.tree = reader.add('tree', b''.join(root)).hex()
+        reader.commit = reader.add('commit', f'tree {reader.tree}\n\nlarge proof\n').hex()
+        rows, commit, proof = source_subset(reader, paths)
+        self.assertEqual(len(proof['trees']), 261)
+        self.assertGreater(sum(len(value) for value in proof['trees'].values()), 2_000_000)
+        self.assertNotIn('f' * 40, [oid for kind, oid in reader.reads])
+        verify_source_subset(rows, commit, proof)
+        changed = deepcopy(proof)
+        changed['trees'][reader.tree] = changed['trees'][reader.tree][:-4]
+        with self.assertRaises(Refused):
+            verify_source_subset(rows, commit, changed)
+
+    def test_build_preparation_inventory_accepts_large_source_and_many_files(self):
+        from aim_ci.build_preparation import source_inventory
+        reader = Reader()
+        data = b'x' * (32 * 1024 * 1024 + 1)
+        large = reader.add('blob', data)
+        small = reader.add('blob', b'body{}')
+        entries = [(f'file-{index:04}.css', '100644', 'blob', (large if index == 0 else small).hex())
+                   for index in range(4100)]
+        raw = b''.join(b'100644 ' + name.encode() + b'\0' + bytes.fromhex(oid)
+                       for name, _, _, oid in entries)
+        reader.tree = reader.add('tree', raw).hex()
+        reader.commit = reader.add('commit', f'tree {reader.tree}\n\nlarge build\n').hex()
+        reader.entries = lambda commit, *, recursive: iter(entries)
+        reader.blob = lambda oid, maximum: reader.checked_object('blob', oid, maximum)
+        source, commit = source_inventory(reader)
+        self.assertEqual(len(source), 4100)
+        self.assertEqual(source['file-0000.css']['data'], data)
+        self.assertEqual(git_id('commit', commit).hex(), reader.commit)
+
+    def test_invalid_measured_size_and_changed_measured_length_fail(self):
+        for size in (-1, True, 'large'):
+            reader = Reader()
+            reader.size = lambda oid: size
+            with self.subTest(size=size), self.assertRaisesRegex(Refused, 'measured source object size'):
+                source_subset(reader, ['package.json'])
+            self.assertFalse(any(kind == 'blob' for kind, _ in reader.reads))
+        reader = Reader()
+        original = reader.size
+        reader.size = lambda oid: original(oid) + 1
+        with self.assertRaisesRegex(Refused, 'changed while reading'):
             source_subset(reader, ['package.json'])
-        self.assertFalse(any(kind == 'blob' for kind, _ in reader.reads))
 
 
 if __name__ == '__main__':

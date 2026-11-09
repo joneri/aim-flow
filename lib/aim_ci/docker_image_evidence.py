@@ -30,7 +30,8 @@ _ZERO_TIME = '0001-01-01T00:00:00Z'
 _BLOCK = 512
 _CHUNK = 64 * 1024
 _MAX_MEMBERS = 4096
-_MAX_SOURCE = 32 * 1024 * 1024
+# Legacy plans have no reviewed file inventory from which to derive archive bounds.
+_MAX_UNREVIEWED_SOURCE = 32 * 1024 * 1024
 _MAX_STORE = 512 * 1024 * 1024
 _MAX_BLOB = 64 * 1024 * 1024
 _MAX_TOOL = 150 * 1024 * 1024
@@ -82,9 +83,23 @@ def _reviewed_inputs(plan_path, plan_pin, control_pin, profile_path, profile_pin
     return plan, binding, tools, script, paths
 
 
-def _archive(stream, root, maximum, member_limit, keep, *, directory=False, browser=False):
+def _archive(stream, root, maximum, member_limit, keep, *, directory=False, browser=False,
+             reviewed_files=None, retain_limit=MAX_FILE):
     """Read a restricted uncompressed tar without extracting or honoring extended headers."""
     total = source_bytes = 0
+    reviewed_directories = None
+    member_count = _MAX_MEMBERS
+    if reviewed_files is not None:
+        if root != 'source' or not directory:
+            raise Refused('Reviewed source inventory requires the source directory archive')
+        reviewed_directories = {root}
+        for name, row in reviewed_files.items():
+            if (not isinstance(row, dict) or not project_path(name) or type(row.get('size')) is not int or row['size'] < 0
+                    or row.get('mode') not in (0o644, 0o755) or not digest(row.get('sha256'))):
+                raise Refused('Invalid reviewed source archive inventory')
+            reviewed_directories.update(str(parent) for parent in PurePosixPath(root + '/' + name).parents
+                                        if str(parent) != '.')
+        member_count = len(reviewed_files) + len(reviewed_directories)
     archive_hash = sha256()
     deadline = monotonic() + 120
     read = getattr(stream, 'read1', stream.read)
@@ -112,8 +127,9 @@ def _archive(stream, root, maximum, member_limit, keep, *, directory=False, brow
     files, directories = {}, set()
     zero = bytes(_BLOCK)
     while (header := exact(_BLOCK)) != zero:
-        if len(files) + len(directories) >= _MAX_MEMBERS:
-            raise Refused('Too many image readback members')
+        if len(files) + len(directories) >= member_count:
+            raise Refused('Source archive exceeds its exact reviewed selection' if reviewed_files is not None
+                          else 'Too many image readback members')
         try:
             item = tarfile.TarInfo.frombuf(header, 'ascii', 'strict')
         except (tarfile.HeaderError, UnicodeError, ValueError) as error:
@@ -128,17 +144,23 @@ def _archive(stream, root, maximum, member_limit, keep, *, directory=False, brow
         if item.type == tarfile.DIRTYPE:
             if not directory or item.size != 0 or item.mode != 0o755:
                 raise Refused('Unsupported image readback directory')
+            if reviewed_directories is not None and name not in reviewed_directories:
+                raise Refused('Unselected source archive directory')
             directories.add(name)
             continue
         if (directory and name == root) or item.mode not in (0o644, 0o755):
             raise Refused('Unsupported image readback file mode or root')
         relative = name[len(root) + 1:] if directory else name
+        if reviewed_files is not None:
+            row = reviewed_files.get(relative)
+            if row is None or item.size != row['size'] or item.mode != row['mode']:
+                raise Refused('Source archive member differs from its reviewed size, mode or selection')
         retain = relative in keep
-        if retain and item.size > MAX_FILE:
+        if retain and reviewed_files is None and item.size > retain_limit:
             raise Refused('Image manifest or source input exceeds its size bound')
-        if root == 'source':
+        if root == 'source' and reviewed_files is None:
             source_bytes += item.size
-            if source_bytes > _MAX_SOURCE:
+            if source_bytes > _MAX_UNREVIEWED_SOURCE:
                 raise Refused('Image source exceeds its cumulative file size bound')
         data = bytearray() if retain else None
         h256, h512 = sha256(), sha512()
@@ -157,6 +179,8 @@ def _archive(stream, root, maximum, member_limit, keep, *, directory=False, brow
             if retain:
                 data.extend(part)
             remaining -= len(part)
+        if reviewed_files is not None and h256.hexdigest() != reviewed_files[relative]['sha256']:
+            raise Refused('Source archive bytes differ from their reviewed hash')
         if any(exact(-item.size % _BLOCK)):
             raise Refused('Nonzero image readback file padding')
         files[name] = {'mode': item.mode, 'size': item.size, 'sha256': h256.hexdigest(),
@@ -177,6 +201,8 @@ def _archive(stream, root, maximum, member_limit, keep, *, directory=False, brow
             parents.update(str(parent) for parent in PurePosixPath(name).parents if str(parent) != '.')
         if directories != parents:
             raise Refused('Image readback directory inventory differs from its regular files')
+    if reviewed_files is not None and {name[len(root) + 1:] for name in files} != set(reviewed_files):
+        raise Refused('Source archive lacks its exact reviewed file inventory')
     return {name[len(root) + 1:] if directory else name: value for name, value in files.items()}, archive_hash.hexdigest()
 
 
@@ -224,6 +250,10 @@ def _check_source(source, commit, binding, script, selector, *, proof=None, sour
     elif (_git_tree(source) != tree or _git_id('commit', commit).hex() != binding['sourceCommit']
             or not commit.startswith(f'tree {tree}\n'.encode())):
         raise Refused('Image source bytes differ from the pinned Git commit and tree')
+    if execution is None and source_files is not None:
+        measured = {name: {key: row[key] for key in ('mode', 'size', 'sha256')} for name, row in source.items()}
+        if measured != source_files or fingerprint(measured) != binding.get('sourceInventorySha256'):
+            raise Refused('Image source differs from its exact complete build inventory')
     inputs = {}
     for name, expected in binding['committedInputs'].items():
         row = source.get(name)
@@ -301,12 +331,14 @@ def _verify_archives(open_archive, binding, tools, script, paths, entrypoint_pin
                      *, execution=None, source_files=None):
     archive_hashes = {}
 
-    def read(role, maximum, member_limit, keep=(), *, directory=False, browser=False):
+    def read(role, maximum, member_limit, keep=(), *, directory=False, browser=False,
+             reviewed_files=None, retain_limit=MAX_FILE):
         path = paths[role]
         with open_archive(role, path) as stream:
             files, archive_hashes[role] = _archive(stream, path.rsplit('/', 1)[-1],
                                                   maximum + 2 * 1024 * 1024, member_limit, keep,
-                                                  directory=directory, browser=browser)
+                                                  directory=directory, browser=browser, reviewed_files=reviewed_files,
+                                                  retain_limit=retain_limit)
         return files
 
     for role, expected, limit in (('node', tools['node']['sha256'], _MAX_TOOL),
@@ -319,10 +351,25 @@ def _verify_archives(open_archive, binding, tools, script, paths, entrypoint_pin
                     and paths['entrypoint'] != PLATFORM_ENTRYPOINT)):
             raise Refused(f'Image {role} bytes or executable mode differ from the reviewed input')
     commit = read('commit', MAX_FILE, MAX_FILE, {'source.commit'})['source.commit']['data']
-    source = read('source', _MAX_SOURCE, _MAX_SOURCE, binding['committedInputs'], directory=True)
+    if source_files is not None:
+        # The frozen plan supplies exact sizes and membership; do not substitute a project-size ceiling.
+        directories = {'.'}
+        for name in source_files:
+            directories.update(str(parent) for parent in PurePosixPath(name).parents)
+        source_maximum = sum(row['size'] + -row['size'] % _BLOCK for row in source_files.values())
+        source_maximum += (len(source_files) + len(directories)) * _BLOCK
+        source = read('source', source_maximum, max(row['size'] for row in source_files.values()),
+                      binding['committedInputs'], directory=True, reviewed_files=source_files)
+    else:
+        source = read('source', _MAX_UNREVIEWED_SOURCE, _MAX_UNREVIEWED_SOURCE,
+                      binding['committedInputs'], directory=True)
     proof = None
     if execution is not None:
-        raw = read('proof', MAX_FILE, MAX_FILE, {'source.proof.json'})['source.proof.json']['data']
+        proof_bytes = binding.get('sourceProofBytes', MAX_FILE)
+        raw = read('proof', proof_bytes, proof_bytes, {'source.proof.json'},
+                   retain_limit=proof_bytes)['source.proof.json']['data']
+        if 'sourceProofBytes' in binding and len(raw) != proof_bytes:
+            raise Refused('Image source proof differs from its reviewed size')
         proof = unique_json(raw)
         if canonical(proof).encode() != raw:
             raise Refused('Image source subset proof is not canonical')
@@ -335,6 +382,8 @@ def _verify_archives(open_archive, binding, tools, script, paths, entrypoint_pin
                 'tools': tools, 'entrypointSha256': entrypoint_pin, 'dependencyTarballs': store}
     if execution is not None:
         measured.update(sourceFiles=source_files, sourceProofSha256=fingerprint(proof))
+    elif source_files is not None:
+        measured['sourceInventory'] = source_files
     if selector is not None:
         measured['selectedTestInputs'] = {
             name: source[name]['sha256'] for name in (selector['file'], PLAYWRIGHT_CONFIG)}
@@ -380,7 +429,7 @@ def verify_local_image_archives(plan_path, plan_pin, control_pin, profile_path, 
 
     measured = _verify_archives(open_archive, binding, tools, script, paths, entrypoint_pin,
                                 planned_test_selector(plan), planned_browser_runtime(plan),
-                                execution=planned_source_check(plan), source_files=plan.get('sourceFiles'))
+                                execution=planned_source_check(plan), source_files=plan.get('sourceFiles', plan.get('sourceInventory')))
     return _result(binding, script, measured, {'imageOrigin': 'unverified', 'kind': 'local-archives'})
 
 
@@ -511,7 +560,7 @@ def _acquire(plan_inputs, entrypoint_pin, policy_pin, acquisition_id, journal_pa
             measurements = _verify_archives(lambda _, path: staging.archive(identifier, path), binding,
                                             tools, script, paths, entrypoint_pin,
                                             planned_test_selector(plan), planned_browser_runtime(plan),
-                                            execution=planned_source_check(plan), source_files=plan.get('sourceFiles'))
+                                            execution=planned_source_check(plan), source_files=plan.get('sourceFiles', plan.get('sourceInventory')))
             after = staging.inspect(identifier)
             if before != after:
                 raise Refused('Docker readback container changed during acquisition')

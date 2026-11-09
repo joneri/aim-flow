@@ -2380,15 +2380,15 @@ class RootCandidateRecipeReviewTests(unittest.TestCase):
         self.assertIn('Patch outside admitted product scope', result['intakeResult']['reason'])
         self.intake_directory()
 
-    def test_intake_only_enforces_total_changed_lines(self):
+    def test_intake_only_has_no_arbitrary_changed_line_ceiling(self):
         def oversized(value):
             value['patch']['edits'][0]['new'] = '/*\n' + '\n'.join('line' for _ in range(165)) + '\n*/'
             return json.dumps(value)
 
         with self.replace_intake_response(oversized):
             result = self.worker(intake_only=True)
-        self.assertEqual(result['intakeResult']['contract'], 'refused')
-        self.assertIn('exceeds admitted story size', result['intakeResult']['reason'])
+        self.assertEqual(result['intakeResult']['contract'], 'validated')
+        self.assertFalse(result['intakeResult']['changeApplied'])
         self.intake_directory()
 
     def test_intake_only_refuses_changed_consent_inputs_and_full_budget_before_transport(self):

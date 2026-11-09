@@ -13,8 +13,8 @@ from .control_package import verify_installation
 from .npm_platform import PLATFORM_STORE, project_path
 from .owned_paths import owned_directory, owned_file, owned_mkdir, read_owned
 from .project_discovery import unique_json
-from .recipe_plan import (PLAYWRIGHT_CONFIG, browser_runtime_files, browser_runtime_paths, digest, fields,
-                          pinned_bytes, planned_browser_runtime, planned_source_check, planned_test_selector,
+from .recipe_plan import (MAX_SAFE_INTEGER, PLAYWRIGHT_CONFIG, browser_runtime_files, browser_runtime_paths, digest, fields,
+                          pinned_bytes, planned_browser_runtime, planned_source_check, planned_source_inventory, planned_test_selector,
                           validate_test_selector)
 
 HELPER = 'lib/aim_ci/npm_platform_build.cjs'
@@ -62,6 +62,10 @@ def reviewed_build(plan, binding, policy, policy_pin, evidence_path, evidence_pi
             or measured.get('entrypointSha256') != manifest['files'][HELPER]
             or measured.get('tools') != plan['runtime']['tools']):
         raise Refused('Platform build requires exact installed helper and trusted image byte evidence')
+    inventory = planned_source_inventory(plan)
+    if inventory is not None and (measured.get('sourceInventory') != inventory
+                                 or binding.get('sourceInventorySha256') != fingerprint(inventory)):
+        raise Refused('Platform build requires its complete measured source inventory')
     execution = planned_source_check(plan)
     selector = planned_test_selector(plan)
     if selector is not None:
@@ -125,8 +129,8 @@ def reviewed_artifact(plan):
     fields(artifact, 'directory requiredFiles maximumBytes linksAllowed status', 'planned build artifact')
     files, limit = artifact['requiredFiles'], artifact['maximumBytes']
     if (artifact['directory'] != 'dist' or artifact['linksAllowed'] is not False
-            or artifact['status'] != 'not-built' or type(limit) is not int or not 1 <= limit <= 20_000_000
-            or not isinstance(files, list) or not 1 <= len(files) <= 100
+            or artifact['status'] != 'not-built' or type(limit) is not int or not 1 <= limit <= MAX_SAFE_INTEGER
+            or not isinstance(files, list) or not files
             or not all(project_path(name) for name in files) or len(set(files)) != len(files)
             or 'index.html' not in files):
         raise Refused('Invalid reviewed static build artifact policy')
@@ -207,7 +211,7 @@ def passed(result):
 
 
 def artifact_inventory(files, policy):
-    if (not isinstance(files, dict) or not 1 <= len(files) <= 4096
+    if (not isinstance(files, dict) or not files
             or not set(policy['requiredFiles']) <= files.keys()):
         raise Refused('Required fresh build artifacts are absent')
     total, inventory = 0, {}
@@ -424,12 +428,30 @@ def assess_report(raw, intent, final):
         return {'status': 'unverified', 'reason': str(error), 'evidenceSha256': sha256(raw).hexdigest()}
 
 
+def report_limit(intent):
+    """Keep bounded protocol overhead while allowing the reviewed artifact payload.
+
+    Each content byte may occupy four base64 bytes when files are one byte long.
+    This covers per-file padding without imposing an artifact file count quota.
+    Metadata still has a protocol-resource envelope, including zero-byte file rows.
+    """
+    review = intent['platformBuild']
+    maximum = 0 if 'execution' in review else review['artifact']['maximumBytes']
+    if type(maximum) is not int or not 0 <= maximum <= MAX_SAFE_INTEGER:
+        raise Refused('Invalid reviewed artifact report allowance')
+    known = {'binding': intent['binding']}
+    if 'execution' in review:
+        known['execution'] = review['execution']
+    return MAX_REPORT + 4 * maximum + len(canonical(known).encode())
+
+
 def capture_report(directory, read_logs, intent, final):
     """Persist verified bytes before cleanup, allowing receipt reconciliation after a crash."""
     location = directory / EVIDENCE_NAME
     retained = os.path.lexists(location)
-    raw = read_owned(directory, EVIDENCE_NAME, MAX_REPORT) if retained else read_logs()
-    if not isinstance(raw, bytes) or len(raw) > MAX_REPORT:
+    limit = report_limit(intent)
+    raw = read_owned(directory, EVIDENCE_NAME, limit) if retained else read_logs()
+    if not isinstance(raw, bytes) or len(raw) > limit:
         raise Refused('Invalid or oversized retained Docker build log')
     if not retained:
         with os.fdopen(owned_file(directory, EVIDENCE_NAME, os.O_WRONLY | os.O_CREAT | os.O_EXCL), 'wb') as stream:
@@ -442,4 +464,4 @@ def capture_report(directory, read_logs, intent, final):
 def reconcile_report(directory, intent, final):
     if not os.path.lexists(directory / EVIDENCE_NAME):
         return None
-    return assess_report(read_owned(directory, EVIDENCE_NAME, MAX_REPORT), intent, final)
+    return assess_report(read_owned(directory, EVIDENCE_NAME, report_limit(intent)), intent, final)

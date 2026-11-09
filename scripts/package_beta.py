@@ -62,6 +62,7 @@ The historical `aim-ci` names are intentionally preserved. See [BETA-SCOPE.md](B
     files['LICENSE'] = license_bytes
     files['THIRD-PARTY-NOTICES.md'] = (ROOT / 'THIRD-PARTY-NOTICES.md').read_bytes()
     files['BETA-SCOPE.md'] = (ROOT / 'docs/BETA-SCOPE.md').read_bytes()
+    files['aim-ci-size-handling.md'] = (ROOT / 'docs/aim-ci-size-handling.md').read_bytes()
     files['release.json'] = (json.dumps({
         'product': 'AIM Flow', 'version': version, 'channel': 'beta', 'license': 'MIT',
         'upstreamCommit': inventory['upstreamCommit'],

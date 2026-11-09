@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
-from openai_budget import LIMIT, MODEL, MAX_CALLS, MAX_OUTPUT, INPUT_RATE, OUTPUT_RATE, Refused, atomic_json, fingerprint, read_owned, safe_path
+from openai_budget import LIMIT, MODEL, MAX_CALLS, MAX_OUTPUT, INPUT_RATE, OUTPUT_RATE, Refused, atomic_json, fingerprint, read_owned, safe_path, provider_token_bounds
 from .owned_paths import owned_directory, owned_file
 
 
@@ -68,8 +68,8 @@ def verify_budget_prefix(grant, original, marker, legacy):
 
 
 def reservation(tokens, output):
-    if (type(tokens) is not int or not 0 <= tokens <= 100000
-            or type(output) is not int or not 16 <= output <= MAX_OUTPUT):
+    if (type(tokens) is not int or tokens < 0
+            or type(output) is not int or output < 1):
         raise Refused('Invalid exact token count')
     return (tokens + 1024) * INPUT_RATE + output * OUTPUT_RATE
 
@@ -138,7 +138,13 @@ def verified_history(directory, data, marker, legacy):
                 or any(row['id'] == grant['operation'] for row in requests[:index])
                 or entry.get('id') != grant['operation'] or entry.get('payloadSha256') != grant['requestSha256']
                 or type(entry.get('reservedNanoUsd')) is not int
-                or entry['reservedNanoUsd'] != reservation(100000, MAX_OUTPUT)
+                or (entry['reservedNanoUsd'] != (grant['maxOperationNanoUsd']
+                    if entry.get('reservationPolicy') == 'approved-operation-cap-v1'
+                    else reservation(100000, MAX_OUTPUT)))
+                or entry.get('reservationPolicy') not in (None, 'approved-operation-cap-v1')
+                or entry.get('reservationPolicy') == 'approved-operation-cap-v1' and (
+                    type(entry.get('maxOutputTokens')) is not int or entry['maxOutputTokens'] < 1
+                    or reservation(0, entry['maxOutputTokens']) > entry['reservedNanoUsd'])
                 or entry['reservedNanoUsd'] > grant['maxOperationNanoUsd']
                 or entry.get('status') not in ('reserved', 'unknown', 'completed')
                 or entry['status'] == 'completed' and 'inputTokens' not in entry):
@@ -246,7 +252,7 @@ class Budget:
                     or any(type(identity[key]) is not int or identity[key] < 0
                            for key in ('legacyCalls', 'legacyReservedNanoUsd'))
                     or type(payload['max_output_tokens']) is not int
-                    or not 16 <= payload['max_output_tokens'] <= MAX_OUTPUT):
+                    or payload['max_output_tokens'] < 1):
                 raise Refused('Invalid aggregate budget admission inputs')
         except (OSError, KeyError, TypeError, ValueError):
             raise Refused('Local admission requires the established shared budget and its original legacy ledger') from None
@@ -254,7 +260,11 @@ class Budget:
         base_reservations = reservations[:len(reservations) - claimed_slots]
         remaining_calls = max(0, identity['maxCalls'] - identity['legacyCalls'] - len(base_reservations))
         available = identity['limitNanoUsd'] - identity['legacyReservedNanoUsd'] - sum(base_reservations)
-        maximum = (100000 + 1024) * INPUT_RATE + payload['max_output_tokens'] * OUTPUT_RATE
+        # A no-key preview cannot establish token usage. Bytes are diagnostic only;
+        # generation is gated on the actual provider preflight and money reservation.
+        minimum = reservation(0, payload['max_output_tokens'])
+        estimate = reservation(len(json.dumps(payload, ensure_ascii=False).encode()), payload['max_output_tokens'])
+        maximum = None
         binding = {'directory': str(Path(directory).resolve()), 'legacy': str(Path(legacy).resolve()),
                    'establishmentSha256': fingerprint(identity)}
         if amendment is not None:
@@ -262,6 +272,8 @@ class Budget:
             verify_amendment(amendment)
             if amendment['version'] == PROJECT_GRANT_VERSION:
                 return Budget.project_admission_snapshot(directory, legacy, payload, amendment, data, binding, maximum)
+            # Historical Liam grants retain their exact established reservation.
+            maximum = reservation(100000, MAX_OUTPUT)
             slot, _, previous_slots = amendment_slot(amendment)
             claimed = slot in data
             if (amendment['requestSha256'] != fingerprint(payload) or payload.get('model') != MODEL
@@ -280,7 +292,9 @@ class Budget:
             available = 0 if claimed else min(amendment['maxOperationNanoUsd'], extended)
             remaining_calls = int(not claimed)
         return {'binding': binding, 'remainingCalls': remaining_calls, 'availableNanoUsd': available,
-                'maximumIntakeNanoUsd': maximum, 'canAdmitIntake': remaining_calls > 0 and available >= maximum}
+                'maximumIntakeNanoUsd': maximum, 'tokenCountStatus': 'unverified-preflight-required',
+                'estimatedIntakeNanoUsd': estimate, 'minimumIntakeNanoUsd': minimum,
+                'canAdmitIntake': remaining_calls > 0 and available >= (maximum if maximum is not None else minimum)}
 
     @staticmethod
     def project_admission_snapshot(directory, legacy, payload, grant, data, binding, maximum):
@@ -290,7 +304,8 @@ class Budget:
         marker = read_owned(directory, 'budget-established.json')
         old = read_owned(legacy.parent, legacy.name)
         if (grant['requestSha256'] != fingerprint(payload) or payload.get('model') != MODEL
-                or payload['max_output_tokens'] != MAX_OUTPUT or maximum > grant['maxOperationNanoUsd']
+                or type(payload.get('max_output_tokens')) is not int or payload['max_output_tokens'] < 1
+                or reservation(0, payload['max_output_tokens']) > grant['maxOperationNanoUsd']
                 or claimed and (len(rows) != 1 or rows[0].get('projectGrant') != grant)):
             raise Refused('Project grant differs from the exact request or claimed operation')
         if not claimed:
@@ -305,9 +320,12 @@ class Budget:
             row['reservedNanoUsd'] for row in data['requests'])
         remaining = grant['maxLedgerCalls'] - data['legacyCalls'] - len(data['requests'])
         available = 0 if claimed else min(available, grant['maxOperationNanoUsd'])
+        # Reserve the exact approved operation cap before credentials/token counting.
+        # This is a financial hold, not a source or model-context size ceiling.
+        maximum = grant['maxOperationNanoUsd']
         return {'binding': {**binding, 'projectGrantSha256': fingerprint(grant)},
                 'remainingCalls': int(not claimed and remaining > 0), 'availableNanoUsd': available,
-                'maximumIntakeNanoUsd': maximum,
+                'maximumIntakeNanoUsd': maximum, 'tokenCountStatus': 'unverified-preflight-required',
                 'canAdmitIntake': not claimed and remaining > 0 and available >= maximum}
 
     def claim_project_grant(self, operation, payload, grant):
@@ -325,7 +343,8 @@ class Budget:
                 os.fsync(stream.fileno())
             data = json.loads(raw)
             data['requests'].append({'id': operation, 'payloadSha256': grant['requestSha256'],
-                'reservedNanoUsd': snapshot['maximumIntakeNanoUsd'], 'status': 'reserved', 'projectGrant': grant})
+                'reservedNanoUsd': snapshot['maximumIntakeNanoUsd'], 'status': 'reserved', 'projectGrant': grant,
+                'reservationPolicy': 'approved-operation-cap-v1', 'maxOutputTokens': payload['max_output_tokens']})
             self._write_amendment(data)
 
     def reserve(self, operation, payload, tokens):
@@ -337,7 +356,8 @@ class Budget:
                     or data['legacyReservedNanoUsd'] + sum(x['reservedNanoUsd'] for x in data['requests']) + amount > LIMIT):
                 raise Refused('Aggregate USD10/call ceiling or duplicate dispatch')
             data['requests'].append({'id': operation, 'payloadSha256': fingerprint(payload),
-                                     'reservedNanoUsd': amount, 'status': 'reserved'})
+                                     'reservedNanoUsd': amount, 'status': 'reserved',
+                                     'maxOutputTokens': payload['max_output_tokens']})
             atomic_json(self.path, data)
 
     def _write_amendment(self, data):
@@ -396,8 +416,8 @@ class Budget:
             if (isinstance(response, dict) and response.get('model') == MODEL
                     and type(ins) is int and type(outs) is int and min(ins, outs) >= 0):
                 cost = ins * INPUT_RATE + outs * OUTPUT_RATE
-                if cost <= entry['reservedNanoUsd'] and (
-                        not amended or outs <= MAX_OUTPUT):
+                maximum_output = entry.get('maxOutputTokens', MAX_OUTPUT if amended else None)
+                if cost <= entry['reservedNanoUsd'] and (maximum_output is None or outs <= maximum_output):
                     entry.update(status='completed', actualNanoUsd=cost, usage=usage,
                                  responseId=response.get('id'), responseStatus=response.get('status'))
             if amended:
@@ -432,6 +452,16 @@ class Budget:
                         self.settle(operation, failure=type(error).__name__)
                     raise
                 count = result.get('input_tokens')
+                if amendment is not None:
+                    try:
+                        provider_token_bounds(count, request['max_output_tokens'])
+                        data = self.read()
+                        entry = next(row for row in data['requests'] if row['id'] == operation)
+                        if reservation(count, request['max_output_tokens']) > entry['reservedNanoUsd']:
+                            raise Refused('Actual token count exceeds the approved operation reservation')
+                    except Refused:
+                        self.settle(operation, failure='TokenPreflightRefused')
+                        raise
                 return result
             if amendment is None:
                 self.reserve(operation, payload, count)

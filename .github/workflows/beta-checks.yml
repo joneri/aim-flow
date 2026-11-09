@@ -16,32 +16,24 @@ jobs:
           persist-credentials: false
       - name: Verify extraction
         run: python3 scripts/verify_provenance.py
-      - name: Run offline contracts without Git 2.54 requirement
-        run: |
-          python3 -B -m unittest discover -s tests -p test_source_free_release.py
-          python3 -B -m unittest discover -s tests -p test_source_check.py
-          python3 -B -m unittest discover -s tests -p test_source_subset.py
-          python3 -B -m unittest discover -s tests -p test_model_support.py
-          python3 -B -m unittest discover -s tests -p test_docker_engine.py
-          python3 -B -m unittest discover -s tests -p test_docker_image_evidence.py
-          python3 -B -m unittest discover -s tests -p test_docker_recipe.py
-          python3 -B -m unittest discover -s tests -p test_recipe_execution.py
-          python3 -B -m unittest discover -s tests -p test_npm_acquisition.py
-          python3 -B -m unittest discover -s tests -p test_npm_platform.py
-      - name: Check proposal-only profiles (requires Git 2.54; otherwise explicit skip)
-        run: python3 -B -m unittest discover -s tests -p test_intake_profile.py -v
       - name: Select Node.js 24
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24.3.0
+      - name: Verify Git prerequisite
+        run: |
+          git --version
+          python3 -c 'import re, subprocess; version = tuple(map(int, re.search(r"git version (\d+)\.(\d+)", subprocess.check_output(["git", "--version"], text=True)).groups())); assert version >= (2, 54), "Git 2.54+ is required for the complete offline suite"'
+      - name: Run complete offline regression
+        run: python3 -B -m unittest discover -s tests -p 'test_*.py' -v
       - name: Run Node protocol tests
         run: node --test tests/test_npm_platform_build.cjs
       - name: Check branded download
-        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.3.zip
+        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.4.zip
       - name: Build and verify branded package
         run: |
           python3 scripts/package_beta.py --output "$RUNNER_TEMP/aim-flow-beta"
-          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.3.zip"
+          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.4.zip"
       - name: Check static website
         run: python3 scripts/check_site.py
       - name: Show beta version

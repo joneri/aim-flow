@@ -171,6 +171,60 @@ runpy.run_path(entry, run_name='__main__')
         self.assertEqual(preview['handoff']['blocked'],
                          ['candidate-preparation', 'technical-validation', 'project-execution'])
 
+    def select_large_css(self, raw):
+        self.source_path = 'src/styles/site.css'
+        selected = self.checkout / self.source_path
+        selected.parent.mkdir(parents=True)
+        selected.write_bytes(raw)
+        self.git('add', '--', self.source_path)
+        self.git('commit', '--no-gpg-sign', '-m', 'Complete selected CSS regression input')
+        self.profile.update(allowedPaths=[self.source_path], tree=self.git('rev-parse', 'HEAD^{tree}'),
+                            target={**self.profile['target'], 'commit': self.git('rev-parse', 'HEAD')})
+        self.selection = self.save_profile(self.profile)
+        return selected
+
+    def assert_complete_css_preview(self, raw):
+        selected = self.select_large_css(raw)
+        before = snapshot(self.root)
+        with self.guarded():
+            preview = self.preview()
+            actual = json.loads(preview['modelRequest']['input'])['files'][self.source_path].encode()
+            self.assertEqual(actual, raw)
+            self.assertEqual(sha(actual), sha(raw))
+            self.assertGreater(len(preview['modelRequest']['input'].encode()), 100_000)
+            self.assertFalse(preview['executionAuthorized'] or preview['liveModelAvailable'])
+            self.assertIsNone(preview['budget']['maximumIntakeNanoUsd'])
+            self.assertEqual(preview['budget']['tokenCountStatus'], 'unverified-preflight-required')
+            self.assertEqual(preview['projectGrantRequirements']['tokenCountStatus'],
+                             'unverified-preflight-required')
+            self.assertEqual(preview['intent']['target']['commit'], self.git('rev-parse', 'HEAD'))
+            self.assertEqual(snapshot(self.root), before)
+            # Same-length dirty bytes must still fail, rather than using committed/truncated text.
+            selected.write_bytes(b'!' + raw[1:])
+            with self.assertRaisesRegex(Refused, 'differs from its committed source'):
+                self.preview()
+            selected.write_bytes(raw)
+        self.assertEqual(snapshot(self.root), before)
+        return preview
+
+    def test_complete_large_css_no_key_preview_and_dirty_source_refusal(self):
+        raw = (''.join('.rule%d { color: #123456; }\n' % i for i in range(11000))).encode()
+        self.assertGreater(len(raw), 256_340)
+        self.assert_complete_css_preview(raw)
+
+    def test_hash_pinned_task_larger_than_old_metadata_reader_is_complete(self):
+        body = self.task['body'] + '\nDetailed context: ' + 'read complete local task context ' * 70000
+        self.task = {**self.task, 'body': body}
+        self.task_file.write_bytes(encoded(self.task))
+        self.task_selection = self.task_file, sha(self.task_file.read_bytes())
+        self.assertGreater(self.task_file.stat().st_size, 2_000_000)
+        before = self.budget.path.read_bytes()
+        with self.guarded():
+            preview = self.preview()
+        self.assertEqual(json.loads(preview['modelRequest']['input'])['task']['body'], body)
+        self.assertEqual(self.budget.path.read_bytes(), before)
+        self.assertFalse(preview['executionAuthorized'])
+
     def test_exact_profile_scope_cannot_be_changed_or_extended(self):
         with self.guarded():
             for change in ({'scope': 'execution'}, {'version': True}, {'version': 2},
@@ -263,6 +317,10 @@ runpy.run_path(entry, run_name='__main__')
         self.assertFalse((self.worker / 'local-tasks').exists())
 
     def test_synthetic_proposal_retains_narrow_scope_and_cannot_become_candidate(self):
+        # Retained source-containing state/journals must not inherit metadata byte caps.
+        self.task = {**self.task, 'body': self.task['body'] + '\n' + 'complete retained context ' * 85000}
+        self.task_file.write_bytes(encoded(self.task))
+        self.task_selection = self.task_file, sha(self.task_file.read_bytes())
         calls = []
 
         def transport(endpoint, payload):
@@ -290,6 +348,7 @@ runpy.run_path(entry, run_name='__main__')
                         authorize_root_intent=preview['intentSha256'])
             state = c.run_issue(**args)
             self.assertEqual(state['stage'], 'intake_proposed')
+            self.assertGreater((self.worker / 'local-tasks' / state['key'] / 'state.json').stat().st_size, 2_000_000)
             self.assertFalse(state['intakeResult']['changeApproved'] or state['intakeResult']['changeApplied'])
             self.assertFalse(state['productAccepted'])
             self.assertEqual(state['rootAdmission']['intakeScope'], preview['intent']['intakeScope'])

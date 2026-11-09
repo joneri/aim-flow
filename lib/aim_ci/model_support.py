@@ -9,7 +9,9 @@ from pathlib import Path
 import re
 import signal
 import subprocess
-from openai_budget import MODEL, Refused, canonical, safe_path, owned_file, read_owned, write_owned
+from openai_budget import MAX_OUTPUT, MODEL, Refused, canonical, safe_path, owned_file, read_owned, write_owned
+
+from .owned_paths import read_owned_content
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,12 +25,12 @@ def frozen_inputs(project):
         if path.is_symlink():
             raise Refused('Linked product input')
         if path.is_file():
-            result[str(path.relative_to(project))] = hashlib.sha256(read_owned(project, path.relative_to(project))).hexdigest()
+            result[str(path.relative_to(project))] = hashlib.sha256(read_owned_content(project, path.relative_to(project))).hexdigest()
     return result
 
-def payload(instructions, data, schema, name):
+def payload(instructions, data, schema, name, *, output_tokens=MAX_OUTPUT):
     return {"model": MODEL, "service_tier": "default", "store": False,
-            "reasoning": {"effort": "low"}, "max_output_tokens": 8192,
+            "reasoning": {"effort": "low"}, "max_output_tokens": output_tokens,
             "instructions": instructions, "input": canonical(data),
             "text": {"format": {"type": "json_schema", "name": name, "strict": True, "schema": schema}}}
 
@@ -79,9 +81,6 @@ def sandbox_profile(candidate, key_file, product):
 
 def validate(candidate, commands, prefix, *, product, capture_stdout=False):
     import contextlib
-    import resource
-    def limit_formatter_output():
-        resource.setrlimit(resource.RLIMIT_FSIZE, (50000, 50000))
     project = product_root(candidate, product)
     frozen = frozen_inputs(project)
     profile = candidate / "validation.sb"
@@ -107,7 +106,6 @@ def validate(candidate, commands, prefix, *, product, capture_stdout=False):
             child = subprocess.Popen(["/usr/bin/sandbox-exec", "-f", str(profile), *command],
                                      cwd=project, env=environment,
                                      stdout=output, stderr=stream if capture_stdout else subprocess.STDOUT,
-                                     preexec_fn=limit_formatter_output if capture_stdout else None,
                                      start_new_session=True)
             try:
                 code = child.wait(timeout=180)

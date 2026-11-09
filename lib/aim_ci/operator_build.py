@@ -10,13 +10,13 @@ import time
 
 from openai_budget import Refused, canonical, fingerprint
 from . import docker_engine
-from .control_package import MAX_FILE, verify_installation
+from .control_package import verify_installation
 from .docker_image_evidence import (_reviewed_inputs, acquire_image_evidence, recover_image_readback,
                                     verify_readback_receipts)
 from .effects import EffectJournal
 from .installed_runtime import file_sha
 from .npm_platform import PLATFORM_STORE
-from .owned_paths import new_owned_directory, owned_directory, owned_file, read_owned
+from .owned_paths import read_owned_content, new_owned_directory, owned_directory, owned_file, read_owned
 from .platform_build import HELPER, reconcile_report, report_json, reviewed_artifact, reviewed_build
 from .recipe_plan import (_advance_docker_recipe, _prepare_docker_recipe, digest, docker_job_intent,
                           fields, planned_browser_runtime, planned_source_check, planned_test_selector, require_test_runtime, reviewed_platform_operations)
@@ -54,9 +54,11 @@ def owned_input(path, pin, label):
         info = os.fstat(stream.fileno())
         if info.st_uid != os.geteuid() or S_IMODE(info.st_mode) & 0o022:
             raise Refused(f'{label} must be owned by the invoking OS user and protected from other writers')
-        raw = stream.read(MAX_FILE + 1)
-    if len(raw) > MAX_FILE:
-        raise Refused(f'{label} bytes differ from the expected SHA-256')
+        raw = stream.read(info.st_size + 1)
+        after = os.fstat(stream.fileno())
+    if (len(raw) != info.st_size or (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)):
+        raise PinnedInputMismatch(f'{label} changed while being read')
     if sha256(raw).hexdigest() != pin:
         raise PinnedInputMismatch(f'{label} bytes differ from the expected SHA-256')
     return raw
@@ -92,7 +94,7 @@ def operator_lock(state, *, name='operator.lock'):
 
 def original_authorization(root, state, intent_pin):
     validate_directory(state, private=True)
-    record = report_json(read_owned(state, _AUTH))
+    record = report_json(read_owned_content(state, _AUTH))
     fields(record, 'version intent intentSha256 consent authorizedAt', 'operator authorization')
     intent = record['intent']
     context = intent.get('invocation') if isinstance(intent, dict) else None
@@ -122,7 +124,7 @@ def journal_operations(state, kind):
     if not os.path.lexists(path) and not os.path.lexists(marker):
         return {}
     validate_directory(child, private=True)
-    data = report_json(read_owned(child, path.name, 4_000_000))
+    data = report_json(read_owned_content(child, path.name))
     identity = report_json(read_owned(child, marker.name))
     fields(data, 'version bindingSha256 synthetic operations', 'retained build journal')
     if (type(data['version']) is not int or data['version'] != 2 or data['synthetic'] is not False
@@ -326,7 +328,7 @@ class OperatorBuild:
     def retain(self, name, value):
         raw = canonical(value).encode()
         if os.path.lexists(self.state / name):
-            if read_owned(self.state, name, 4_000_000) != raw:
+            if read_owned_content(self.state, name) != raw:
                 raise Refused('Retained operator build evidence differs')
         else:
             write_state(self.state, name, raw)
@@ -345,7 +347,7 @@ def recorded_status(root, state, intent_pin, manifest_pin):
     if os.path.lexists(state / 'cleanup.json'):
         result['recordedCleanup'] = report_json(read_owned(state, 'cleanup.json'))
     if os.path.lexists(state / 'result.json'):
-        saved = report_json(read_owned(state, 'result.json', 4_000_000))
+        saved = report_json(read_owned_content(state, 'result.json'))
         if saved['intentSha256'] != intent_pin:
             raise Refused('Retained build result does not bind this exact intent')
         result['recordedResult'] = saved['result']
@@ -377,7 +379,7 @@ def verify_named_test_evidence(root, state, intent_pin, manifest_pin, *, target,
     if (scope.get('allowedPaths') != profile['allowedPaths'] or not isinstance(requested, list)
             or (requested != paths if exact_scope else any(path not in requested for path in paths))):
         raise Refused('Recipe scope differs from the reviewed project profile')
-    readback = read_owned(state, 'readback.json', MAX_FILE)
+    readback = read_owned_content(state, 'readback.json')
     readback_pin = sha256(readback).hexdigest()
     acquisition_id = fingerprint({'operatorIntent': intent_pin, 'phase': 'image-readback'})
     review = reviewed_build(plan, binding, checked.policy, checked.policy_pin,

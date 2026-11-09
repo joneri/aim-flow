@@ -1,3 +1,36 @@
+# AIM Flow 0.1.0-beta.4
+
+Remove inherited product-size caps while preserving reviewed scope, spending and resource controls.
+
+## Changes
+
+- Removed the fixed 50 KB source-file and 100 KB request-byte caps, task-text limits, tiny patch size/count rules and default changed-line ceiling.
+- Project discovery now reads complete committed definitions, selected documents, workflows and repository inventories without truncation.
+- Removed global selected-file/source-byte and artifact-size/count ceilings. New whole-build plans carry a measured source inventory; archive readback remains bound to its exact paths, lengths, modes and hashes.
+- Kept ownership, link checks, selected paths, source freshness, proposal-only restrictions, exact consent and approved budget/call limits. Token preflight must fit the approved financial reservation before generation; unknown outcomes retain their reservations.
+- The output allowance is configurable through the request-building API, rather than treated as a universal maximum. No new CLI/profile selector is claimed.
+- Added generated content-size and discovery regressions and included the [size-handling guide](aim-ci-size-handling.md) in the download. No customer code, requirements, budgets or private evidence are included.
+- Ported applicable changes from upstream commit `6bdd87552dc62e382b45434c30c93328d09acccb` without restoring excluded application integrations.
+
+Actual provider constraints, per-run resources, archive/protocol protections and compatibility handling for older inventory-less plans remain. The formatter's old fixed file-size guard was removed; independent formatter disk-space enforcement remains unqualified. This release is not a claim of unlimited resources or hostile-code safety.
+
+## Verification
+
+Local validation on 9 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **315 tests run, 314 passed, 1 skipped**, 323.458 seconds.
+- Existing skip: separate-candidate validation requires two verified fixture packages. No claim is made for the skipped path.
+- Node: **16 tests passed**, no failures or skips.
+- Independent read-only port review found no blockers in the helper translation, source/identity checks, budget reservations/preflight, inventory/readback or proposal-only guards.
+- Source inventory: 72 files verified (18 unchanged upstream files, 48 reviewed modifications, 6 added files). All 50 controller payload files match current reviewed source.
+- Branded download: nine payload hashes, trusted-source bootstrap match, fresh installation and expected unconfigured readiness exit 3 passed.
+- Static website: 18 local links/assets checked. Recursive current-file and nested-archive scan: 188 members, no excluded legacy-demo matches.
+- Controller archive SHA-256: `16a3a65e9db960764ef4503ec6fb0f0918675ec3c0de89c12a45d08e676ed7bf`.
+- Controller manifest SHA-256: `bed7ad9f0ee919b73a492c648226ed8f024a503732a99823da2389b700ce24b5`.
+- Download ZIP SHA-256: `e9eec35ba9e2bac926aa8d3cb39502375e7e625562d3560f7adf379dbf607470`.
+
+The publication workflow now requires Git 2.54+ and runs the complete offline Python suite plus Node tests before deployment. No live model, VM or project-script execution was performed for this release; larger-input regressions use generated fixtures. Earlier runtime evidence remains separate in [VERIFICATION.md](VERIFICATION.md).
+
 # AIM Flow 0.1.0-beta.3
 
 Preview a local task before choosing a build setup.

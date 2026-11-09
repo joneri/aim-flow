@@ -17,8 +17,8 @@ _REGISTRY_TARBALL = re.compile(r'https://[A-Za-z0-9.-]+(?::[0-9]+)?/[A-Za-z0-9@%
 
 
 def project_path(name):
-    return (isinstance(name, str) and 0 < len(name) <= 240
-            and all(len(part) <= 128 and part not in ('.', '..')
+    return (isinstance(name, str) and bool(name)
+            and all(part not in ('.', '..')
                     and re.fullmatch(_ARTIFACT_COMPONENT, part) for part in name.split('/')))
 
 

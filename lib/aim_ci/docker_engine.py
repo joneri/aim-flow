@@ -377,7 +377,7 @@ class DockerRecipeJob:
         return absent
 
     def _build_evidence(self, bound, final):
-        from .platform_build import MAX_REPORT, capture_report, reconcile_report
+        from .platform_build import report_limit, capture_report, reconcile_report
 
         identifier = bound['containerId']
         directory = self.journal.directory
@@ -388,7 +388,7 @@ class DockerRecipeJob:
         def capture():
             try:
                 self._require_state(identifier, ('exited',))
-                return capture_report(directory, lambda: self.engine.build_log(identifier, MAX_REPORT),
+                return capture_report(directory, lambda: self.engine.build_log(identifier, report_limit(self.intent)),
                                       self.intent, checked)
             except (Refused, OSError) as error:
                 return {'status': 'unverified', 'reason': str(error)}

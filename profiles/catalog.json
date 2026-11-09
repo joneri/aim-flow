@@ -6,7 +6,7 @@
   "label": "aim-ci",
   "product": "catalog",
   "allowedPaths": ["catalog.py", "tests/test_catalog.py"],
-  "maximumChangedLines": 160,
+  "maximumChangedLines": null,
   "maximumRounds": 2,
   "requiredCheck": "quality-security-supply-chain",
   "productionUrl": "http://127.0.0.1:4173/",

@@ -34,13 +34,13 @@ as a file or literal indicator and `risk` as a review point.
 | Dockerfile, Compose and CI definitions | Scans literal line indicators such as `FROM`, `RUN`, `services`, `uses`, `run` and expression-like text. This scan leaves effective commands, includes, permissions and interpolation open. |
 
 Discovery inventories standard root files and direct YAML files under
-`.github/workflows/`. It limits individual reads to 512,000 bytes,
-workflow tree size to 32,768 bytes and inspected workflows to 32. Literal
-scans stop after 300 lines per definition. Linked and other nonregular
-definitions appear as open items. Workspace paths are clues for later
-investigation. This version leaves nested project roots for separate review.
+`.github/workflows/`. It reads complete selected objects using their measured
+Git sizes and verifies their object identities. There are no discovery byte,
+workflow-count or line-count ceilings. Linked and other nonregular definitions
+appear as open items. Workspace paths are clues for later investigation. This
+version leaves nested project roots for separate review.
 
-Select up to eight distinct committed `README.md`, `AGENTS.md` or Markdown
+Select distinct committed `README.md`, `AGENTS.md` or Markdown
 paths under `docs/`. The scan links a complete literal `npm run NAME` or
 `npm run-script NAME` token to the same declared script name. A plain token
 ends at whitespace or the end of the line. For a command in backticks,
@@ -50,9 +50,9 @@ ASCII letters, digits, periods, colons, underscores or hyphens. Quoted
 arguments and punctuation attached to a plain token stay outside this
 subset. Unsupported names and unmatched references become open items.
 The scan treats document text as data and follows no paths or commands
-from it. Selected documents
-have a 24,000-byte limit. An absent, oversized, linked, unavailable or
-unreadable document gives an open item. A script name or reference does
+from it. All selected documents are scanned completely, without a document
+count or byte ceiling. An absent, linked, unavailable or unreadable document
+gives an open item. A script name or reference does
 not establish what it tests or whether it passes.
 
 For each root declaration with a corresponding npm v3
@@ -85,9 +85,15 @@ Discovery outputs observations and a proposed review sequence. The command
 does not run project scripts, installs, tests, containers or workflows. It
 does not initialize journals, budgets, recipes or approval records.
 
-Discovery also preserves script bodies as source-linked data and bounded
-CI/container definition excerpts for agent review. An excerpt covers at most
-300 lines and 24,000 UTF-8 bytes, and explicitly reports truncation. The
-metadata-only committed-tree footprint is bounded to 512,000 bytes and 4,096
-entries. It counts regular files separately from other entries and does not
-select execution inputs or change any runner limit.
+Discovery also preserves script bodies and complete CI/container definitions
+as source-linked data for agent review. The compatible `excerpt` field now
+contains the entire definition with `complete: true`. Literal indicator scans
+include every line. The metadata-only committed-tree footprint counts every
+entry and reports all top-level byte totals, plus the ten largest regular
+files as a summary. It counts regular files separately from other entries and
+does not select execution inputs or change any runner limit.
+
+Exact object size and hash checks, regular-file and UTF-8 requirements, path
+validation, and the 20-second timeout on each network-disabled Git command
+remain. Failed or incomplete reads are refused or reported as open items;
+source is never silently shortened to fit a discovery ceiling.

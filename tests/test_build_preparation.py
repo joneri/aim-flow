@@ -929,6 +929,12 @@ class InstalledPreparationTests(unittest.TestCase):
         plan=json.loads((output/'plan.json').read_bytes())
         self.assertEqual((plan['target']['commit'],plan['target']['tree']),(commit,tree))
         self.assertFalse(plan['executionAuthorized'])
+        inventory = json.loads((output/'source-manifest.json').read_bytes())
+        review = json.loads((output/'planning-review.json').read_bytes())
+        self.assertEqual(plan['sourceInventory'], inventory)
+        self.assertEqual(review['sourceInventory'], inventory)
+        self.assertEqual(plan['sourceInventorySha256'], pin(encode(inventory)))
+        self.assertEqual(events['runPreview']['stdout']['intent']['binding']['sourceInventorySha256'], pin(encode(inventory)))
         preview=events['runPreview']['stdout']['intent']
         self.assertEqual(preview['binding']['imageDigest'],IMAGE)
         self.assertEqual(events['preview']['stdout']['ignoredFiles'][0]['name'],'optional-other.tgz')

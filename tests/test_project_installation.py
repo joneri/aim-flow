@@ -315,6 +315,48 @@ raise SystemExit(code)
                                  *flags, *receipt_flags, expected=1)
         self.assertIn('current controller installation', error)
 
+    def test_complete_large_project_plan_round_trips_through_installed_receipt(self):
+        commit, paths, flags = self.source_fixture()
+        workflow_path = self.checkout / '.github/workflows/build.yml'
+        workflow = '# ' + 'complete committed workflow ' * 310_000 + '\nrun: npm run check:source\n'
+        workflow_path.write_text(workflow)
+        self.git_run('add', '.')
+        self.git_run('commit', '-qm', 'Large complete review fixture')
+        commit = self.git_run('rev-parse', 'HEAD')
+        before = snapshot(self.checkout)
+        installed = self.cli(commit, *flags)
+        original = self.output.read_bytes()
+        self.assertGreater(len(original), 16_000_000)
+        receipt = json.loads(original)
+        self.assertGreater(len(json.dumps(receipt['adaptation']).encode()), 16_000_000)
+        definition = receipt['adaptation']['projectPlan']['buildDefinitions'][0]
+        self.assertEqual(definition['excerpt']['text'], workflow)
+        self.assertTrue(definition['excerpt']['complete'])
+        self.assertEqual(definition['sha256'], sha(workflow_path))
+        self.assertEqual(installed['projectPlan']['sha256'], sha(self.output))
+        self.assertEqual(stat.S_IMODE(self.output.stat().st_mode), 0o600)
+        manager = self.destination / 'aim-ci-control.py'
+        receipt_flags = ['--project-plan', str(self.output), '--project-plan-sha256', installed['projectPlan']['sha256']]
+        report = self.inspect_cli(manager, 'draft-build-preparation', commit, *flags, *receipt_flags)
+        self.assertEqual(report['projectInstallation']['status'], 'verified-review-draft-only')
+        self.assertFalse(report['projectInstallation']['executionAuthorized'])
+        self.assertEqual(report['projectInstallation']['selection']['sourcePaths'], sorted(paths))
+        self.assertEqual(report['projectInstallation']['sha256'], installed['projectPlan']['sha256'])
+        self.assertEqual(report['adaptation']['projectPlan']['buildDefinitions'][0]['excerpt']['text'], workflow)
+        self.assertEqual(snapshot(self.checkout), before)
+        # Exact pin and no-link checks apply to the complete large receipt too.
+        self.output.write_bytes(original + b'\n')
+        error = self.inspect_cli(manager, 'draft-build-preparation', commit, *flags, *receipt_flags, expected=1)
+        self.assertIn('Project plan receipt SHA-256 mismatch', error)
+        self.output.write_bytes(original)
+        alias = self.case / 'hardlinked-receipt.json'
+        os.link(self.output, alias)
+        try:
+            error = self.inspect_cli(manager, 'draft-build-preparation', commit, *flags, *receipt_flags, expected=1)
+            self.assertIn('single-link regular file', error)
+        finally:
+            alias.unlink()
+
     def test_installed_local_intake_preview_dispatches_pins_without_key_or_budget_reads(self):
         before = snapshot(self.seed)
         report = self.local_intake_cli('--preview')

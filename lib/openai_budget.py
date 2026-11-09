@@ -22,7 +22,13 @@ LIMIT = 10_000_000_000  # nanodollars; USD10 across this entire experiment
 INPUT_RATE = 250  # USD0.25 / million tokens, uncached standard service
 OUTPUT_RATE = 2000  # USD2 / million tokens, including reasoning
 MAX_CALLS = 4
-MAX_OUTPUT = 8192
+DEFAULT_OUTPUT = 8192
+MAX_OUTPUT = DEFAULT_OUTPUT  # Historical ledger/probe allowance, not a provider or product maximum.
+# Actual pinned-model limits, not local product policy. Verified 2026-11-09:
+# https://developers.openai.com/api/docs/models/gpt-5-mini
+PROVIDER_MAX_INPUT = 272_000
+PROVIDER_MAX_OUTPUT = 128_000
+PROVIDER_CONTEXT = 400_000
 PRICING = "https://developers.openai.com/api/docs/pricing"
 REQUEST_DEADLINE_SECONDS = 240
 
@@ -42,6 +48,15 @@ def fingerprint(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
 
 
+def provider_token_bounds(input_tokens, output_tokens):
+    if (type(input_tokens) is not int or input_tokens < 0
+            or type(output_tokens) is not int or output_tokens < 1):
+        raise Refused('Invalid provider token count or output allowance')
+    if (input_tokens > PROVIDER_MAX_INPUT or output_tokens > PROVIDER_MAX_OUTPUT
+            or input_tokens + output_tokens > PROVIDER_CONTEXT):
+        raise Refused('Request exceeds the pinned model provider token limits')
+
+
 def atomic_json(path, value):
     safe_path(path)
     with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as stream:
@@ -57,13 +72,14 @@ def atomic_json(path, value):
 
 
 class Campaign:
-    def __init__(self, directory, scope):
+    def __init__(self, directory, scope, *, maximum_operation_nano_usd=None):
         self.directory = Path(directory).absolute()
         safe_path(self.directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.ledger = self.directory / "budget.json"
         self.marker = self.directory / "campaign.json"
         self.scope = scope
+        self.maximum_operation_nano_usd = maximum_operation_nano_usd
         with self.lock():
             if not self.ledger.exists():
                 if self.marker.exists():
@@ -109,11 +125,13 @@ class Campaign:
         return data
 
     def reserve(self, request_id, payload_hash, input_tokens, output_tokens):
-        if (type(input_tokens) is not int or not 0 <= input_tokens <= 100_000
-                or type(output_tokens) is not int or not 16 <= output_tokens <= MAX_OUTPUT):
+        if (type(input_tokens) is not int or input_tokens < 0
+                or type(output_tokens) is not int or output_tokens < 1):
             raise Refused("Invalid token bounds")
         # Extra input headroom; reservations are NEVER refunded, even on success.
         amount = (input_tokens + 1024) * INPUT_RATE + output_tokens * OUTPUT_RATE
+        if self.maximum_operation_nano_usd is not None and amount > self.maximum_operation_nano_usd:
+            raise Refused("Legacy operation exceeds its established financial reservation")
         with self.lock():
             data = self.read()
             if (len(data["requests"]) >= MAX_CALLS
@@ -154,10 +172,11 @@ class Campaign:
         if (set(payload) - allowed or payload.get("model") != MODEL or payload.get("store") is not False
                 or payload.get("service_tier") != "default" or not isinstance(payload.get("input"), str)
                 or payload.get('stream', True) is not True
-                or not isinstance(payload.get("instructions"), str) or len(canonical(payload).encode()) > 100_000):
-            raise Refused("Only bounded pinned-model text requests without tools are admitted")
+                or not isinstance(payload.get("instructions"), str)):
+            raise Refused("Only pinned-model text requests without tools are admitted")
         count_payload = {key: payload[key] for key in ("model", "input", "instructions", "text") if key in payload}
         count = transport("responses/input_tokens", count_payload)
+        provider_token_bounds(count.get('input_tokens'), payload.get('max_output_tokens'))
         self.reserve(request_id, fingerprint(payload), count.get("input_tokens"), payload.get("max_output_tokens"))
         try:
             response = transport("responses", payload)

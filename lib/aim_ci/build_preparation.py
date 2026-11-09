@@ -13,12 +13,12 @@ from types import SimpleNamespace
 from openai_budget import Refused, canonical, fingerprint
 from . import docker_engine
 from .control_package import MAX_FILE, verify_installation
-from .docker_image_evidence import PLATFORM_ENTRYPOINT, _LAYOUT, _MAX_BLOB, _MAX_MEMBERS, _MAX_SOURCE, _MAX_STORE, _git_id, _git_tree
+from .docker_image_evidence import PLATFORM_ENTRYPOINT, _LAYOUT, _MAX_BLOB, _MAX_MEMBERS, _MAX_STORE, _git_id, _git_tree
 from .image_preparation import ImagePreparation, measure_file, _MAX_ARCHIVE
 from .installed_runtime import file_sha
 from .npm_platform import PLATFORM_STORE, platform_partition, project_path
 from .operator_build import ActiveController, canonical_path, operator_lock, overlaps, owned_input, validate_directory, write_state
-from .owned_paths import new_owned_directory, owned_directory, owned_file, read_owned
+from .owned_paths import new_owned_directory, owned_directory, owned_file, read_owned, read_owned_content
 from .platform_build import HELPER, report_json
 from .project_adaptation import propose_adaptation
 from .project_discovery import CommitReader, LOCKS, SourceBindingMismatch, unique_json
@@ -44,9 +44,8 @@ _LIMITATIONS = {
 
 
 def source_inventory(reader):
-    source, total = {}, 0
-    directories = set()
-    for name, mode, kind, oid in reader.entries(reader.commit, recursive=True, maximum=MAX_FILE):
+    source = {}
+    for name, mode, kind, oid in reader.entries(reader.commit, recursive=True):
         if (kind != 'blob' or mode not in ('100644', '100755') or not project_path('source/' + name)
                 or not re.fullmatch('[a-f0-9]{40}', oid) or name in source):
             raise Refused('Unsupported committed source member in build preparation')
@@ -56,23 +55,19 @@ def source_inventory(reader):
                 tarfile.TarInfo(_LAYOUT[1:] + '/source/' + str(relative)).tobuf(format=tarfile.USTAR_FORMAT)
         except ValueError:
             raise Refused('Committed source path exceeds the supported tar layout') from None
-        directories.update(str(parent) for parent in path.parents)
-        if len(source) + len(directories) >= _MAX_MEMBERS:
-            raise Refused('Committed source member count exceeds the readback bound')
         if any(part in ('.git', 'node_modules', '.npmrc') or re.match(r'^\.env(?:\.|$)', part)
                for part in path.parts):
             raise Refused('Committed npm configuration, dependency tree or environment file is unsupported')
         size = reader.size(oid)
-        if not 0 <= size <= _MAX_SOURCE - total or name in ('package.json', 'package-lock.json') and size > MAX_FILE:
-            raise Refused('Committed source exceeds its reviewed byte bound')
+        if type(size) is not int or size < 0:
+            raise Refused('Invalid measured committed source size')
         data = reader.blob(oid, maximum=size)
         blob = _git_id('blob', data)
         if len(data) != size or blob.hex() != oid:
             raise Refused('Committed Git blob changed during preparation')
         source[name] = {'mode': int(mode, 8) & 0o777, 'size': size, 'sha256': sha256(data).hexdigest(),
                         'blob': blob, 'data': data}
-        total += size
-    commit = reader.read('cat-file', 'commit', reader.commit, maximum=MAX_FILE)
+    commit = reader.checked_object('commit', reader.commit, reader.size(reader.commit))
     if (_git_tree(source) != reader.tree or _git_id('commit', commit).hex() != reader.commit
             or not commit.startswith(f'tree {reader.tree}\n'.encode())):
         raise Refused('Committed source does not reconstruct the exact Git tree and commit')
@@ -134,8 +129,8 @@ def draft_build_preparation(root, args, control):
     if any(git.is_relative_to(path) for path in (checkout, root)):
         raise Refused('Git executable must be outside the checkout and installation')
     reader = CommitReader(root, checkout, git, args.git_sha256, args.commit)
-    commit = reader.checked_object('commit', reader.commit, MAX_FILE)
-    reader.checked_object('tree', reader.tree, MAX_FILE)
+    commit = reader.checked_object('commit', reader.commit, reader.size(reader.commit))
+    reader.checked_object('tree', reader.tree, reader.size(reader.tree))
     if not commit.startswith(f'tree {reader.tree}\n'.encode()):
         raise Refused('Committed Git tree differs from the selected commit')
     labels = checkout_labels(reader)
@@ -512,6 +507,7 @@ class BuildPreparation(PreparationInputs):
             self.intent['acknowledgedLimitations'] = {**_LIMITATIONS, 'storeCoverage': 'none-no-dependencies-installed'}
         else:
             self.intent['sourceManifestSha256'] = self.source_binding['sourceManifestSha256']
+            self.intent['sourceInventory'] = self.source_manifest
         self.intent_pin = fingerprint(self.intent)
 
     def preview(self):
@@ -562,7 +558,7 @@ class BuildPreparation(PreparationInputs):
     def retain(self, name, value):
         raw = canonical(value).encode()
         if os.path.lexists(self.output / name):
-            if read_owned(self.output, name, MAX_FILE) != raw:
+            if read_owned_content(self.output, name) != raw:
                 raise Refused('Retained preparation bytes differ')
         else:
             write_state(self.output, name, raw)
@@ -600,6 +596,9 @@ class BuildPreparation(PreparationInputs):
                   'committedInputs': self.committed}
         if self.source_check:
             review['sourceFiles'] = self.source_manifest
+        else:
+            review.update(sourceInventory=self.source_manifest,
+                          sourceInventorySha256=fingerprint(self.source_manifest))
         if 'testSelector' in self.recipe:
             review['testSelector'] = self.recipe['testSelector']
         review_pin = self.retain('planning-review.json', review)
@@ -637,7 +636,7 @@ class BuildPreparation(PreparationInputs):
                     'authorizedAt': datetime.now(timezone.utc).isoformat(), 'consent': 'explicit-local-preparation-only'}).encode())
         validate_directory(self.output, private=True)
         with operator_lock(self.output):
-            auth = report_json(read_owned(self.output, _AUTH))
+            auth = report_json(read_owned_content(self.output, _AUTH))
             fields(auth, 'intent intentSha256 authorizedAt consent', 'preparation authorization')
             if (auth.get('intent') != self.intent or auth.get('intentSha256') != self.intent_pin
                     or auth.get('consent') != 'explicit-local-preparation-only'):
@@ -668,7 +667,7 @@ class BuildPreparation(PreparationInputs):
 def cleanup_preparation(root, args):
     output = canonical_path(str(args.output), 'Preparation output')
     validate_directory(output, private=True)
-    auth = report_json(read_owned(output, _AUTH))
+    auth = report_json(read_owned_content(output, _AUTH))
     fields(auth, 'intent intentSha256 authorizedAt consent', 'preparation authorization')
     intent = auth['intent']
     invocation = intent.get('invocation') if isinstance(intent, dict) else None
@@ -688,7 +687,7 @@ def cleanup_preparation(root, args):
         preparation = BuildPreparation(root, config_args)
         if preparation.intent != intent or preparation.intent_pin != args.intent_sha256:
             raise Refused('Current preparation inputs differ from the original intent')
-        prepared = report_json(read_owned(output, 'preparation-result.json', MAX_FILE))
+        prepared = report_json(read_owned_content(output, 'preparation-result.json'))
         if (not isinstance(prepared, dict) or prepared.get('status') != 'prepared-reviewed-build-inputs'
                 or prepared.get('executionAuthorized') is not False or prepared.get('intentSha256') != args.intent_sha256):
             raise Refused('Final image cleanup requires the original completed preparation result')
@@ -702,8 +701,8 @@ def cleanup_preparation(root, args):
         def verify_inputs():
             preparation.verify_inputs()
             verify_tools({'docker': {key: intent['docker'][key] for key in ('path', 'sha256')}}, 'docker')
-            if (report_json(read_owned(output, _AUTH, MAX_FILE)) != auth
-                    or report_json(read_owned(output, 'preparation-result.json', MAX_FILE)) != prepared):
+            if (report_json(read_owned_content(output, _AUTH)) != auth
+                    or report_json(read_owned_content(output, 'preparation-result.json')) != prepared):
                 raise Refused('Original preparation records changed before image cleanup')
 
         image = ImagePreparation(output, intent, args.intent_sha256, verify_inputs)
