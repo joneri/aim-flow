@@ -1,0 +1,26 @@
+name: Beta feedback
+description: Report a bounded, reproducible Beta issue without private data.
+title: "[Beta] "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not paste secrets, private source or raw operator journals. A source-check pass is not a build or deployment."
+  - type: textarea
+    id: goal
+    attributes:
+      label: What were you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Version and non-sensitive environment details
+      description: Include AIM Flow, Python and Git versions and the operation name.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true

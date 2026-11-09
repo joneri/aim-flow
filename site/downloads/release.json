@@ -1,0 +1,21 @@
+{
+  "bootstrapSha256": "d64e155e1bca4248225d5a90d51733fdc65915e168231f4a19061e0660b5824f",
+  "channel": "beta",
+  "controllerArchive": "controller/aim-ci-control-0.1.0-beta.1.tar.gz",
+  "controllerArchiveSha256": "e32a0f3fbed1e26b8a233304069692fda73214672418e3242f7d5916a9708b33",
+  "controllerManifestSha256": "1e9480aca8c42cbd7296fca8b2bc489b1f9ef65454e78d352da7f9fcf2ad36ae",
+  "filesSha256": {
+    "BETA-SCOPE.md": "a50096a1d93125c22ff1651f6d8e4b8b04466a0a3c377fa1a7c91320821b0b3b",
+    "LICENSE": "5bac14f1eeb03a07bea99437ace3fd87926d9507483cd49cd552e62753af795d",
+    "README.md": "340df0e63a755a3b1058fe52268aea5b1db2b9f4ea58f45b1f170e90de8f84f3",
+    "THIRD-PARTY-NOTICES.md": "097113e07e47b2481175e919ffdfa22f1ce44040019cfcec9cc4c953a6ad8ce8",
+    "controller/README.md": "064ab4a2f9138fca4467e247b81a7aab83b2b73ae6ae3cde3d5916912c1e3497",
+    "controller/aim-ci-bootstrap.pyz": "d64e155e1bca4248225d5a90d51733fdc65915e168231f4a19061e0660b5824f",
+    "controller/aim-ci-control-0.1.0-beta.1.tar.gz": "e32a0f3fbed1e26b8a233304069692fda73214672418e3242f7d5916a9708b33",
+    "controller/release.json": "b340fcb8d6f648d252df2034ea27548d5fc15b37d4268246651034fecaf327e4"
+  },
+  "license": "MIT",
+  "product": "AIM Flow",
+  "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",
+  "version": "0.1.0-beta.1"
+}

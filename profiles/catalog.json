@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "repository": "synthetic/catalog",
+  "branch": "main",
+  "owner": "fixture",
+  "label": "aim-ci",
+  "product": "catalog",
+  "allowedPaths": ["catalog.py", "tests/test_catalog.py"],
+  "maximumChangedLines": 160,
+  "maximumRounds": 2,
+  "requiredCheck": "quality-security-supply-chain",
+  "productionUrl": "http://127.0.0.1:4173/",
+  "deploymentWorkflow": "aim-ci-production.yml",
+  "model": "gpt-5-mini-2025-08-07",
+  "maximumCampaignUsd": 10,
+  "maximumCampaignCalls": 16,
+  "offlineOnly": true
+}

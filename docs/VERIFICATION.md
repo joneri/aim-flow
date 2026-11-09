@@ -1,0 +1,33 @@
+# Beta verification
+
+## Prior real runtime qualification
+
+On 9 November 2026, controller source `783cb975f897b3179f3a8492a98b24fcc48dead6` completed the maintained installed schema 3 `npm-source-check` path against a reviewed synthetic fixture.
+
+- Actual named command: pinned Node/npm with `--ignore-scripts run check:source`.
+- Result: exit 0; `source-check-passed`.
+- Dependency installs, application builds and artifacts: none.
+- Exactly one VM start and one executing check-container start.
+- Staging/readback containers were not started.
+- All owned containers and the derived image were confirmed absent afterward; the base image was retained and the VM stopped.
+- No model calls, downloads, publication or deployment.
+
+This summary does not publish private operator journals. The retained qualification receipt is identified by SHA-256 `4b53c2e5bc6b95a2541b4646f73007fbcdf6487ff24e7ae757bc864eb88a191d`. A digest is an integrity reference, not independent public verification. The compatibility extraction preserves the qualified controller bytes; it does not repeat the runtime effect.
+
+## What this does not prove
+
+Qualification of arbitrary repositories, hostile-code isolation, independent resource enforcement, an external watchdog, browser tests, hosted effects and product acceptance remain outside this proof. See [Beta scope](BETA-SCOPE.md).
+
+## Packaging regression
+
+The extraction includes focused package, installation, planning, source-check, intake, preparation and synthetic Docker protocol regression tests. They are offline contract tests; mocked Docker/provider results are not runtime or live-model qualification.
+
+Run the selected suite with Python 3.11+ and Git 2.54+:
+
+```sh
+python3 -B -m unittest discover -s tests -p 'test_*.py'
+node --test tests/test_npm_platform_build.cjs
+python3 scripts/verify_provenance.py
+```
+
+[Beta release notes](RELEASE-NOTES.md) record actual results and any omitted checks. The old `aim-ci-python-test-matrix.md` is retained upstream context and describes additional tests not all included here.
