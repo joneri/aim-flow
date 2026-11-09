@@ -19,6 +19,8 @@ python3 scripts/verify_provenance.py
 - `test_npm_acquisition.py` and `test_npm_platform.py`: locked tarball, registry-policy, platform-selection and integrity contracts with synthetic network transport.
 - `test_npm_platform_build.cjs`: source-only dispatch and helper behavior using local fixture bytes and a synthetic cache adapter.
 
+- `test_intake_profile.py`: strict proposal-only profiles without build placeholders, installed no-key preview, source/grant binding and candidate refusal. Uses real temporary repositories and Git 2.54+; explicitly skips when that version is unavailable. Synthetic provider replies do not qualify live intake.
+
 ## Evidence boundaries
 
 Mocked Docker and provider results are not real runtime or live-model qualification. Local Git fixture tests do not execute project scripts. Skipped cases provide no evidence for their skipped path. The public CI workflow runs a portable subset without requiring Git 2.54; the full Mac suite and exact totals are recorded in [release notes](RELEASE-NOTES.md).
@@ -26,7 +28,7 @@ Mocked Docker and provider results are not real runtime or live-model qualificat
 The separate package smoke check verifies the branded ZIP against trusted source bootstrap bytes, checks all payload hashes, installs a fresh controller and expects unconfigured readiness exit 3:
 
 ```sh
-python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.2.zip
+python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.3.zip
 ```
 
 A passed source check is not an application build, browser-test result or product acceptance. This packaging cleanup does not repeat a real execution qualification. See [Beta scope](BETA-SCOPE.md) and [verification](VERIFICATION.md).

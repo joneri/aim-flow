@@ -27,6 +27,7 @@ TRANSPORTS = ContextVar('aim_ci_transports', default=None)
 TARGET = ContextVar('aim_ci_target', default=None)
 ROOT_INSTALLATION = ContextVar('aim_ci_root_installation', default=None)
 ROOT_PROPOSAL_EFFECT = 'local-root-intake-proposal-only'
+INTAKE_PROFILE_KIND = 'local-task-intake-profile'
 LIVE_LOCAL_MODE = 'live-local-intake-only'
 # Legacy grant versions 1/2 remain restricted to this explicitly approved experiment.
 LIAM_INTAKE_TARGET = {
@@ -447,7 +448,7 @@ INTAKE_SCHEMA = {'type': 'object', 'additionalProperties': False,
 
 
 def intake_arguments(config, identity, original, *, root_review=False, intake_only=False, local_task=False):
-    human_mode = review_policy(config)['mode'] == 'human-local'
+    human_mode = not local_task and review_policy(config)['mode'] == 'human-local'
     if root_review:
         purpose = 'local inspection' if intake_only else 'technical review'
         requirement = 'local task' if local_task else 'local project requirement'
@@ -472,11 +473,11 @@ def intake_arguments(config, identity, original, *, root_review=False, intake_on
                   ['isolated-validation', 'human-technical-review-pause'] if human_mode else
                   ['isolated-validation', 'independent-review', 'pull-request', 'exact-head-ci',
                    'merge', 'verified-pages-deployment'])
-    authorization = {'owner': config['owner'], 'optInLabel': config['label'],
+    authorization = {} if local_task else {'owner': config['owner'], 'optInLabel': config['label'],
                      'ownerAndOptInVerified': True, 'productionUrl': None if root_review else config['productionUrl'],
                      'technicalReview': 'human-local' if human_mode else 'api',
                      'existingDeliveryOperations': operations, 'newInfrastructureChangesAllowed': False}
-    if root_review:
+    if root_review and not local_task:
         authorization['declaredOwnerAndOptInMatched'] = authorization.pop('ownerAndOptInVerified')
         authorization['issueAuthorAuthenticated'] = False
         authorization['authorizationRequired'] = 'explicit-local-os-principal-consent-for-synthetic-only'
@@ -487,6 +488,8 @@ def intake_arguments(config, identity, original, *, root_review=False, intake_on
                          'authorAuthenticated': False, 'existingDeliveryOperations': [],
                          'newInfrastructureChangesAllowed': False,
                          'dataTransferConsent': 'controller-verifies-exact-consent-before-dispatch'}
+        if 'intakeScope' in config:
+            authorization['intakeScope'] = config['intakeScope']
     return instructions, {'task' if local_task else 'issue': identity,
                           'files': original, 'allowedPaths': config['allowedPaths'],
                           'maximumChangedLines': config['maximumChangedLines'],
@@ -550,7 +553,7 @@ def product_baseline(config):
     return remote
 
 
-def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_task=False):
+def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_task=False, intake_only=False):
     from .operator_build import canonical_path, overlaps, owned_input
     from .platform_build import report_json
     from .project_discovery import SCRIPT_NAME
@@ -561,10 +564,17 @@ def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_
     path, pin = selection
     path = canonical_path(str(path), 'Reviewed root project profile')
     reviewed = report_json(owned_input(path, pin, 'Reviewed root project profile'))
-    if not isinstance(reviewed, dict) or type(reviewed.get('version')) is not int or reviewed['version'] != 2:
+    proposal_only = isinstance(reviewed, dict) and reviewed.get('kind') == INTAKE_PROFILE_KIND
+    if proposal_only:
+        fields(reviewed, 'kind version scope checkout target tree git allowedPaths', 'local task intake profile')
+        if (type(reviewed['version']) is not int or reviewed['version'] != 1
+                or reviewed['scope'] != 'proposal-only' or not local_task or not intake_only):
+            raise Refused('An intake profile requires a version 1 proposal-only local task selection')
+    elif not isinstance(reviewed, dict) or type(reviewed.get('version')) is not int or reviewed['version'] != 2:
         raise Refused('Local root admission requires a separately reviewed version 2 profile')
-    fields(reviewed, 'version checkout target tree git owner allowedPaths recipeManifestSha256 runtimeSha256 testScript reviewer',
-           'local root project profile')
+    else:
+        fields(reviewed, 'version checkout target tree git owner allowedPaths recipeManifestSha256 runtimeSha256 testScript reviewer',
+               'local root project profile')
     source_root = canonical_path(reviewed['checkout'], 'Root project checkout')
     if (overlaps(source_root, ROOT) or overlaps(source_root, worker_state)
             or legacy is not None and overlaps(source_root, legacy)):
@@ -574,12 +584,13 @@ def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_
     target = reviewed['target']
     validate_target(target)
     repository = re.fullmatch(r'https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)\.git', target['repository'])
-    owner = reviewed['owner']
+    owner = reviewed.get('owner')
     fields(reviewed['git'], 'path sha256', 'root Git pin')
-    if (repository is None or not isinstance(owner, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,38}', owner)
+    if (repository is None
             or not isinstance(reviewed['tree'], str) or not re.fullmatch('[a-f0-9]{40}', reviewed['tree'])
-            or not all(digest(reviewed[key]) for key in ('recipeManifestSha256', 'runtimeSha256'))
-            or not isinstance(reviewed['testScript'], str) or not re.fullmatch(SCRIPT_NAME, reviewed['testScript'])):
+            or not proposal_only and (not isinstance(owner, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,38}', owner)
+                or not all(digest(reviewed[key]) for key in ('recipeManifestSha256', 'runtimeSha256'))
+                or not isinstance(reviewed['testScript'], str) or not re.fullmatch(SCRIPT_NAME, reviewed['testScript']))):
         raise Refused('Reviewed root profile differs from the selected project, recipe or runtime')
     repository = repository.group(1)
     if runtime is not None and (source_root != runtime.root.resolve() or repository != runtime.repository
@@ -590,13 +601,24 @@ def root_review_profile(selection, runtime, worker_state, legacy=None, *, local_
     if any(any(part.startswith('.') or part == 'node_modules' for part in PurePosixPath(name).parts)
            or any(PurePosixPath(name).is_relative_to(p) for p in PROTECTED) for name in allowed):
         raise Refused('Reviewed root profile includes a protected path')
-    config = {'repository': repository, 'owner': owner, 'branch': target['branch'],
+    config = {'repository': repository, 'branch': target['branch'],
               'productionUrl': runtime.destination if runtime is not None and not local_task else None,
               'label': 'aim-ci', 'product': '.', 'allowedPaths': allowed,
-              'maximumChangedLines': 160, 'rootProfileSha256': pin,
-              'reviewPolicy': {'mode': 'human-local', 'reviewer': reviewed['reviewer']}}
-    review_policy(config)
+              'maximumChangedLines': 160, 'rootProfileSha256': pin}
+    if proposal_only:
+        config['intakeScope'] = {'kind': INTAKE_PROFILE_KIND, 'version': 1, 'scope': 'proposal-only',
+                                 'buildQualification': 'not-selected'}
+    else:
+        config.update(owner=owner, reviewPolicy={'mode': 'human-local', 'reviewer': reviewed['reviewer']})
+        review_policy(config)
     return config, reviewed
+
+
+def require_candidate_profile(reviewed):
+    if reviewed.get('kind') == INTAKE_PROFILE_KIND:
+        raise Refused('Proposal-only intake profile cannot prepare or validate a candidate; '
+                      'separately qualified bindings and new explicit consent are required. '
+                      'Retained proposal conversion is not supported')
 
 
 def local_task_key(repository, task_id, *, continuation=False):
@@ -708,7 +730,7 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
         raise Refused('Installed live intake requires an explicit private key file')
     worker_state, legacy = state_root().resolve(), legacy_budget_path()
     config, reviewed = root_review_profile(root_profile, runtime, worker_state, legacy if installation else None,
-                                          local_task=local_task)
+                                          local_task=local_task, intake_only=intake_only)
     selection = root_task if local_task else root_issue
     label = 'Local task file' if local_task else 'Local Issue file'
     if not isinstance(selection, (tuple, list)) or len(selection) != 2:
@@ -776,6 +798,8 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
               'target': {**target, 'tree': reader.tree, 'checkout': str(checkout)},
               'allowedPaths': config['allowedPaths'], 'controllerSha256': resume_contract_sha(),
               'modelRequestSha256': fingerprint(request)}
+    if 'intakeScope' in config:
+        intent['intakeScope'] = config['intakeScope']
     if installation is not None:
         intent['controllerInstallation'] = installation
     if live_key_file is not None:
@@ -818,6 +842,12 @@ def inspect_root_admission(root_profile, root_issue=None, *, root_task=None, int
     preview = {'status': 'preview', 'executionAuthorized': False, 'liveModelAvailable': live_grant is not None,
                'sourceObservation': {'selectedFiles': 'match-committed-blobs', 'wholeWorktree': 'not-inspected'},
                'intentSha256': fingerprint(intent), 'intent': intent, 'modelRequest': request, 'budget': budget}
+    if 'intakeScope' in config:
+        preview['handoff'] = {
+            'status': 'proposal-only', 'available': ['inspect-retained-proposal'],
+            'blocked': ['candidate-preparation', 'technical-validation', 'project-execution'],
+            'nextRequirement': 'Separately qualified bindings and new explicit consent; retained proposal conversion is not supported',
+        }
     if local_task and runtime is None and live_grant is None:
         from .budget import verified_history
         ledger = Budget.read_existing(worker_state, legacy)
@@ -856,6 +886,7 @@ def root_git(*args, cwd, executable='git'):
 
 
 def root_candidate(directory, state, config, reviewed, *, prepare=False):
+    require_candidate_profile(reviewed)
     checkout = directory / 'candidate'
     baseline = state['baseline']
     branch = 'aim-ci-review-' + state['key']
@@ -1012,6 +1043,7 @@ def inspect_intake_candidate(root_profile, root_issue, root_task, retained_intak
         raise Refused('Retained intake candidate requires one explicitly selected offline root input')
     config, reviewed, requirement, intake = inspect_root_admission(
         root_profile, root_issue, root_task=root_task, intake_only=True)
+    require_candidate_profile(reviewed)
     field = 'task' if root_task is not None else 'issue'
     identity = {key: value for key, value in requirement.items() if key != 'updatedAt'}
     current = intake['intent']
@@ -1245,6 +1277,9 @@ def inspect_candidate_validation(root_profile, root_task, retained_intake, selec
     if (installation is None or TRANSPORTS.get() is not None or TARGET.get() is not None
             or root_task is None or retained_intake is None):
         raise Refused('Candidate validation requires a verified installed controller and retained live task')
+    _, reviewed = root_review_profile(root_profile, None, state_root().resolve(), legacy_budget_path(),
+                                      local_task=True, intake_only=True)
+    require_candidate_profile(reviewed)
     if not isinstance(selection, (tuple, list)) or len(selection) != 2:
         raise Refused('Candidate validation requires an independently reviewed file and its operator pin')
     path = canonical_path(str(selection[0]), 'Candidate validation review')

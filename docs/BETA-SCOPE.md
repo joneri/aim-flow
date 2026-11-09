@@ -1,11 +1,11 @@
-# AIM Flow 0.1.0-beta.2 scope
+# AIM Flow 0.1.0-beta.3 scope
 
 ## Available paths
 
 1. Read-only project discovery and adaptation from committed files.
 2. Project-aware installation with a frozen, hashed project receipt.
 3. Explicit schema 3 `npm-source-check` planning and reviewed execution.
-4. Project-bound intake preview; actual OpenAI dispatch only with the separate project grant, consent and retained shared budget history.
+4. Project-bound intake preview, including a proposal-only profile before build selection. Actual OpenAI dispatch requires a separate project grant, consent and retained shared budget history. Proposal-only profiles cannot prepare candidates, attach validation or execute project code.
 5. A reviewed npm/Vite offline-build route with prior evidence for one pilot project and pinned environment.
 
 These paths have different prerequisites and evidence. Their presence is not a general readiness or execution guarantee.
@@ -32,7 +32,7 @@ These paths have different prerequisites and evidence. Their presence is not a g
 - Strict denial of container-internal loopback, which remains available in the qualified runtime.
 - Reusable issue-to-production delivery for arbitrary external projects.
 
-Legacy project-specific delivery routes are excluded from this distribution. No new repository is granted merge or deployment authority. The first AIWEBSITE pilot has not been performed as part of this release.
+Legacy project-specific delivery routes are excluded from this distribution. No new repository is granted merge or deployment authority. Customer-specific qualification is separate from this release.
 
 ## Pilot fit
 

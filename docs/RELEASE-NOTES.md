@@ -1,3 +1,32 @@
+# AIM Flow 0.1.0-beta.3
+
+Preview a local task before choosing a build setup.
+
+## Changes
+
+- Added a strict proposal-only local task profile. A no-key preview binds the selected committed source, Git identity and task without requiring invented build/runtime/reviewer fields.
+- Bound the proposal-only scope into the request, intent, grant and retained state. Existing shared-budget and exact-consent requirements remain in place.
+- Explicitly refused candidate preparation, technical validation, execution and conversion of a retained proposal to an execution profile.
+- Ported only the applicable controller, test and documentation changes from upstream commit `af7e45f744c6dd58f57cb714a4ed424f7a9077b1`; retained the product-only archive boundary.
+- Updated the quickstart, website download and release metadata. No customer source, private state or qualification journals are included.
+
+## Verification
+
+Local validation on 9 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **277 tests run, 276 passed, 1 skipped**, 275.785 seconds.
+- The seven new profile tests passed, including a real installed no-key preview and refusal cases. The existing separate-candidate validation case remains skipped because it needs two verified fixture packages.
+- Node: **12 tests passed**, no failures or skips.
+- Independent review: controller change matches the reviewed upstream patch; candidate/refusal, consent, scope, budget and resume boundaries remain enforced.
+- Source inventory: 69 files verified. All 50 controller payload files in the download match the reviewed current source exactly.
+- Branded download: trusted-source bootstrap match, eight payload hashes, fresh installation and expected unconfigured readiness exit 3 passed.
+- Static website: 18 local links/assets checked. Recursive current-file and archive scan: 184 members, no excluded legacy-demo matches.
+- Controller archive SHA-256: `dcaae17ef81363d3564beb08933e59fcf8e15d84c64297856c86ec6b71769181`.
+- Controller manifest SHA-256: `d7104a7d39e186f763a739c2df3995d0aa44ce075b0518393af672845afbf270`.
+- Download ZIP SHA-256: `83e6a7e587d3e57b95cbc799738853012f058c3cb4881815253f3d746371ff43`.
+
+No live model, VM or project-script execution was performed for this release. Proposal preview is not live board integration, build readiness or product acceptance. The public workflow runs portable contracts and explicitly reports a skip for profile tests if Git 2.54+ is unavailable; the real-Git profile results above are local.
+
 # AIM Flow 0.1.0-beta.2
 
 Product-only Beta packaging with the approved official AIM A identity.

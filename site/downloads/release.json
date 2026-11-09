@@ -1,21 +1,24 @@
 {
   "bootstrapSha256": "9aa0392150372c03392f16303557d2618243270d65ced5aab31817d0bfd51203",
   "channel": "beta",
-  "controllerArchive": "controller/aim-ci-control-0.1.0-beta.2.tar.gz",
-  "controllerArchiveSha256": "1608173c6e9e57414868ad07dd7b9ee6907241ca2092811781765b7eb8a69d04",
-  "controllerManifestSha256": "c00b9fdcdc5b5c100e0ec44e624cc9379790526c3a8994e140d750943b7c1453",
+  "controllerArchive": "controller/aim-ci-control-0.1.0-beta.3.tar.gz",
+  "controllerArchiveSha256": "dcaae17ef81363d3564beb08933e59fcf8e15d84c64297856c86ec6b71769181",
+  "controllerManifestSha256": "d7104a7d39e186f763a739c2df3995d0aa44ce075b0518393af672845afbf270",
   "filesSha256": {
-    "BETA-SCOPE.md": "42f002bc9938830fd241d24c8c466c1efc324c0484dd0cd8c396b63d3d142352",
+    "BETA-SCOPE.md": "0a9f86cc474cdd5bb18772338403d6419b0a4df6b3fed01cec040c84f6c322a6",
     "LICENSE": "5bac14f1eeb03a07bea99437ace3fd87926d9507483cd49cd552e62753af795d",
-    "README.md": "2c9bf3a6442ae1287575c2b73ada67a05573a7e3c2ede9ce527a53457d537b0b",
+    "README.md": "122f192f2d02bf5741ab684415992207578dc31839e304f465907680a8215c86",
     "THIRD-PARTY-NOTICES.md": "e299962d1fbf476b3f3e9f8010c36b94d82665da8d3f66e34d9f9baedbde46b3",
-    "controller/README.md": "3534036a7770e2e61d2bb5652fc4d65b4c2cedf1b1d76598466d2198fec6dfcb",
+    "controller/README.md": "e015fec56f0a6bdd44dcdaf07bed27080c320fb58426237a6f308bc4367dd668",
     "controller/aim-ci-bootstrap.pyz": "9aa0392150372c03392f16303557d2618243270d65ced5aab31817d0bfd51203",
-    "controller/aim-ci-control-0.1.0-beta.2.tar.gz": "1608173c6e9e57414868ad07dd7b9ee6907241ca2092811781765b7eb8a69d04",
-    "controller/release.json": "13b764b583240de251b3195be977686ebdd7c398fb4c8e879ab33cb2333880d1"
+    "controller/aim-ci-control-0.1.0-beta.3.tar.gz": "dcaae17ef81363d3564beb08933e59fcf8e15d84c64297856c86ec6b71769181",
+    "controller/release.json": "2fc400d5e1ba421fa1a8e453f17bb829c95b7bbabedd535e7fbbfbf677e8d6bf"
   },
   "license": "MIT",
   "product": "AIM Flow",
+  "upstreamChanges": [
+    "af7e45f744c6dd58f57cb714a4ed424f7a9077b1"
+  ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",
-  "version": "0.1.0-beta.2"
+  "version": "0.1.0-beta.3"
 }

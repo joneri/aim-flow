@@ -5,6 +5,58 @@ standard library. Project inspection also needs an existing local Git checkout
 and a real Git 2.54.0 or newer executable. The local workflow was tested on
 macOS. Git, Node and npm are unnecessary for installation.
 
+## Preview a local task before build selection
+
+An unsupported or not-yet-selected build does not prevent local proposal
+intake. Independently review and pin this exact profile outside the project,
+controller and existing worker state:
+
+```json
+{
+  "kind": "local-task-intake-profile",
+  "version": 1,
+  "scope": "proposal-only",
+  "checkout": "/absolute/project/path",
+  "target": {"repository": "https://github.com/owner/project.git", "branch": "main", "commit": "<full committed HEAD>"},
+  "tree": "<full committed tree>",
+  "git": {"path": "/absolute/selected/git", "sha256": "<verified executable SHA-256>"},
+  "allowedPaths": ["src/pages/index.astro"]
+}
+```
+
+These are the only fields. There are no recipe/runtime/test/reviewer
+placeholders. Use a bounded, independently pinned `local-task` v1 file
+with exactly `kind`, `version`, `id`, `title` and `body`. Its body needs
+`## Scope` and `## Acceptance criteria` with a `- [ ]` outcome. Label a
+local card fixture honestly; this is not a Kanban integration or proof
+of the card author's identity.
+
+```sh
+"$python" -IBS "$installation/aim-ci-control.py" preview-root-admission \
+  --manifest-sha256 "$manifest_sha256" \
+  --state-dir "$existing_worker_state" --legacy-budget "$original_legacy_budget" \
+  --profile "$profile" --profile-sha256 "$profile_sha256" \
+  --task-file "$local_task" --task-sha256 "$local_task_sha256"
+```
+
+This no-key preview verifies the installed controller, local commit/tree,
+origin and selected committed file bytes, and reads the established shared
+budget without changing it. Unselected dirty files are not inspected or
+modified. The explicit proposal-only scope is bound into the request,
+intent, state and any project grant. The preview is not permission to
+transfer source or call a model. One actual proposal still requires a
+separately approved project-bound v3 grant, exact live intent and existing
+shared-budget capacity. Exhausted history remains exhausted.
+
+After a separately authorized proposal, the supported handoff is local
+inspection of the retained proposal and receipt. Nothing is applied.
+This profile cannot prepare a candidate, attach technical validation,
+execute project code or establish product acceptance. A build needs
+separately qualified bindings and new explicit consent. Conversion of a
+retained proposal from this profile to an execution profile is not
+supported; changing profile fields does not upgrade its consent.
+Existing root profile v2 and legacy grant/recovery behavior are unchanged.
+
 ## Obtain the Beta bundle
 
 Use the current AIM Flow Beta download and its separately trusted checksum. The outer distribution contains MIT and artwork notices plus current instructions; its `controller/` directory contains the controller archive, bootstrap and detailed guide. Installation proves package integrity, not runtime readiness or product acceptance.

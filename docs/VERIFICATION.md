@@ -12,7 +12,7 @@ On 9 November 2026, controller source `783cb975f897b3179f3a8492a98b24fcc48dead6`
 - All owned containers and the derived image were confirmed absent afterward; the base image was retained and the VM stopped.
 - No model calls, downloads, publication or deployment.
 
-This summary does not publish private operator journals. The retained qualification receipt is identified by SHA-256 `4b53c2e5bc6b95a2541b4646f73007fbcdf6487ff24e7ae757bc864eb88a191d`. A digest is an integrity reference, not independent public verification. Beta.2 has a product-only package layout and reviewed source changes that remove unrelated legacy integrations. Its regression and installation checks are separate from the earlier runtime result. No VM, model call or project execution was repeated for this cleanup.
+This summary does not publish private operator journals. The retained qualification receipt is identified by SHA-256 `4b53c2e5bc6b95a2541b4646f73007fbcdf6487ff24e7ae757bc864eb88a191d`. A digest is an integrity reference, not independent public verification. Beta.2 has a product-only package layout and reviewed source changes that remove unrelated legacy integrations. Its regression and installation checks are separate from the earlier runtime result. Beta.3 adds proposal-only local task profiles with separate regression and installed-preview checks. No VM, model call or project execution was repeated for either packaging update.
 
 ## What this does not prove
 

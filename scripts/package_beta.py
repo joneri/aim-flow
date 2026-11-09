@@ -17,6 +17,7 @@ if sys.version_info < (3, 11):
     parser.error('Python 3.11 or newer is required')
 version = (ROOT / 'VERSION').read_text().strip()
 license_bytes = (ROOT / 'LICENSE').read_bytes()
+inventory = json.loads((ROOT / 'provenance/upstream-files.json').read_text())
 subprocess.run([sys.executable, str(ROOT / 'scripts/verify_provenance.py')], check=True)
 if args.output.exists() or args.output.is_symlink():
     parser.error('Choose a new output directory')
@@ -63,7 +64,8 @@ The historical `aim-ci` names are intentionally preserved. See [BETA-SCOPE.md](B
     files['BETA-SCOPE.md'] = (ROOT / 'docs/BETA-SCOPE.md').read_bytes()
     files['release.json'] = (json.dumps({
         'product': 'AIM Flow', 'version': version, 'channel': 'beta', 'license': 'MIT',
-        'upstreamCommit': json.loads((ROOT / 'provenance/upstream-files.json').read_text())['upstreamCommit'],
+        'upstreamCommit': inventory['upstreamCommit'],
+        'upstreamChanges': [change['commit'] for change in inventory.get('upstreamChanges', [])],
         'controllerArchive': 'controller/' + release['archive'], 'controllerArchiveSha256': release['archiveSha256'],
         'controllerManifestSha256': release['manifestSha256'],
         'bootstrapSha256': release['filesSha256']['aim-ci-bootstrap.pyz'],
