@@ -4,7 +4,7 @@
 
 **Understand the project. Review the next step. Keep the evidence.**
 
-AIM Flow is an experimental local controller for making AI-assisted delivery more deliberate and inspectable. It reads a repository's committed workflow, proposes a project-specific plan and binds approved operations to exact inputs. The goal is a repeatable path from intent to verified delivery, with clear boundaries rather than a blanket promise of autonomy.
+AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
 **Version:** `0.1.0-beta.2` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
@@ -35,10 +35,10 @@ Start with [archive verification and read-only installation checks](docs/QUICKST
 
 AIM Flow does **not** yet offer universal build support, unattended delivery for arbitrary projects, multi-user governance, a qualified hostile-code sandbox or a general browser-testing path. A source check is not an application build, deployment or product-owner acceptance. See [current boundaries](docs/BETA-SCOPE.md) before planning a pilot.
 
-## Compatibility and provenance
+## Project background
 
-The engine is derived from [`joneri/agenticpipeline` at `783cb975`](https://github.com/joneri/agenticpipeline/tree/783cb975f897b3179f3a8492a98b24fcc48dead6), with the public distribution separated from legacy project-specific integrations. The source inventory distinguishes retained upstream bytes from reviewed product changes. Earlier archive layouts are not accepted by this product-only distribution.
+AIM Flow is the standalone public beta of AIM's delivery-controller work. This repository contains the product's code, documentation and website. You do not need a separate development repository or demo application to install it.
 
-The `aim-ci` Python module and installed manager names remain for compatibility with the project inspection/build interface. `aim-flow.py` is the source-checkout entry point; installed users run `aim-ci-control.py`. Legacy project-specific API and production-release entry points are not part of this distribution. No unrelated application, dependency manifest or deployment target is bundled.
+The [source inventory](provenance/upstream-files.json) records where the code came from and which parts have changed. Installation commands and requirements are explained in the [quickstart](docs/QUICKSTART.md).
 
 [Artwork attribution and notices](THIRD-PARTY-NOTICES.md) · [Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)

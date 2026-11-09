@@ -19,7 +19,7 @@ From this repository, select your Python executable and a new output directory:
 python3 scripts/package_beta.py --output /absolute/path/to/new-beta-bundle
 ```
 
-The output contains a branded ZIP and checksum. The ZIP includes the controller archive and bootstrap under `controller/`, current instructions and the MIT notice. The installed manager and inner archive retain their `aim-ci` names. Building a package does not run project code, call a model or authorize execution.
+The output contains a branded ZIP and checksum. The ZIP includes the controller archive and bootstrap under `controller/`, current instructions and the MIT notice. Some command files still use the earlier `aim-ci` name, including the installed `aim-ci-control.py` manager. They are included parts of AIM Flow, not a separate product you need to install. Building a package does not run project code, call a model or authorize execution.
 
 ## Verify and install
 
@@ -56,4 +56,4 @@ Use [project-aware installation](aim-ci-install.md#install-for-a-projects-own-bu
 
 For this beta, a pilot should select one meaningful existing source-only npm check. It must fit the [supported contract](BETA-SCOPE.md), including explicit input selection and no dependency installation. Review its script and all selected code before preparing any runtime. Each preparation and execution needs the matching exact-intent consent and its own applicable limits.
 
-Never paste credentials into issues or commit them. Model intake is optional, separate and budget-bound. Do not start with the legacy live worker entry points.
+Never paste credentials into issues or commit them. Model intake is optional, separate and budget-bound. Start with the documented inspection commands before enabling any execution.
