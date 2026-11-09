@@ -1,33 +1,39 @@
 # AIM Flow Beta identity
 
-## Core idea
+## Identity
 
-Three paths converge into a forward arrow: project context, a defined task and a selected check moving toward inspectable evidence. The mark is original vector artwork prepared for AIM Flow. No trademark clearance has been performed.
+Use the official AIM folded A and established AIM lettering. The original gold/orange apex, blue base and cyan-blue foot stay unchanged. Flow extends the family in blue/cyan; a gold BETA badge clearly identifies the technical preview.
+
+The source A is reused from the approved AIM asset, not regenerated or redrawn. Source SHA-256: `5e1cd88bed8e78b5dfe08238b24c9006d1dac9a85fcd56779c30eef6c97ff3d7`.
 
 ## Assets
 
-- `aim-flow-beta-light.svg`: dark wordmark and Beta badge, transparent background, for light surfaces.
-- `aim-flow-beta-dark.svg`: light wordmark and Beta badge, transparent background, for dark surfaces.
-- `aim-flow-mark.svg`: square ink/lime symbol for avatars and app icons.
-- `aim-flow-mark-mono.svg`: one-color ink symbol with transparent background.
-- `aim-flow-beta-light.png`: 1400-pixel-wide raster wordmark for common office tools.
-- `../marketing/aim-flow-beta-social.svg` and `.png`: 1200 × 630 launch / social-sharing card.
+- `aim-flow-beta-light.svg` / `.png`: transparent lockup for light surfaces.
+- `aim-flow-beta-dark.svg` / `.png`: transparent lockup for dark surfaces; only AIM lettering is rendered white.
+- `aim-flow-mark.svg` / `.png`: original A in a square presentation frame.
+- `official-aim-source.png`: byte-identical approved source artwork.
+- `../marketing/aim-flow-beta-social.svg` / `.png`: 1200 × 630 launch card.
 - `../marketing/aim-flow-beta-overview.pdf`: one-page product overview.
+
+The SVG compositions embed the official raster image and outlined Flow lettering. No vector master of the original A is claimed. Preserve source attribution and notices in `BRAND-NOTICES.txt`.
 
 ## Color
 
-- Ink: `#17211C`. Main text, dark backgrounds and primary buttons.
-- Paper: `#F4F5EF`. Main light surface.
-- Signal lime: `#D7FB5A`. Direction, emphasis and Beta status. Use ink text on lime.
-- Muted text: `#5A655C` on paper; `#A6B5AA` on ink.
-- Light rule: `#D5D9CF`.
+- Navy: `#06142D` for text and dark surfaces.
+- White/pale blue: `#FFFFFF` and `#F6F8FC` for light surfaces.
+- Blue: `#0867E8` for links, actions and the Flow extension.
+- Cyan: `#00B8E7` for Flow accents.
+- Gold: `#FFC735` for Beta labeling and directional emphasis.
+- Muted text: `#52627B` on light surfaces, `#ADC0DC` on navy.
 
-## Type and space
+## Legibility
 
-The website uses system Arial/Helvetica sans-serif and Courier New for technical labels. No external fonts are downloaded. SVG wordmarks and social-card text are converted to outlines for consistent rendering. Those outlines and the PDF use DejaVu Sans; its applicable license is preserved in `THIRD-PARTY-NOTICES.txt`.
+Use the full horizontal lockup at 240 px wide or larger. Below that, use the A-only mark with visible AIM Flow text and a separate Beta badge, as implemented in the mobile website header. Keep clear space around the logo. Never stretch, rotate, recolor or redraw the A. Do not mix the earlier arrow mark or lime identity into the current design.
 
-Keep clear space of at least one-quarter of the symbol height around the lockup. Keep the Beta badge visible. Prefer a minimum lockup width of 175 px; use only the mark for smaller placements. Never stretch, add glow effects, detach the badge to imply a stable release, or place lime text on a light surface.
+## Type
+
+The website uses system Arial/Helvetica and Courier New. No external font service is called. Marketing text is outlined or embedded DejaVu Sans; preserve its notices. The original AIM letterforms are retained from the approved source.
 
 ## Voice
 
-Clear, practical and precise. Lead with the value of understanding the project, defining the task and checking the result. Explain boundaries in plain language. Treat autonomous delivery as a direction until the relevant path has supporting evidence.
+Clear and practical. Lead with project context, a defined task and inspectable evidence. Keep current Beta capabilities separate from future autonomous delivery. Do not invent customer counts, savings, success rates, security guarantees or testimonials.

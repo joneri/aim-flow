@@ -6,7 +6,7 @@
 
 AIM Flow is an experimental local controller for making AI-assisted delivery more deliberate and inspectable. It reads a repository's committed workflow, proposes a project-specific plan and binds approved operations to exact inputs. The goal is a repeatable path from intent to verified delivery, with clear boundaries rather than a blanket promise of autonomy.
 
-**Version:** `0.1.0-beta.1` · **License:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.1` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -41,4 +41,4 @@ The engine comes from [`joneri/agenticpipeline` at `783cb975`](https://github.co
 
 The retained `aim-ci.py`, `aim-ci-release.py` and `api-story-probe.py` are legacy source entry points. Do not use them as a generic AIM Flow runtime: their original registered route targets the upstream repository. They are fenced in a verified installation. Profiles and the two FakeATG dependency manifests are package compatibility inputs, not a bundled demo application or a grant to deploy it.
 
-[Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+[Artwork attribution and notices](THIRD-PARTY-NOTICES.md) · [Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)

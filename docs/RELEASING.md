@@ -7,7 +7,7 @@
 5. Review and test the static `site/` directory. It needs no package install, analytics, form service or external font.
 6. Search the exact staged files for credentials, private paths, operator evidence and accidental application assets. Never publish `.env`, `.aim`, `.sandbox` or runtime journals.
 7. After owner approval, create the intended repository and publish only reviewed files. Keep any release marked pre-release. The website presents the same Beta scope as the repository.
-8. Set the repository’s Pages build source to **GitHub Actions**. The prepared workflow publishes `site/` on a `main` push only after the portable offline checks pass. Pull requests never deploy. It uses the `github-pages` environment and job-scoped Pages permissions; it does not migrate any upstream app release automation.
+8. Set the repository’s Pages build source to **GitHub Actions**. The prepared workflow publishes `site/` on a `main` push or explicit `main` workflow dispatch only after the portable offline checks pass. Pull requests never deploy. It uses the `github-pages` environment and job-scoped Pages permissions; it does not migrate any upstream app release automation.
 9. Verify the expected remote commit, required CI and actual HTTPS page after publication. Until these checks pass, call it prepared, not live.
 
 Do not migrate the upstream live automation, repository protections, budgets, API credentials or deployment profiles merely because a new repository exists.

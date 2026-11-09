@@ -13,6 +13,6 @@ If the first Pages job runs before Pages is enabled, configure Pages and rerun t
 
 ## Current reviewed download
 
-ZIP SHA-256: `30ec86053448216f4258ee06da99c4fe4d1308d018e2899d74b46074d0739317`
+ZIP SHA-256: `3df0af6ac02ea561076abf1e25e625d6bce1e4d59cb5f17ba31fad543684edd7`
 
 The source checkout's `scripts/check_bundle.py` binds the bootstrap to the preserved trusted source before testing it. End users must independently trust their expected download/bootstrap hashes as described in the quickstart.

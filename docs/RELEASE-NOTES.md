@@ -7,7 +7,7 @@ Initial public packaging of the existing bounded controller as AIM Flow Beta. Pu
 - Exact 52-file controller extraction from `joneri/agenticpipeline` commit `783cb975f897b3179f3a8492a98b24fcc48dead6`.
 - MIT license, compatibility/source inventory, current quickstart, Beta boundaries and release checklist.
 - AIM Flow source-checkout convenience wrapper, separate from installed `aim-ci` command names.
-- New Beta identity, static GitHub Pages site and launch material.
+- Approved official AIM A identity, static GitHub Pages site and matching launch material. Original AIM source attribution is retained separately from the MIT code license.
 - Branded download wrapper with the unchanged controller archive, bootstrap, license and instructions.
 
 ## Local checks, 9 November 2026

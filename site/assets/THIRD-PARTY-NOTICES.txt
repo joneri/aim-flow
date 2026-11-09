@@ -1,3 +1,26 @@
+AIM Flow brand artwork and third-party notices
+
+ORIGINAL AIM IDENTITY
+Original AIM artwork: Jonas Eriksson (Agile iteration method, AIM).
+Source: https://github.com/joneri/agile-iteration-method/blob/main/github-pages/assets/images/aim-4-logo.png
+Source SHA-256: 5e1cd88bed8e78b5dfe08238b24c9006d1dac9a85fcd56779c30eef6c97ff3d7
+Source identity/provenance: https://github.com/joneri/agile-iteration-method/blob/main/github-pages/assets/images/README.md
+
+The original source is unchanged. This AIM Flow composition isolates the original A and AIM lettering, omits the campaign numeral 4, adds Flow lettering and a Beta badge, and presents the AIM letters in white on dark backgrounds. The A's geometry and colors remain unchanged. The SVG files embed the original raster artwork; they are not a new vector master of the A.
+
+The approved AIM press package carries the repository documentation license, Creative Commons Attribution 4.0 International (CC BY 4.0). Preserve appropriate attribution, link the license and identify changes.
+https://creativecommons.org/licenses/by/4.0/
+https://github.com/joneri/agile-iteration-method/blob/main/docs/LICENSE-DOCS
+
+The browser icon is the existing official AIM A-only icon:
+https://github.com/joneri/agile-iteration-method/blob/main/github-pages/assets/images/aim-icon.png
+
+CODE AND COMPOSITION
+The AIM Flow repository's MIT code license is separate from the original AIM artwork attribution and the font licenses. It does not replace or relicense those materials.
+
+TYPOGRAPHY
+Flow lettering and standalone marketing text use DejaVu Sans outlines or embedded glyphs. The website otherwise uses system fonts and downloads no external fonts. Applicable DejaVu notices follow.
+
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: DejaVu fonts
 Upstream-Author: Stepan Roh <src@users.sourceforge.net> (original author),
