@@ -50,3 +50,5 @@ The [source inventory](provenance/upstream-files.json) records where the code ca
 Unreleased development: [project-specific agent onboarding](docs/PROJECT-ONBOARDING.md) exports committed evidence and retains source-cited installation, test, CI and deployment reasoning in a separate project instance. The optional `onboard-api` route can dispatch a separately approved Sol assessment and retain the resulting instance. A first live pilot returned useful but incomplete analysis. The compact response and explicit excerpt correction are offline-tested; no route executes the proposed plan.
 
 Unreleased development: [project-local validation handoffs](docs/PROJECT-VALIDATION.md) consume a reviewed onboarding instance and explicit project declaration. They preserve actual npm roots, lifecycle hooks and CI distinctions without executing the project or upgrading the existing runners.
+
+The unreleased project-local validation route now supports explicitly authorized, single-attempt offline npm jobs and source-bound execution receipts. See [project validation](docs/PROJECT-VALIDATION.md) for the preview, containment, runtime review and verification boundaries.

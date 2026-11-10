@@ -1,8 +1,9 @@
 {
-  "controllerFiles": 58,
+  "controllerFiles": 59,
   "controllerPaths": [
     "aim-flow.py",
     "lib/flow_api_delivery.py",
+    "lib/flow_onboarding_delivery.py",
     "docs/API-DELIVERY.md",
     "aim-ci.py",
     "aim-ci-control.py",
@@ -52,13 +53,13 @@
     "lib/aim_ci/npm_acquisition.py",
     "lib/aim_ci/operator_readiness.py",
     "lib/aim_ci/project_installation.py",
-    "lib/aim_ci/source_subset.py",
-    "lib/aim_ci/model_support.py",
     "lib/aim_ci/project_onboarding.py",
-    "docs/PROJECT-ONBOARDING.md",
-    "lib/flow_onboarding_delivery.py",
     "lib/aim_ci/project_validation.py",
-    "docs/PROJECT-VALIDATION.md"
+    "lib/aim_ci/project_execution.py",
+    "docs/PROJECT-VALIDATION.md",
+    "docs/PROJECT-ONBOARDING.md",
+    "lib/aim_ci/source_subset.py",
+    "lib/aim_ci/model_support.py"
   ],
   "fileOrigins": {
     "aim-ci-control.py": {
@@ -249,6 +250,10 @@
       "kind": "modified",
       "upstreamSha256": "18fdbd5345317353225a868a802da589c5501cd3268d5660896844b723833dab"
     },
+    "lib/aim_ci/project_execution.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit project validation execution development"
+    },
     "lib/aim_ci/project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "457a8ce7046a021d4c8c39c3859d17e5a4fbe00d4308f2caf69da586803ce553"
@@ -373,6 +378,10 @@
       "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
       "upstreamSha256": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0"
     },
+    "tests/test_project_execution.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit project validation execution development"
+    },
     "tests/test_project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "fd04a40c373ff787801bf49575d6c119fb2e56cce23bf8975c1405b2891c4990"
@@ -415,13 +424,13 @@
     }
   },
   "files": {
-    "aim-ci-control.py": "904d2850a7fffad334299bfc33db2648f123f6bb471369d68eb34f3f08188978",
+    "aim-ci-control.py": "198b71a9858291680b70b99ae243c50c2cc0f2f298e68e59a349904740a45eff",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
     "aim-flow.py": "6847ede1ebbe0fa0ca57df5fcb5c350be53dbbfd07a71d4232d45dab2e4a1fcf",
     "docs/API-DELIVERY.md": "9ed67ce099fa031283d5a9c64ae9e114fdc01d5b8aa1ad8fd000a1b11bda700a",
     "docs/PROJECT-ONBOARDING.md": "e07aec6b3cd3ef6e9f9ce78ba7a5286173c3bb24fad17056050248603699aaaf",
-    "docs/PROJECT-VALIDATION.md": "42226bbce8da98e7d5b24f995ff20b6fd58c0eb0889491d0422691325f5254f8",
+    "docs/PROJECT-VALIDATION.md": "eee24041668580bde491d4a8d7fed0df423cfcffbd3abb2fefe501712f84ab24",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -438,7 +447,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "972882135c5051140ae2cda31f731290ed282d9982a3f071910a0a3cd3c5f3c2",
+    "lib/aim_ci/control_archive.py": "2d1de63112de4a7294cb86e8e994fce0bc52f089ac38c60dbc317b3481119bad",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -462,6 +471,7 @@
     "lib/aim_ci/products.py": "50008fc9cdaa45ecb32b9e2c39eb763efe74889dd881b943be4430231592dc20",
     "lib/aim_ci/project_adaptation.py": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282",
     "lib/aim_ci/project_discovery.py": "57db6306a45240e9d0ba1aa0aa837badc3238c7d2be3ff40f3ecc51fa6d9c393",
+    "lib/aim_ci/project_execution.py": "2cf0bbef9fdbae9741c2f6bc9010344c56567792e3887ed816850ade7257ae55",
     "lib/aim_ci/project_installation.py": "db9e2a40daf937cb0a303ac0937ddd9a42f98951ea4668bd734602ac0ef0da6f",
     "lib/aim_ci/project_onboarding.py": "6b496cbcac5174e477b764ce875d7064dd1ab2f7aa9466b97692964b160a94f2",
     "lib/aim_ci/project_validation.py": "0b606eaceb8a03a64eb9103e10f8c2413250fb26e2d583e7d23e8e8b28cf8d57",
@@ -492,6 +502,7 @@
     "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
     "tests/test_output_allowance.py": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5",
     "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
+    "tests/test_project_execution.py": "8690b1ee9da29a3434d277c636085379493f28366844b48157bba6d969112b82",
     "tests/test_project_installation.py": "f6b11b76ebfd6ff81ba2da1ccb02517940bfd4ea139d3e341908b20b1185e16c",
     "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
     "tests/test_project_onboarding.py": "c46fc2ba142f0e811ee75bc0647089f6356906e957afffca0a01e6b1a0c0f2b9",
