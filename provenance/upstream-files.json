@@ -1,5 +1,5 @@
 {
-  "controllerFiles": 56,
+  "controllerFiles": 58,
   "controllerPaths": [
     "aim-flow.py",
     "lib/flow_api_delivery.py",
@@ -56,7 +56,9 @@
     "lib/aim_ci/model_support.py",
     "lib/aim_ci/project_onboarding.py",
     "docs/PROJECT-ONBOARDING.md",
-    "lib/flow_onboarding_delivery.py"
+    "lib/flow_onboarding_delivery.py",
+    "lib/aim_ci/project_validation.py",
+    "docs/PROJECT-VALIDATION.md"
   ],
   "fileOrigins": {
     "aim-ci-control.py": {
@@ -82,6 +84,10 @@
     "docs/PROJECT-ONBOARDING.md": {
       "kind": "added",
       "source": "AIM Flow source-bound project onboarding development"
+    },
+    "docs/PROJECT-VALIDATION.md": {
+      "kind": "added",
+      "source": "AIM Flow project-local validation handoff development"
     },
     "docs/aim-ci-discover-project.md": {
       "kind": "modified",
@@ -251,6 +257,10 @@
       "kind": "added",
       "source": "AIM Flow source-bound project onboarding development"
     },
+    "lib/aim_ci/project_validation.py": {
+      "kind": "added",
+      "source": "AIM Flow project-local validation handoff development"
+    },
     "lib/aim_ci/recipe_plan.py": {
       "kind": "modified",
       "upstreamSha256": "af58d7873119611750a64d91f32dd5f7b827fbe365dadb67a492bb637253b6b7"
@@ -379,6 +389,10 @@
       "kind": "modified",
       "upstreamSha256": "6967571de046f9e7049bc2c37a0711d75c398da450469ead6de020d228fcfb15"
     },
+    "tests/test_project_validation.py": {
+      "kind": "added",
+      "source": "AIM Flow project-local validation handoff development"
+    },
     "tests/test_recipe_execution.py": {
       "kind": "unchanged",
       "upstreamSha256": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4"
@@ -401,12 +415,13 @@
     }
   },
   "files": {
-    "aim-ci-control.py": "bbd588b1f2d652d32a476ba899bdbb41e2a7cc318dc4f474b8e840b3e8a30c05",
+    "aim-ci-control.py": "904d2850a7fffad334299bfc33db2648f123f6bb471369d68eb34f3f08188978",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
     "aim-flow.py": "6847ede1ebbe0fa0ca57df5fcb5c350be53dbbfd07a71d4232d45dab2e4a1fcf",
     "docs/API-DELIVERY.md": "9ed67ce099fa031283d5a9c64ae9e114fdc01d5b8aa1ad8fd000a1b11bda700a",
     "docs/PROJECT-ONBOARDING.md": "e07aec6b3cd3ef6e9f9ce78ba7a5286173c3bb24fad17056050248603699aaaf",
+    "docs/PROJECT-VALIDATION.md": "42226bbce8da98e7d5b24f995ff20b6fd58c0eb0889491d0422691325f5254f8",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -423,7 +438,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "bc5ed002ffc6e2b130033ae33d7147d9d724aa659c1dd335fe75e17fa96762c5",
+    "lib/aim_ci/control_archive.py": "972882135c5051140ae2cda31f731290ed282d9982a3f071910a0a3cd3c5f3c2",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -449,6 +464,7 @@
     "lib/aim_ci/project_discovery.py": "57db6306a45240e9d0ba1aa0aa837badc3238c7d2be3ff40f3ecc51fa6d9c393",
     "lib/aim_ci/project_installation.py": "db9e2a40daf937cb0a303ac0937ddd9a42f98951ea4668bd734602ac0ef0da6f",
     "lib/aim_ci/project_onboarding.py": "6b496cbcac5174e477b764ce875d7064dd1ab2f7aa9466b97692964b160a94f2",
+    "lib/aim_ci/project_validation.py": "0b606eaceb8a03a64eb9103e10f8c2413250fb26e2d583e7d23e8e8b28cf8d57",
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
@@ -480,6 +496,7 @@
     "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
     "tests/test_project_onboarding.py": "c46fc2ba142f0e811ee75bc0647089f6356906e957afffca0a01e6b1a0c0f2b9",
     "tests/test_project_planning.py": "b4e2cb5b3c898bdcb62631465458cf15fbf3216a6861b6e0e41cbf781f1ab35a",
+    "tests/test_project_validation.py": "2979de61d29d76d66668998496bb9c6e84993cd6bbedead938bb2bd346e4f2bb",
     "tests/test_recipe_execution.py": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4",
     "tests/test_source_check.py": "d01e71f3cca32d3338bf941328a6b68f88091c9d1ac44137d703d26907d96cc3",
     "tests/test_source_free_release.py": "4113d5fa7515f68d7b9d557c7ba6a5dfcff894c70c04a93de979b21898e4d68c",

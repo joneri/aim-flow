@@ -68,6 +68,18 @@ def main():
             command.add_argument('--' + option, type=Path, required=True)
         for option in ('manifest-sha256', 'git-sha256', 'commit'):
             command.add_argument('--' + option, required=True)
+    validation_commands = ('plan-project-validation', 'verify-project-validation')
+    for name in validation_commands:
+        command = commands.add_parser(name, description='Bind a project-local validation handoff without executing project code.')
+        for option in ('instance', 'instance-controller', 'declaration', 'python'):
+            command.add_argument('--' + option, type=Path, required=True)
+        for option in ('manifest-sha256', 'instance-sha256', 'instance-controller-manifest-sha256', 'declaration-sha256', 'python-sha256'):
+            command.add_argument('--' + option, required=True)
+        if name == 'plan-project-validation':
+            command.add_argument('--output', type=Path, required=True)
+        else:
+            command.add_argument('--handoff', type=Path, required=True)
+            command.add_argument('--handoff-sha256', required=True)
     root_preview = commands.add_parser('preview-root-admission',
                                        description='Preview exact local root intake without transport.')
     for option in ('profile', 'state-dir', 'legacy-budget'):
@@ -260,6 +272,9 @@ def main():
     elif args.action in onboarding_commands:
         from aim_ci.project_onboarding import onboarding
         result = onboarding(ROOT, args)
+    elif args.action in validation_commands:
+        from aim_ci.project_validation import validation
+        result = validation(ROOT, args)
     elif args.action == 'discover-project':
         manifest = control_package.verify_installation(ROOT, args.manifest_sha256)
         from aim_ci.project_discovery import discover_project

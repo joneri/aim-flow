@@ -46,3 +46,12 @@ The legacy mini controller's models, prices and budget rules remain unchanged. O
 
 
 The compact onboarding correction adds local shape/length/array bounds, canonical wire-order checks, compact reference enrichment, CRLF preservation, excerpt omission disclosure, exact consent changes, omitted-gap rejection and aggregate quote-expansion limits. Its provider replies remain injected offline fixtures. The initial verbose live pilot returned an incomplete answer at its output cap; independently verified partial source citations are not evidence of a completed model assessment or plan qualification. See the [live-pilot boundary](PROJECT-ONBOARDING.md#initial-live-pilot-and-recovery-boundary).
+
+
+## Project-local validation handoffs (unreleased development)
+
+`test_project_validation.py` exercises a fresh installed controller against a separately pinned predecessor inventory and real committed fixture metadata. It covers normal npm install/run lifecycle declarations, independent job scopes, preserved agent unknowns/review qualifications, index-only and dirty-source exclusion, inventory/bytecode/link refusal, controller/interpreter/instance pins, exact verifier protocol, streaming metadata limits, invalid declarations and source/handoff drift. No npm or project command is executed by planning tests.
+
+The real AIWebSite handoff preserves root `npm ci` then `npm run ci:release-readiness`, separate root/API locks, three independent hosted references and a component-only `test:release-process` selection. Installed planning and freshness verification passed at the reviewed commit. This is an executable-command handoff, not runner dispatch or successful CI.
+
+A separate observed release-process attempt launched the actual npm script in a committed private snapshot under tested process-tree network and write restrictions. It stopped at fixture Git initialization because Apple Git required xcrun-cache writes outside the allowed root and access to `/dev/null`. The component did not pass; no uncontained retry or production deployment occurred. Runtime qualification remains open independently of handoff correctness.

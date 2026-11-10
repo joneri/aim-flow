@@ -76,6 +76,8 @@ FILES = (
     'lib/aim_ci/operator_readiness.py',
     'lib/aim_ci/project_installation.py',
     'lib/aim_ci/project_onboarding.py',
+    'lib/aim_ci/project_validation.py',
+    'docs/PROJECT-VALIDATION.md',
     'docs/PROJECT-ONBOARDING.md',
     'lib/aim_ci/source_subset.py',
     'lib/aim_ci/model_support.py',
