@@ -52,3 +52,9 @@ Unreleased development: [project-specific agent onboarding](docs/PROJECT-ONBOARD
 Unreleased development: [project-local validation handoffs](docs/PROJECT-VALIDATION.md) consume a reviewed onboarding instance and explicit project declaration. They preserve actual npm roots, lifecycle hooks and CI distinctions without executing the project or upgrading the existing runners.
 
 The unreleased project-local validation route now supports explicitly authorized, single-attempt offline npm jobs and source-bound execution receipts. See [project validation](docs/PROJECT-VALIDATION.md) for the preview, containment, runtime review and verification boundaries.
+
+The unreleased Linux container route can run reviewed Node 24 backend npm jobs
+with a private loopback namespace, offline cache and retained execution evidence.
+A real AIWebSite backend chain passed through the installed Flow controller.
+This is separate from hosted CI, full aggregate validation and release readiness;
+see the [container scope](docs/PROJECT-VALIDATION.md#linux-container-backend-jobs).

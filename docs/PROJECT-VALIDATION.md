@@ -74,3 +74,48 @@ A completed `result.json` records process outcomes, logical and resolved argv, p
 `verify-project-validation-run` uses the same inputs, state and externally retained `--receipt-sha256`. It verifies journal/intent/log/control bindings and rechecks retained source bytes/modes and compares currently retained output bytes with the recorded inventory, without rerunning the project. Missing or changed state is a verification failure, not an instruction to reset it.
 
 A successful process status does not independently establish test assertions, product acceptance, hosted CI, Windows coverage or release readiness. Inspect the raw output and review its meaning separately. The original handoff remains unapproved. Production deployment and external communication are outside this adapter; a successful component does not authorize them or upgrade other jobs.
+
+## Linux container backend jobs
+
+`run-project-container-validation --preview` derives one exact npm job from the
+same source-bound instance and declaration. An explicit `--authorize-intent`
+grants one fresh attempt. `verify-project-container-validation` verifies the
+retained receipt without dispatching another job. It never starts Colima or
+pulls an image: those are separate operator actions.
+
+The separate `aim-flow-project-container-spec` schema pins an already-local
+Linux Node image ID/repository digest, observed Node/npm versions, the local
+Docker executable/Unix socket, selected committed sources, content-only npm
+cache and explicit source/runtime reviews. Job commands still come from the
+validated committed manifests, never model prose. The normal npm lifecycle is
+preserved with offline/audit/fund/update settings and a clean environment.
+
+The controller creates a never-started staging container, uploads a retained
+regular-file tar archive and commits one local derived image. A fixed helper
+runs as nonroot PID 1 with inspector signal activation disabled, read-only
+rootfs, network:none, no host mounts/published ports/devices, no capabilities,
+no-new-privileges, no restart/healthcheck and explicit memory/process/tmpfs/time/
+output limits. The helper checks its exact baseline inputs and parent/child
+containment before invoking any project stage. Unknown effects retain evidence
+and refuse replay. Derived images remain local for review; completed job
+containers are removed only by exact owned identity.
+
+The network namespace has private loopback for HTTP fixtures and no external
+route. This is not the earlier macOS loopback policy. `/work` is noexec: explicit
+image Node invocations work, but native binaries and shebang executables in
+node_modules/.bin do not. This route is therefore not general frontend npm
+coverage. Existing macOS execution remains separate and unchanged.
+
+Original checkout and image baseline are read-only to the job. The private
+working copy is mutable during stages; source bytes/modes must be restored
+before/after stages. This is not atomic working-source immutability. The helper
+sweeps remaining same-UID processes in its private PID namespace before final
+inventories. Selected project code is reviewed, not treated as hostile:
+same-UID helper/project execution is not adversarial evidence trust separation.
+
+The bounded JSON report captures runtime, stage stdout/stderr/exit, source
+checks and output inventories before tmpfs disappears. It is reconciled with
+Docker's observed terminal status and retained control/effect hashes. Files
+created in tmpfs are not themselves preserved. A pass remains ready:false,
+acceptance:not-established and deployment:not-authorized. Hosted CI, Windows,
+browser acceptance and release publication are separate work.

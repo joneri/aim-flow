@@ -70,8 +70,9 @@ def main():
             command.add_argument('--' + option, required=True)
     validation_commands = ('plan-project-validation', 'verify-project-validation')
     execution_commands = ('run-project-validation', 'verify-project-validation-run')
-    for name in (*validation_commands, *execution_commands):
-        command = commands.add_parser(name, description=('Preview or explicitly execute a project-local npm job with retained offline evidence.' if name in execution_commands else 'Bind a project-local validation handoff without executing project code.'))
+    container_commands = ('run-project-container-validation', 'verify-project-container-validation')
+    for name in (*validation_commands, *execution_commands, *container_commands):
+        command = commands.add_parser(name, description=('Preview or explicitly execute a project-local npm job with retained offline evidence.' if name in (*execution_commands, *container_commands) else 'Bind a project-local validation handoff without executing project code.'))
         for option in ('instance', 'instance-controller', 'declaration', 'python'):
             command.add_argument('--' + option, type=Path, required=True)
         for option in ('manifest-sha256', 'instance-sha256', 'instance-controller-manifest-sha256', 'declaration-sha256', 'python-sha256'):
@@ -85,7 +86,7 @@ def main():
             command.add_argument('--execution-spec', type=Path, required=True)
             command.add_argument('--execution-spec-sha256', required=True)
             command.add_argument('--state', type=Path, required=True)
-            if name == 'run-project-validation':
+            if name in ('run-project-validation', 'run-project-container-validation'):
                 mode = command.add_mutually_exclusive_group(required=True)
                 mode.add_argument('--preview', action='store_true')
                 mode.add_argument('--authorize-intent')
@@ -286,6 +287,9 @@ def main():
     elif args.action in execution_commands:
         from aim_ci.project_execution import execution
         result = execution(ROOT, args)
+    elif args.action in container_commands:
+        from aim_ci.project_container import execution
+        result = execution(ROOT, args)
     elif args.action in validation_commands:
         from aim_ci.project_validation import validation
         result = validation(ROOT, args)
@@ -394,7 +398,7 @@ def main():
     else:
         result = control_package.readiness(ROOT, args.manifest_sha256, args.product or 'catalog', args.checkout)
     print(json.dumps(result, indent=2))
-    if args.action in execution_commands and result['status'] == 'failed':
+    if args.action in (*execution_commands, *container_commands) and result['status'] == 'failed':
         return 3
     return 3 if args.action == 'readiness' and not result['ready'] else 0
 

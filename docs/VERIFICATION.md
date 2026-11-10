@@ -65,3 +65,57 @@ A fresh installed controller executed the real AIWebSite release-process compone
 The initial frontend attempt correctly stopped when Info-ZIP requested a temporary sibling outside the declared exact archive-file boundary. Its failed receipt is retained. A subsequent explicit attempt used documented `ZIPOPT=-b` to place that temporary archive in already-permitted private scratch; no network or write boundary was broadened. A separately reviewed exact copied-source write exception supports the package test's timestamp mutation, with final source bytes and mode restored. npm 11.17 allowScripts warnings remain in evidence; the esbuild postinstall trace specifically shows exit 0, but no universal dependency-hook or hosted-npm equivalence is claimed.
 
 Backend HTTP fixtures require a separately qualified loopback profile and were not run. The full `ci:release-readiness` aggregate, hosted Actions, native Windows/PowerShell, browser acceptance and deployment remain unqualified. No model request, push, publication or deployment was made in this execution increment. The beta.8 download is unchanged; its bundle-equality gate intentionally differs from this unreleased source and requires a new versioned release rather than relabeling beta.8.
+
+## Project-specific container backend execution, 2026-11-10
+
+A fresh installed development controller executed AIWebSite's actual root
+`npm run ci:backend` at commit `27cdc01052a88f130ae1d794d2d2ef6ae652204a`.
+The command installed 81 backend packages from a content-only offline cache,
+then ran `npm run test:backend` and the real `node server/djmelo-api/test/run-tests.js`.
+It exited 0 in 0.685 seconds, emitted `ok`, and had empty stderr. The runner awaits
+its producer and mix-series suites before printing `ok`; it emits no numeric
+assertion count. This supersedes the earlier backend-unrun state above, not the
+remaining full-aggregate or release boundaries.
+
+The exact local official Linux ARM64 image was
+`sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9`:
+observed Node 24.22.2 and npm 11.19.1. A separate synthetic probe and the fixed
+Flow helper both qualified parent/child private-loopback HTTP, only-loopback
+interfaces/routes, denied external connections and protected-root writes.
+The helper rechecked all 45 selected source files and 81 cache inputs, and
+retained 1,506 output inventory entries before private tmpfs disappeared.
+Independent review reconciled installed bytes, archive contents, source modes,
+control hashes, effect journals, stage logs and terminal observations.
+
+Successful controller manifest:
+`eb048b59a638773bfda532d748c8ebf8473f58e8080ac3850623aae5350e9689`.
+Successful receipt:
+`8ad925cf5a3d69874b52f6a363c750ded9d3dfda495cf25ca485fb3c7d57bb23`.
+The original preparation attempt failed before creating any container because
+USTAR cannot encode long npm cache basenames. The correction uses locally
+constructed regular-file PAX inputs; the failed attempt was retained, not reset.
+
+Original checkout and image baseline remained protected. Private copied source
+was mutable during stages and exactly restored afterward, not atomically
+immutable. This is reviewed-code execution, not hostile same-UID evidence
+isolation. The noexec workspace supports this backend's explicit image Node
+commands but excludes native or shebang workspace CLIs. Only bounded reports
+and inventories persist, not generated tmpfs files. Completed job containers
+were removed; the derived image remains local for review. No hosted CI, native
+Windows/PowerShell, browser acceptance, full combined aggregate, model request,
+push, publication or deployment is established by this result. Beta.8 is unchanged.
+
+Final development checks: Python unittest reported 440 tests, 439 passed and one
+existing skip, including seven new Python container tests. Node tests passed
+30/30, including 14 helper tests. The invoking zsh wrapper subsequently exited
+1 while assigning its reserved `status` variable; the complete unittest `OK`
+log is retained separately from that wrapper error. The final help-description
+correction was checked with the focused installed preview tests and another
+actual backend run: exit 0, 0.774 seconds, identical scope and isolation.
+Final installed manifest:
+`9372865955822b3376ab7c6c8af336339ece6528ed97ee4cfd6b1349fcabdfcf`.
+Final execution receipt:
+`ff59f674561b27ae07c0c41cc3df7dc0b036b3a13427ee49a94c13a2edf772d7`.
+Both successful receipts remain preserved. Provenance covers 93 product files
+and 61 controller files. The unchanged beta.8 bundle-equality check still fails
+intentionally; a separate new versioned package is required.

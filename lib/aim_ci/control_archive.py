@@ -78,6 +78,8 @@ FILES = (
     'lib/aim_ci/project_onboarding.py',
     'lib/aim_ci/project_validation.py',
     'lib/aim_ci/project_execution.py',
+    'lib/aim_ci/project_container.py',
+    'lib/aim_ci/project_container_runner.cjs',
     'docs/PROJECT-VALIDATION.md',
     'docs/PROJECT-ONBOARDING.md',
     'lib/aim_ci/source_subset.py',
