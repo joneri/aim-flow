@@ -9,6 +9,13 @@ if sys.version_info < (3, 11):
 
 if sys.argv[1:] == ['--version']:
     print('AIM Flow 0.1.0-beta.8')
+elif sys.argv[1:2] == ['onboard-api']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_onboarding_delivery import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
 elif sys.argv[1:2] == ['deliver-api']:
     sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
     from flow_api_delivery import main

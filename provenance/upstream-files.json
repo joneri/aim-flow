@@ -1,5 +1,5 @@
 {
-  "controllerFiles": 55,
+  "controllerFiles": 56,
   "controllerPaths": [
     "aim-flow.py",
     "lib/flow_api_delivery.py",
@@ -55,7 +55,8 @@
     "lib/aim_ci/source_subset.py",
     "lib/aim_ci/model_support.py",
     "lib/aim_ci/project_onboarding.py",
-    "docs/PROJECT-ONBOARDING.md"
+    "docs/PROJECT-ONBOARDING.md",
+    "lib/flow_onboarding_delivery.py"
   ],
   "fileOrigins": {
     "aim-ci-control.py": {
@@ -266,6 +267,10 @@
       "kind": "added",
       "source": "AIM Flow Sol API beta.8 integration"
     },
+    "lib/flow_onboarding_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow authorized onboarding assessment dispatch development"
+    },
     "lib/openai_budget.py": {
       "kind": "modified",
       "upstreamSha256": "86fbae433114037019a1975d437ed144f420e04ac22dd4f2f2bc82dbcf0185e8"
@@ -340,6 +345,10 @@
       "kind": "modified",
       "upstreamSha256": "86a582d8e9e56e3a5f9b686f7fa2b4ac42e96f862d67e245e756fcafd30afcad"
     },
+    "tests/test_onboarding_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow authorized onboarding assessment dispatch development"
+    },
     "tests/test_operator_build.py": {
       "kind": "modified",
       "upstreamSha256": "3b244070eed86743fe66b745c26fe2e9372331927e95c82b3613f083df846ed3"
@@ -395,9 +404,9 @@
     "aim-ci-control.py": "bbd588b1f2d652d32a476ba899bdbb41e2a7cc318dc4f474b8e840b3e8a30c05",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
-    "aim-flow.py": "4bf84b5693befc03758cdf60999f59cd52d8b975f404ab6eb1837feeb97a0c5e",
+    "aim-flow.py": "6847ede1ebbe0fa0ca57df5fcb5c350be53dbbfd07a71d4232d45dab2e4a1fcf",
     "docs/API-DELIVERY.md": "9ed67ce099fa031283d5a9c64ae9e114fdc01d5b8aa1ad8fd000a1b11bda700a",
-    "docs/PROJECT-ONBOARDING.md": "65bad3f9a46b6f69795659b1dcad52762f76dc022bf3c3d5ad07617baa73a21f",
+    "docs/PROJECT-ONBOARDING.md": "1289a20479650585f96e7ba529704cb5e249d52682ee6732bf48a35c9eca382d",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -414,7 +423,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "85dc027a52877dc83db9c2cbf4ca756d2ddc3e2f4ae3f94b5a9874d77af0a645",
+    "lib/aim_ci/control_archive.py": "bc5ed002ffc6e2b130033ae33d7147d9d724aa659c1dd335fe75e17fa96762c5",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -444,6 +453,7 @@
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
     "lib/flow_api_delivery.py": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
+    "lib/flow_onboarding_delivery.py": "84e9032230204f76864ba3063204456c92876d4c98e5fe8fe0640d2595a8b796",
     "lib/openai_budget.py": "943748a36665bb5a165acb6ed5661e5af4e01e4d472b1c9bcb94ce0f9efd6600",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
@@ -462,6 +472,7 @@
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
     "tests/test_npm_platform_build.cjs": "6bc7b9e45e8894090e2fd287748901e5a1fb3728e0a89f4afdbb9af1d420b01e",
+    "tests/test_onboarding_api_delivery.py": "e98d265b5d0f0a49954b022c72da53372cf8ec44851d303bc7573aece8ac5ffc",
     "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
     "tests/test_output_allowance.py": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5",
     "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
@@ -502,6 +513,17 @@
       ],
       "summary": "Retain source-cited agent reasoning for installation, tests, CI and deployment in a project-only instance. No model dispatch or project execution; independent review and execution approval remain separate.",
       "version": "unreleased-project-onboarding"
+    },
+    {
+      "paths": [
+        "aim-flow.py",
+        "lib/aim_ci/control_archive.py",
+        "lib/flow_onboarding_delivery.py",
+        "docs/PROJECT-ONBOARDING.md",
+        "tests/test_onboarding_api_delivery.py"
+      ],
+      "summary": "Dispatch an exactly authorized Sol project assessment with an operation ceiling and existing shared campaign. Validate source citations and retain a project-only instance without executing its proposed plan. Offline tested; live qualification pending.",
+      "version": "unreleased-onboarding-dispatch"
     }
   ],
   "schemaVersion": 2,

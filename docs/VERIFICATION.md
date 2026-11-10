@@ -41,3 +41,5 @@ The legacy mini controller's models, prices and budget rules remain unchanged. O
 ## Project-specific agent onboarding (unreleased development)
 
 `test_project_onboarding.py` checks the installed prepare/record/verify handoff with Python and nested JavaScript fixtures: exact citations, project-local reasoning, source/controller/Git drift, inert hostile text, schema/authority refusals, step ordering, protected inputs and exclusive private outputs. This verifies evidence retention and validation only. It does not show that Flow independently called an agent, understood a project correctly, executed CI, or deployed anything. See [onboarding boundaries](PROJECT-ONBOARDING.md).
+
+`test_onboarding_api_delivery.py` exercises authorized dispatch with an injected provider, including a source-free installed runner, exact request disclosure, per-assessment and shared-campaign ceilings, durable reservations, source drift, invalid citations, authority claims, refusals, incomplete/unknown outcomes and no replay. No live provider call or credential read is made by these tests.

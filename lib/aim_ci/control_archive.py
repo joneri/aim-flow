@@ -25,6 +25,7 @@ SCHEMA_VERSION = 3
 FILES = (
     'aim-flow.py',
     'lib/flow_api_delivery.py',
+    'lib/flow_onboarding_delivery.py',
     'docs/API-DELIVERY.md',
     'aim-ci.py',
     'aim-ci-control.py',
