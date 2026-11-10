@@ -56,11 +56,11 @@ Step commands, effects and reasoning are unverified agent proposals. The engine 
 The offline tests use committed Python and nested JavaScript fixtures, hostile instruction text and marker commands that must never run. They cover installed CLI round trips, literal citations, target/controller/Git drift, source selection, schema escalation, cycles, links, output overlap and overwrite refusal. They are not live model, build, browser, CI or deployment qualification.
 
 
-## Authorized Sol dispatch (development, live qualification pending)
+## Authorized Sol dispatch (unreleased development)
 
-`aim-flow.py onboard-api` can generate the assessment itself through the OpenAI Responses API, pinned to `gpt-6.1-sol`, `xhigh`, standard tier, streaming and `store: false`. This is actual transport code exercised by offline injected-provider tests, not evidence that a real model request has succeeded. No project commands are executed, even when the returned plan proposes installation, CI or deployment.
+`aim-flow.py onboard-api` can generate the assessment itself through the OpenAI Responses API, pinned to `gpt-6.1-sol`, `xhigh`, standard tier, streaming and `store: false`. The initial live pilot reached Sol but exhausted its output allowance; it did not yield a complete assessment. The compact contract below is an offline-tested correction, not a live-qualified completion. No project commands are executed, even when the returned plan proposes installation, CI or deployment.
 
-Use an installed development controller that includes `lib/flow_onboarding_delivery.py`. Prepare a new packet with that installation's exact manifest pin. The dispatch configuration has exactly these fields:
+Use an installed development controller that includes `lib/flow_onboarding_delivery.py`. Prepare a new packet with that installation's exact manifest pin. The dispatch configuration requires these fields, with optional `sourceRanges` described below:
 
 ```json
 {
@@ -91,7 +91,7 @@ Use an installed development controller that includes `lib/flow_onboarding_deliv
 
 Budget paths, pins and liability are illustrative. Reuse the exact existing campaign, history and authority used by `deliver-api`; include every historical `budget-before-*.json`. Never initialize a new identity to obtain another allowance. The shared ceiling remains $20 including all historical and Sol reservations. The per-operation limit in the example is $1 and must itself be approved for this assessment. Approval for an earlier patch or another task does not automatically authorize a new assessment or disclosure.
 
-Preview is read-only and requires no key. It regenerates committed evidence, verifies the installed controller and prints the exact request, source disclosure inventory and intent digest. Save the preview privately because it contains source text. The generated provider payload contains source paths/hashes/complete line arrays and commit/tree identities. It omits local checkout, controller, Git, budget and credential locations from the metadata sent to the provider. Source text is **not scrubbed**: any private data or secrets committed inside selected files remain in the preview and must be reviewed before transmission.
+Preview is read-only and requires no key. It regenerates committed evidence, verifies the installed controller and prints the exact request, source disclosure inventory and intent digest. Save the preview privately because it contains source text. The generated provider payload contains source paths/hashes/source-located excerpts and commit/tree identities. It omits local checkout, controller, Git, budget and credential locations from the metadata sent to the provider. Source text is **not scrubbed**: any private data or secrets committed inside selected files remain in the preview and must be reviewed before transmission.
 
 ```sh
 python3 /private/controller/aim-flow.py onboard-api --preview \
@@ -106,3 +106,44 @@ Token preflight counts the exact request. Generation proceeds only after its ful
 A successful returned assessment must pass strict schema and exact source-citation validation and current source/controller checks. Flow then records `assessment.json` and `project-instance.json` automatically inside the private attempt directory. The instance still has `ready: false` and `executionAuthorized: false`. Literal citations do not prove correct reasoning, complete coverage, actual test success or approval. Independent plan review remains required.
 
 `onboard-api --status --state /private/attempt` verifies retained evidence without a key, model request or retry. Use `verify-project-onboarding` with the current explicit source/controller options to recheck freshness before using the instance. A completed status is not permanent freshness or operational acceptance.
+
+
+### Compact response and local citation enrichment
+
+The provider response contract is now `project_onboarding_compact_v2`:
+
+- `brief`: `summary` (at most 1,000 characters), then `unknowns` (at most eight entries of 400 characters).
+- `plan`: the four `areas`, up to four `decisions`, then up to ten ordered `steps`.
+- Area analysis is limited to 1,400 characters, commands to 800, and ordinary list entries to 400. Areas have at most four citations/questions; decisions and steps have at most three citations. Effects, prerequisites and independent checks each have one to three entries.
+- Model citations contain only `path`, `startLine` and `endLine`, at most 40 lines per span. The model does **not** reproduce hashes or quotes.
+
+The `brief`/`plan` envelope preserves this essential-first order even through the existing canonical serializers, which sort object keys. It avoids changing shared API transport or depending on Python dictionary order. Bounds are enforced locally as well as in the provider schema. They constrain response verbosity; they do not restrict project size. If a project cannot be covered within them, the agent must state the omitted planning work and needed evidence.
+
+Flow validates each model-selected range against the actual displayed excerpts, then enriches the citation with its pinned source hash and exact original lines locally. Blank, omitted, cross-gap, out-of-range and oversized references are refused. Each synthesized quote is limited to 16 KiB and all synthesized quote occurrences together to 128 KiB. CRLF and a final line without a newline are preserved. Full local assessment/instance schemas remain unchanged, but the retained raw provider response and result explicitly distinguish model prose/ranges from locally supplied hashes/quotes. This enrichment proves source identity, not semantic support or command safety.
+
+An old verbose provider body is not silently accepted by the new contract. Retained attempts keep their original controller and evidence. Incomplete results remain terminal and cannot be converted into successful dispatches by repairing JSON. Useful complete fragments may be reviewed in a **separate, attributed local analysis**, with missing fields and any local synthesis labeled. That analysis is not the model's complete answer or execution authority.
+
+### Explicit source excerpts
+
+By default every selected source is still sent in full. To reduce a reviewed request, optionally add a `sourceRanges` object to the dispatch configuration:
+
+```json
+{
+  "sourceRanges": {
+    "package-lock.json": [
+      {"startLine": 1, "endLine": 32},
+      {"startLine": 67, "endLine": 86}
+    ]
+  }
+}
+```
+
+These line numbers are illustrative, not a recommendation for any repository. Each key must name a file already in the verified packet. Ranges must be explicit, nonempty, sorted, disjoint and within that source's original lines. Files not named here remain complete. Local packet/source verification still uses the full original files. The provider receives only the displayed excerpts, original starting lines, total line count and omitted-line count. The preview disclosure lists exact ranges and disclosed bytes. A changed selection changes the request and exact authorization digest. Citation ranges cannot cross an omitted gap.
+
+Select evidence based on project risks rather than blindly taking the first lines of large files. For a lockfile, preserve root dependency declarations, locked versions, engine constraints, platform restrictions and install-script flags. If dependency edges, resolutions, integrities or other material detail are omitted, say so and request the full evidence before a conclusion requiring it. Explicit excerpts are not an automatic summary, secret filter or proof that the omitted text is irrelevant. Review the exact preview before approving another disclosure/call.
+
+### Initial live pilot and recovery boundary
+
+The first approved real-project pilot requested 32,768 output tokens. Sol returned `incomplete` with reason `max_output_tokens`: 15,020 reasoning tokens and 17,748 remaining answer tokens. The verbose response repeated complete source quotes and emitted the detailed plan before summary/unknowns. It yielded four complete area analyses, three decisions and nine complete steps with 63 literal citation occurrences, but omitted summary/unknowns and truncated its tenth step. Those complete fragments were independently checked and preserved separately with attribution. No completed assessment or project instance, source execution, test success or deployment resulted.
+
+The compact contract and explicit excerpts directly address repeated-quote cost and ordering. Their new behavior is verified using offline tests and read-only previews; another live generation needs its own permitted budget/disclosure scope. No automatic retry or reset is introduced.

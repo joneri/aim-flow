@@ -22,24 +22,42 @@ def object_schema(properties):
             'required': list(properties), 'properties': properties}
 
 
-def array_schema(items):
-    return {'type': 'array', 'items': items}
+def array_schema(items, maximum, minimum=0):
+    return {'type': 'array', 'items': items, 'minItems': minimum, 'maxItems': maximum}
 
 
-STRING = {'type': 'string'}
-STRINGS = array_schema(STRING)
-CITATION = object_schema({'path': STRING, 'sha256': STRING, 'startLine': {'type': 'integer'},
-                         'endLine': {'type': 'integer'}, 'quote': STRING})
-CITATIONS = array_schema(CITATION)
+def string_schema(maximum):
+    return {'type': 'string', 'minLength': 1, 'maxLength': maximum}
+
+
+# Provider limits are also enforced locally. A schema is not a safety boundary.
+MAX_REFERENCE_LINES = 40
+MAX_QUOTE_BYTES = 16_384
+MAX_ENRICHED_BYTES = 131_072
+STRING = string_schema(400)
+STRINGS = array_schema(STRING, 4)
+CITATION = object_schema({'path': string_schema(1024),
+    'startLine': {'type': 'integer', 'minimum': 1},
+    'endLine': {'type': 'integer', 'minimum': 1}})
+CITATIONS = array_schema(CITATION, 4)
 AREA = object_schema({'status': {'type': 'string', 'enum': ['proposed', 'needs-investigation', 'not-applicable']},
-                      'analysis': STRING, 'sources': CITATIONS, 'questions': STRINGS})
+    'analysis': string_schema(1400), 'sources': CITATIONS, 'questions': STRINGS})
+# Both evidence pinning and the shared HTTP transport sort object keys. The
+# brief/plan envelope therefore guarantees essentials precede detailed steps on
+# the actual wire, without changing shared transport or relying on dict order.
 ASSESSMENT_BODY_SCHEMA = object_schema({
-    'summary': STRING, 'areas': object_schema({name: AREA for name in onboarding.AREAS}),
-    'steps': array_schema(object_schema({'id': STRING, 'area': {'type': 'string', 'enum': list(onboarding.AREAS)},
-        'purpose': STRING, 'command': STRING, 'workingDirectory': STRING, 'dependsOn': STRINGS,
-        'effects': STRINGS, 'prerequisites': STRINGS, 'independentChecks': STRINGS, 'sources': CITATIONS})),
-    'decisions': array_schema(object_schema({'decision': STRING, 'reason': STRING, 'sources': CITATIONS})),
-    'unknowns': STRINGS,
+    'brief': object_schema({'summary': string_schema(1000), 'unknowns': array_schema(STRING, 8)}),
+    'plan': object_schema({
+        'areas': object_schema({name: AREA for name in onboarding.AREAS}),
+        'decisions': array_schema(object_schema({'decision': STRING, 'reason': string_schema(600),
+            'sources': array_schema(CITATION, 3, 1)}), 4, 1),
+        'steps': array_schema(object_schema({'id': string_schema(80),
+            'area': {'type': 'string', 'enum': list(onboarding.AREAS)}, 'purpose': STRING,
+            'command': string_schema(800), 'workingDirectory': string_schema(1024),
+            'dependsOn': array_schema(string_schema(80), 9), 'effects': array_schema(STRING, 3, 1),
+            'prerequisites': array_schema(STRING, 3, 1), 'independentChecks': array_schema(STRING, 3, 1),
+            'sources': array_schema(CITATION, 3, 1)}), 10),
+    }),
 })
 INSTRUCTIONS = (
     'You are the project onboarding assessment agent for AIM Flow. Analyze the supplied committed '
@@ -50,17 +68,108 @@ INSTRUCTIONS = (
     'request missing evidence instead of guessing. Keep project-specific choices in this assessment, '
     'not in shared Flow. Do not claim anything was run, installed, approved, published or deployed. '
     'No tools or project execution are available. This is a proposal requiring independent review. '
-    'Return only the strict assessment body. Areas are installation, tests, ci and deployment. '
-    'Each area needs analysis, source citations and questions. Proposed/not-applicable areas require '
+    'Return only the strict compact assessment body: brief first (summary and unknowns), then plan '
+    '(areas, decisions and steps). Prioritize essential risks and unknowns before detailed steps. '
+    'Use at most 10 steps and 4 decisions. Consolidate related checks; do not repeat the same '
+    'explanation in every field. Respect all string and array bounds. If full planning needs '
+    'more evidence or space, state the limitation rather than inventing or silently dropping it. '
+    'Areas are installation, tests, ci and deployment. Proposed/not-applicable areas require '
     'citations; needs-investigation requires a concrete question. Each step needs a unique lowercase '
     'hyphenated id, an area, purpose, inert command, repository-relative workingDirectory, dependencies '
     'on earlier step ids, and nonempty effects, prerequisites, independentChecks and sources. '
-    'Include at least one reasoned, source-cited decision. Each citation must use the source path and '
-    'sha256, inclusive 1-based startLine/endLine, and exact quote including original line endings. '
-    'The source lines array preserves complete lines: quote is the concatenation of elements '
-    'startLine-1 through endLine-1. Do not quote blank spans or invent hashes or text. '
-    'Keep quotes and prose concise without omitting material risks or prerequisites.'
+    'Each citation contains only path and inclusive 1-based startLine/endLine, at most 40 lines. '
+    'Use only lines actually displayed in one source excerpt. Do not cite an omitted gap, blank '
+    'span or invent content. Flow adds the hash and exact quote locally from pinned evidence. '
+    'Each excerpt has its original startLine and complete lines including line endings. '
+    'Omitted lines are NOT evidence of absence. Request them when material. '
+    'Never return source hashes or quote text in citations.'
 )
+
+
+def validate_shape(value, schema):
+    """Enforce the small, closed schema subset used above without extra packages."""
+    kind = schema['type']
+    if kind == 'object':
+        onboarding._keys(value, schema['properties'], 'compact model response')
+        for key, child in schema['properties'].items():
+            validate_shape(value[key], child)
+    elif kind == 'array':
+        if not isinstance(value, list) or not schema['minItems'] <= len(value) <= schema['maxItems']:
+            raise Refused('Compact model response array exceeds bounds')
+        for item in value:
+            validate_shape(item, schema['items'])
+    elif kind == 'string':
+        onboarding._text(value, 'compact model response string')
+        if not schema.get('minLength', 1) <= len(value) <= schema.get('maxLength', 1024):
+            raise Refused('Compact model response string exceeds bounds')
+        if 'enum' in schema and value not in schema['enum']:
+            raise Refused('Unsupported compact model response value')
+    elif kind == 'integer':
+        if type(value) is not int or value < schema['minimum']:
+            raise Refused('Invalid compact model response line number')
+    else:
+        raise Refused('Unsupported compact response schema')
+
+
+def evidence_sources(packet, selected=None):
+    """Explicit, source-located projection; never silently abbreviate source files."""
+    selected = {} if selected is None else selected
+    sources = {source['path']: source for source in packet['sources']}
+    if not isinstance(selected, dict) or not set(selected) <= set(sources):
+        raise Refused('Evidence ranges must name selected source paths')
+    result = []
+    for path, source in sources.items():
+        lines = source['text'].splitlines(keepends=True)
+        ranges = selected.get(path, [{'startLine': 1, 'endLine': len(lines)}] if lines else [])
+        if not isinstance(ranges, list) or (path in selected and not ranges):
+            raise Refused('Explicit source ranges require at least one span')
+        previous, excerpts = 0, []
+        for span in ranges:
+            onboarding._keys(span, ('startLine', 'endLine'), 'selected source range')
+            start, end = span['startLine'], span['endLine']
+            if (type(start) is not int or type(end) is not int
+                    or not previous < start <= end <= len(lines)):
+                raise Refused('Source ranges must be ordered, disjoint and within committed lines')
+            excerpts.append({'startLine': start, 'lines': lines[start - 1:end]})
+            previous = end
+        result.append({'path': path, 'sha256': source['sha256'], 'lineCount': len(lines),
+            'excerpts': excerpts, 'omittedLineCount': len(lines) - sum(len(e['lines']) for e in excerpts)})
+    return result
+
+
+def enrich_body(body, packet, selected=None):
+    """The agent selects ranges; only pinned local evidence supplies hashes/quotes."""
+    validate_shape(body, ASSESSMENT_BODY_SCHEMA)
+    shown = {s['path']: s for s in evidence_sources(packet, selected)}
+    originals = {s['path']: s for s in packet['sources']}
+    expanded_bytes = 0
+
+    def citations(refs):
+        nonlocal expanded_bytes
+        result = []
+        for ref in refs:
+            source = shown.get(ref['path'])
+            start, end = ref['startLine'], ref['endLine']
+            if (source is None or not 1 <= start <= end <= source['lineCount']
+                    or end - start + 1 > MAX_REFERENCE_LINES
+                    or not any(e['startLine'] <= start <= end < e['startLine'] + len(e['lines'])
+                               for e in source['excerpts'])):
+                raise Refused('Compact reference is outside displayed source evidence or span bound')
+            quote = ''.join(originals[ref['path']]['text'].splitlines(keepends=True)[start - 1:end])
+            size = len(quote.encode('utf-8'))
+            expanded_bytes += size
+            if not quote.strip() or size > MAX_QUOTE_BYTES or expanded_bytes > MAX_ENRICHED_BYTES:
+                raise Refused('Enriched citation is blank or exceeds retained evidence bounds')
+            result.append({**ref, 'sha256': source['sha256'], 'quote': quote})
+        return result
+
+    # Construct new objects so the provider response remains unchanged evidence.
+    plan = body['plan']
+    return {**body['brief'],
+        'areas': {name: {**area, 'sources': citations(area['sources'])}
+                  for name, area in plan['areas'].items()},
+        'decisions': [{**item, 'sources': citations(item['sources'])} for item in plan['decisions']],
+        'steps': [{**item, 'sources': citations(item['sources'])} for item in plan['steps']]}
 
 
 def target_args(config):
@@ -69,16 +178,16 @@ def target_args(config):
         commit=source['commit'], git=Path(source['git']), git_sha256=source['gitSha256'])
 
 
-def request_payload(packet, output):
-    # Send selected evidence, not local checkout/controller/credential/budget locations.
+def request_payload(packet, output, selected=None):
+    # Send explicitly selected evidence, never local controller/credential locations.
     inputs = {'project': {key: packet['target'][key] for key in ('commit', 'tree')},
-              'coverage': packet['coverage'], 'sources': [
-                  {'path': source['path'], 'sha256': source['sha256'],
-                   'lines': source['text'].splitlines(keepends=True)} for source in packet['sources']]}
+              'coverage': packet['coverage'] + ' Only displayed excerpts are available to the agent; '
+                          'omitted lines require a new explicitly reviewed evidence selection.',
+              'sources': evidence_sources(packet, selected)}
     return {'model': api.MODEL, 'input': json.dumps(inputs, sort_keys=True, ensure_ascii=True),
             'instructions': INSTRUCTIONS, 'max_output_tokens': output, 'reasoning': {'effort': 'xhigh'},
             'service_tier': 'default', 'store': False, 'stream': True,
-            'text': {'format': {'type': 'json_schema', 'name': 'project_onboarding', 'strict': True,
+            'text': {'format': {'type': 'json_schema', 'name': 'project_onboarding_compact_v2', 'strict': True,
                               'schema': ASSESSMENT_BODY_SCHEMA}}}
 
 
@@ -88,7 +197,7 @@ def prepare(config_path, config_sha, state):
     config = unique_json(raw)
     onboarding._keys(config, ('schemaVersion', 'purpose', 'model', 'reasoning', 'manifestSha256', 'source',
         'packet', 'campaignDirectory', 'historicalBudget', 'timeoutSeconds', 'maxOutputTokens',
-        'maxOperationNanoUsd'), 'onboarding dispatch configuration')
+        'maxOperationNanoUsd', *(('sourceRanges',) if 'sourceRanges' in config else ())), 'onboarding dispatch configuration')
     if (type(config['schemaVersion']) is not int or config['schemaVersion'] != 1
             or config['purpose'] != PURPOSE or config['model'] != api.MODEL or config['reasoning'] != 'xhigh'
             or type(config['timeoutSeconds']) is not int or not 1 <= config['timeoutSeconds'] <= 3600
@@ -118,7 +227,7 @@ def prepare(config_path, config_sha, state):
             raise Refused('Pinned dispatch inputs must be outside state and campaign')
     api.historical_snapshot(config['historicalBudget'])
     authority_path, _ = api.authority(config)
-    payload = request_payload(packet, config['maxOutputTokens'])
+    payload = request_payload(packet, config['maxOutputTokens'], config.get('sourceRanges'))
     request_raw = api.encoded(payload)
     intent = {'schemaVersion': 1, 'purpose': PURPOSE, 'configPath': str(config_path), 'configSha256': config_sha,
         'controller': {'directory': str(ROOT), 'manifestSha256': args.manifest_sha256},
@@ -129,13 +238,17 @@ def prepare(config_path, config_sha, state):
         'serviceTier': 'default', 'maxOutputTokens': config['maxOutputTokens'],
         'maxOperationNanoUsd': config['maxOperationNanoUsd'], 'timeoutSeconds': config['timeoutSeconds'],
         'campaignLimitNanoUsd': api.LIMIT, 'pricing': api.PRICING, 'maxAttempts': 1,
-        'disclosure': [{'path': s['path'], 'sha256': s['sha256'], 'bytes': len(s['text'].encode())}
-                       for s in packet['sources']],
+        'responseContract': 'bounded-compact-v2-local-citation-enrichment',
+        'disclosure': [{'path': s['path'], 'sha256': s['sha256'], 'sourceLineCount': s['lineCount'],
+            'disclosedBytes': sum(len(''.join(e['lines']).encode()) for e in s['excerpts']),
+            'omittedLineCount': s['omittedLineCount'],
+            'ranges': [{'startLine': e['startLine'], 'endLine': e['startLine'] + len(e['lines']) - 1}
+                       for e in s['excerpts']]} for s in evidence_sources(packet, config.get('sourceRanges'))],
         'sourceApplied': False, 'executionAuthorized': False, 'deploymentAuthorized': False}
     return config, raw, packet_raw, packet, payload, request_raw, intent
 
 
-def parse_response(response, packet, packet_pin):
+def parse_response(response, packet, packet_pin, selected=None):
     texts = []
     output = response.get('output')
     if not isinstance(output, list):
@@ -158,7 +271,7 @@ def parse_response(response, packet, packet_pin):
     if len(texts) != 1:
         raise Refused('Exactly one JSON assessment body required')
     body = unique_json(texts[0])
-    onboarding._keys(body, ('summary', 'areas', 'steps', 'decisions', 'unknowns'), 'model assessment body')
+    body = enrich_body(body, packet, selected)
     assessment = {'format': onboarding.ASSESSMENT, 'schemaVersion': 1, 'packetSha256': packet_pin,
                   'target': packet['target'], **body}
     return onboarding.validate_assessment(assessment, packet, packet_pin)
@@ -217,7 +330,7 @@ def run(config_path, config_sha, state, authorization=None, *, key_file=None, tr
             elif response.get('status') != 'completed':
                 outcome = 'model-' + (response.get('status') if response.get('status') in ('incomplete', 'failed') else 'unknown-status')
             else:
-                assessment = parse_response(response, packet, c['packet']['sha256'])
+                assessment = parse_response(response, packet, c['packet']['sha256'], c.get('sourceRanges'))
                 if assessment is None:
                     outcome = 'model-refused'
                 else:
@@ -253,6 +366,7 @@ def run(config_path, config_sha, state, authorization=None, *, key_file=None, tr
             'reservation': entry, 'failure': failure, 'projectInstance': instance,
             'sourceApplied': False, 'executionAuthorized': False, 'deploymentAuthorized': False,
             'independentReview': 'not-run',
+            'assessmentConstruction': 'model-prose-and-ranges; hashes-and-quotes-enriched-locally',
             'evidenceSha256': {p.name: api.digest(api.file_bytes(p)) for p in state.iterdir() if p.is_file()}}
         api.durable(state, 'result.json', api.encoded(result))
         return result

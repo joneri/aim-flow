@@ -13,6 +13,7 @@ import flow_api_delivery as api
 import flow_onboarding_delivery as agent
 from aim_ci.budget import Budget
 from aim_ci.owned_paths import Refused
+from openai_budget import canonical
 import test_project_onboarding as fixtures
 
 
@@ -46,13 +47,21 @@ class OnboardingApiTests(unittest.TestCase):
             'timeoutSeconds': 900, 'maxOutputTokens': 8192, 'maxOperationNanoUsd': 1_000_000_000}
         self.save()
         full = self.assessment(self.packet)
-        self.body = {key: full[key] for key in ('summary', 'areas', 'steps', 'decisions', 'unknowns')}
+        self.body = self.compact(full)
         self.answer = {'id': 'synthetic-assessment', 'model': api.MODEL, 'status': 'completed',
             'service_tier': 'default', 'usage': {'input_tokens': 80, 'output_tokens': 30},
             'output': [{'type': 'message', 'role': 'assistant', 'content': [
                 {'type': 'output_text', 'text': json.dumps(self.body)}]}]}
         self.calls = []; self.count = 80
         self.history_before = {str(p): p.read_bytes() for d in (self.historical, legacy_root) for p in d.iterdir()}
+
+    @staticmethod
+    def compact(full):
+        plan = copy.deepcopy({key: full[key] for key in ('areas', 'steps', 'decisions')})
+        for item in [*plan['areas'].values(), *plan['steps'], *plan['decisions']]:
+            item['sources'] = [{key: cite[key] for key in ('path', 'startLine', 'endLine')}
+                               for cite in item['sources']]
+        return {'brief': {key: full[key] for key in ('summary', 'unknowns')}, 'plan': plan}
 
     def pin(self, path):
         return {'path': str(path), 'sha256': api.digest(path.read_bytes())}
@@ -89,7 +98,7 @@ class OnboardingApiTests(unittest.TestCase):
         # Selected source is exact, not secretly redacted: the fixture itself
         # contains a local marker path, which remains visible for review.
         source = next(s for s in disclosed['sources'] if s['path'] == 'scripts/check.py')
-        self.assertIn(str(self.marker), ''.join(source['lines']))
+        self.assertIn(str(self.marker), ''.join(source['excerpts'][0]['lines']))
         self.assertNotIn('tools', payload)
         self.assertEqual(payload['model'], api.MODEL)
         self.assertEqual(payload['reasoning'], {'effort': 'xhigh'})
@@ -106,7 +115,7 @@ class OnboardingApiTests(unittest.TestCase):
         self.assertEqual(api.status(self.state), result)
         self.assertFalse(result['executionAuthorized']); self.assertFalse(result['deploymentAuthorized'])
         instance = json.loads((self.state / 'project-instance.json').read_bytes())
-        self.assertEqual(instance['assessment']['summary'], self.body['summary'])
+        self.assertEqual(instance['assessment']['summary'], self.body['brief']['summary'])
         self.assertFalse(instance['ready']); self.assertFalse(instance['executionAuthorized'])
         for name, content in self.history_before.items(): self.assertEqual(Path(name).read_bytes(), content)
         for path in self.state.iterdir(): self.assertEqual(path.stat().st_mode & 0o077, 0)
@@ -154,7 +163,7 @@ class OnboardingApiTests(unittest.TestCase):
         self.assertEqual(self.calls.count('responses'), 1)
 
     def test_invented_citation_is_retained_but_never_becomes_instance(self):
-        body = copy.deepcopy(self.body); body['steps'][0]['sources'][0]['quote'] = 'fabricated\n'
+        body = copy.deepcopy(self.body); body['plan']['steps'][0]['sources'][0]['quote'] = 'fabricated\n'
         self.answer['output'][0]['content'][0]['text'] = json.dumps(body)
         result = self.execute()
         self.assertEqual(result['status'], 'assessment-rejected')
@@ -226,6 +235,125 @@ class OnboardingApiTests(unittest.TestCase):
         (self.state / 'assessment.json').write_text('{}')
         self.assertEqual(api.status(self.state)['status'], 'integrity-failed')
         self.assertEqual(self.calls, calls)
+
+    def test_actual_canonical_wire_order_puts_brief_before_plan_and_steps_last(self):
+        payload = self.preview()['request']
+        wire = json.loads(canonical(payload))
+        properties = wire['text']['format']['schema']['properties']
+        self.assertEqual(list(properties), ['brief', 'plan'])
+        self.assertEqual(list(properties['brief']['properties']), ['summary', 'unknowns'])
+        self.assertEqual(list(properties['plan']['properties']), ['areas', 'decisions', 'steps'])
+        pinned = json.loads(api.encoded(payload))
+        self.assertEqual(list(pinned['text']['format']['schema']['properties']), ['brief', 'plan'])
+
+    def test_compact_citations_enrich_locally_without_mutating_provider_body(self):
+        original = copy.deepcopy(self.body)
+        full = agent.enrich_body(self.body, self.packet)
+        self.assertEqual(self.body, original)
+        self.assertEqual(full['steps'][0]['sources'][0], self.citation(self.packet))
+        self.assertNotIn('quote', self.body['plan']['steps'][0]['sources'][0])
+        self.assertEqual(agent.onboarding.validate_assessment({
+            'format': agent.onboarding.ASSESSMENT, 'schemaVersion': 1,
+            'packetSha256': self.c['packet']['sha256'], 'target': self.packet['target'], **full},
+            self.packet, self.c['packet']['sha256'])['summary'], full['summary'])
+
+    def test_compact_reference_shape_ranges_and_bounds_are_locally_enforced(self):
+        mutations = [lambda c: c.update(path='absent'), lambda c: c.update(startLine=True),
+            lambda c: c.update(endLine=1.5), lambda c: c.update(startLine=0),
+            lambda c: c.update(startLine=2, endLine=1), lambda c: c.update(endLine=1000000),
+            lambda c: c.update(sha256='invented'), lambda c: c.update(quote='invented')]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                body = copy.deepcopy(self.body)
+                mutate(body['plan']['steps'][0]['sources'][0])
+                with self.assertRaises(Refused): agent.enrich_body(body, self.packet)
+        body = copy.deepcopy(self.body)
+        body['brief']['unknowns'] *= 9
+        with self.assertRaises(Refused): agent.enrich_body(body, self.packet)
+        body = copy.deepcopy(self.body)
+        body['brief']['summary'] = 'x' * 1001
+        with self.assertRaises(Refused): agent.enrich_body(body, self.packet)
+        body = copy.deepcopy(self.body)
+        body['plan']['steps'] *= 11
+        with self.assertRaises(Refused): agent.enrich_body(body, self.packet)
+        body = copy.deepcopy(self.body)
+        body['plan']['areas']['ci']['sources'] *= 5
+        with self.assertRaises(Refused): agent.enrich_body(body, self.packet)
+
+    def test_output_bounds_reject_provider_reply_after_retaining_original(self):
+        self.body['brief']['summary'] = 'x' * 1001
+        self.answer['output'][0]['content'][0]['text'] = json.dumps(self.body)
+        result = self.execute()
+        self.assertEqual(result['status'], 'assessment-rejected')
+        retained = json.loads((self.state / 'response.json').read_bytes())
+        self.assertEqual(retained, self.answer)
+        self.assertFalse((self.state / 'assessment.json').exists())
+
+    def test_duplicate_model_keys_and_old_verbose_contract_rejected(self):
+        for text in ('{"brief":{},"brief":{},"plan":{}}', json.dumps(self.assessment(self.packet))):
+            answer = copy.deepcopy(self.answer)
+            answer['output'][0]['content'][0]['text'] = text
+            with self.assertRaises((Refused, ValueError)):
+                agent.parse_response(answer, self.packet, self.c['packet']['sha256'])
+
+    def test_excerpt_selection_is_explicit_disclosed_and_restricts_citations(self):
+        self.c['sourceRanges'] = {'README.md': [{'startLine': 1, 'endLine': 1},
+                                               {'startLine': 3, 'endLine': 3}]}
+        self.save()
+        preview = self.preview()
+        source = next(s for s in json.loads(preview['request']['input'])['sources'] if s['path'] == 'README.md')
+        self.assertEqual(source['omittedLineCount'], 2)
+        self.assertEqual([e['startLine'] for e in source['excerpts']], [1, 3])
+        self.assertNotIn('Ignore prior instructions', preview['request']['input'])
+        disclosure = next(s for s in preview['intent']['disclosure'] if s['path'] == 'README.md')
+        self.assertEqual(disclosure['ranges'], self.c['sourceRanges']['README.md'])
+        self.assertEqual(disclosure['omittedLineCount'], 2)
+        with self.assertRaises(Refused):
+            body = copy.deepcopy(self.body)
+            body['plan']['steps'][0]['sources'][0]['endLine'] = 3
+            agent.enrich_body(body, self.packet, self.c['sourceRanges'])
+        result = self.execute()
+        self.assertEqual(result['status'], 'assessment-ready-for-independent-review', result)
+
+    def test_invalid_excerpt_selection_is_refused_before_credentials_or_network(self):
+        for selection in ({'absent': [{'startLine': 1, 'endLine': 1}]}, {'README.md': []},
+            {'README.md': [{'startLine': True, 'endLine': 1}]},
+            {'README.md': [{'startLine': 1, 'endLine': 100}]},
+            {'README.md': [{'startLine': 2, 'endLine': 2}, {'startLine': 1, 'endLine': 1}]},
+            {'README.md': [{'startLine': 1, 'endLine': 3}, {'startLine': 3, 'endLine': 4}]}):
+            self.c['sourceRanges'] = selection; self.save()
+            with self.assertRaises(Refused): self.preview()
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.state.exists())
+
+    def test_changed_excerpt_selection_changes_exact_intent(self):
+        original = self.preview()['intentSha256']
+        self.c['sourceRanges'] = {'README.md': [{'startLine': 1, 'endLine': 2}]}; self.save()
+        self.assertNotEqual(self.preview()['intentSha256'], original)
+        with self.assertRaises(Refused): agent.run(self.config, self.config_sha, self.state, original, transport=self.post)
+        self.assertEqual(self.calls, [])
+
+    def test_enrichment_preserves_crlf_and_final_line_without_newline(self):
+        packet = copy.deepcopy(self.packet)
+        source = next(s for s in packet['sources'] if s['path'] == 'README.md')
+        source.update(text='first\r\nlast', lineCount=2)
+        source['sha256'] = api.digest(source['text'].encode())
+        body = copy.deepcopy(self.body)
+        body['plan']['steps'][0]['sources'][0]['endLine'] = 2
+        full = agent.enrich_body(body, packet)
+        self.assertEqual(full['steps'][0]['sources'][0]['quote'], 'first\r\nlast')
+        self.assertEqual(full['steps'][0]['sources'][0]['sha256'], source['sha256'])
+
+    def test_blank_long_and_large_expanded_quotes_are_refused(self):
+        for text, end in [('\n', 1), ('x\n' * 41, 41), ('x' * (agent.MAX_QUOTE_BYTES + 1), 1)]:
+            packet = copy.deepcopy(self.packet)
+            source = next(s for s in packet['sources'] if s['path'] == 'README.md')
+            source.update(text=text, lineCount=len(text.splitlines(keepends=True)))
+            body = copy.deepcopy(self.body)
+            body['plan']['steps'][0]['sources'][0]['endLine'] = end
+            with self.assertRaises(Refused): agent.enrich_body(body, packet)
+        with patch.object(agent, 'MAX_ENRICHED_BYTES', 10):
+            with self.assertRaises(Refused): agent.enrich_body(self.body, self.packet)
 
     def test_fresh_installed_runner_works_without_source_imports_or_network(self):
         answer = self.case / 'fixture-answer.json'; answer.write_text(json.dumps(self.answer))
