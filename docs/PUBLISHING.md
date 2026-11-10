@@ -1,9 +1,10 @@
 # Publish the prepared Beta
 
 Target: public `joneri/aim-flow`, MIT. The intended Pages site is
-`https://joneri.github.io/aim-flow/`. Beta.9 is prepared locally, not verified
-as published. Do not replace an existing repository or assume remote main is
-unchanged from a cached local observation.
+`https://joneri.github.io/aim-flow/`. Local package verification is recorded
+below; confirm the exact remote commit, hosted checks and live download before
+claiming a new version is published. Do not replace an existing repository or
+assume remote main is unchanged from a cached local observation.
 
 ## Current reviewed download
 
@@ -18,21 +19,20 @@ The previous beta.8 ZIP remains unchanged. The bootstrap is bound to this
 release's exact 61-file inventory; matching schema numbers do not make older
 bootstraps interchangeable. End users need independently trusted expected pins.
 
-## Publication currently blocked
+## Network and publication prerequisites
 
-A previous `git fetch origin` was explicitly blocked by execution-network policy
-at `https://github.com:443`. No remote refresh, push or draft PR has been retried
-for beta.9. This is not evidence of an authentication error, missing repository,
-merge conflict or failed hosted CI. Do not use another endpoint, proxy, connector
-or machine to get around the denial.
+Check that the intended destination and operation are permitted before fetching
+or publishing. If access is denied, stop and resolve that restriction through
+an approved route. Do not switch endpoints, proxies, accounts or machines to
+circumvent it. A successful one-off fetch does not grant broader persistent
+access or authorize pushes, merges, repository settings or Pages publication.
 
-A supported permission change must allow the intended GitHub operation before
-retrying it. No verified permission UI or pending approval form is available in
-this handoff; a chat response alone is not proof the network policy changed.
-GitHub CLI would additionally need authorized `api.github.com:443` access, which
-has not been probed here. Existing account/repository rights remain separate.
+During beta.9 preparation, an earlier GitHub fetch was blocked. A later scoped
+approved fetch succeeded, and the reviewed release branch and draft PR were
+published. That initial restriction is historical, not a current blanket claim
+that GitHub is inaccessible. Record the outcome of each subsequent step.
 
-## Steps after access is permitted
+## Publication sequence
 
 1. Recheck the local release branch, clean status, archive and independent pins.
 2. Refresh remote main once through the newly permitted route. Review any new
@@ -40,7 +40,7 @@ has not been probed here. Existing account/repository rights remain separate.
 3. With current authorization for the destination and content, publish the
    reviewed isolated branch and open a **draft PR**. A PR run cannot deploy Pages.
 4. Verify remote commit/tree and the exact commit's portable CI results. The
-   workflow requires Git 2.54+; runner availability is not yet verified. It runs
+   workflow requires Git 2.54+; the beta.9 PR runner passed that prerequisite. It runs
    both Node suites and reports platform-specific Python skips. Linux CI does
    not run the 13 macOS-only sandbox execution fixtures.
 5. Confirm authorization for the main-branch update and Pages publication.

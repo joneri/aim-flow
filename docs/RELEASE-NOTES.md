@@ -1,8 +1,8 @@
 # AIM Flow 0.1.0-beta.9
 
 Prepare a project-specific assessment, then separately review and run its real
-validation process. This package is prepared locally; remote CI/publication are
-not established.
+validation process. The local verification below is separate from the exact
+hosted CI and publication checks.
 
 ## Changes
 
@@ -42,7 +42,8 @@ The package contains no customer sources, cache, runtime images, API keys or
 operator journals. It does not install Docker, configure a host, grant a budget
 or deploy. Hosted Node 22.12, native Windows/PowerShell, browser acceptance and
 production behavior remain unqualified. Git 2.54+ must be available to the hosted
-workflow; this has not been checked remotely because GitHub access was denied.
+workflow. Its prerequisite passed on the beta.9 PR runner after a scoped
+approved fetch resolved the earlier access restriction; platform limits remain.
 
 Final packaging checks on 10 November 2026:
 

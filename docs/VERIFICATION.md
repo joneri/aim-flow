@@ -228,6 +228,8 @@ retained aggregate regression above. The first beta.9 candidate's hardcoded
 version-label failure was corrected and its scoped tests repeated; that candidate
 is superseded, not a passing release.
 
-The current GitHub fetch restriction remains an explicit publication blocker.
-No remote refresh, push, PR, hosted checks or Pages update was attempted for
-beta.9. See [publication steps and prerequisites](PUBLISHING.md).
+The initial GitHub fetch restriction was later resolved for a scoped approved
+fetch. The remote main was refreshed and the reviewed beta.9 branch and draft
+PR were published. These local packaging results do not themselves prove hosted
+checks or a Pages deployment; verify their exact remote identities separately.
+See [publication steps and prerequisites](PUBLISHING.md).
