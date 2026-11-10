@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.7 scope
+# AIM Flow 0.1.0-beta.8 scope
 
 ## Available paths
 
@@ -9,6 +9,8 @@
 5. A reviewed npm/Vite offline-build route with prior evidence for one pilot project and pinned environment.
 
 6. Preview or separately authorize preparation of an isolated private candidate. Preparation clones the pinned local commit without hardlinks and applies only the reviewed proposal there. It does not change the original checkout, call a model, run project code, push or open a pull request. Resume reconciles the same effect; withdrawal blocks later resume without deleting the candidate.
+
+7. Explicit Sol/xhigh Responses API patch proposals through installed `aim-flow.py deliver-api`, with exact preview authorization, retained historical liabilities and terminal evidence. This advanced path requires an established budget history, produces a separate proposal format and does not apply changes or activate all AIM roles.
 
 These paths have different prerequisites and evidence. Their presence is not a general readiness or execution guarantee.
 

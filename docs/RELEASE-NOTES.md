@@ -1,3 +1,39 @@
+# AIM Flow 0.1.0-beta.8
+
+Use the explicit Sol API proposal route from a verified installation.
+
+## Changes
+
+- Include `aim-flow.py deliver-api`, the reviewed Sol/xhigh adapter and its guide in the downloadable controller. A source checkout and Codex CLI are no longer needed for this route.
+- Preserve beta.7 diagnostic and output-allowance fixes. The legacy mini model, rates, accounting and default timeouts remain unchanged.
+- Bind a request, selected source, task/instructions and implementation to an exact no-key preview before API authorization. Retain terminal outcomes and refuse automatic replay.
+- Preserve established historical liabilities and the same persistent Sol campaign under the combined USD20 ceiling. Upgrade into a new controller directory without resetting history, reservations or attempts.
+- Use archive schema 3 with an exact 53-file payload. Schema 2 downloads require their original matching bootstrap; no older installation is overwritten or silently migrated.
+- Keep the local Codex prototype outside the release. Sol produces its own patch proposal format for separate review, application and testing; it is not an input to `prepare-local-candidate` and does not activate every AIM role.
+- Update the website, quickstart and bundled instructions. Only generic fixtures and product code are included.
+
+See [Sol API proposals](API-DELIVERY.md) for the installed command and upgrade contract.
+
+## Verification
+
+Local validation on 10 November 2026:
+
+- Python 3.14.8 / Apple Git 2.54.0: **376 tests run, 375 passed, 1 skipped**, 363.750 seconds on the final complete run.
+- Existing skip: separate-candidate validation requires two verified fixture packages. No claim is made for the skipped path.
+- All **28 Sol API contracts passed** from source and were repeated successfully against a fresh source-free installation. Archive compatibility and installed CLI routing passed.
+- Node: **16 tests passed**, no failures or skips.
+- Independent read-only source and final-package review found no P0–P2 findings. Every packaged byte matches the reviewed source; the separate Codex adapter is absent.
+- Source inventory: **79 files verified**, with **53 controller payload files**. Exact schema 3 membership is enforced; schema 2 is refused by this bootstrap.
+- Branded download: nine payload hashes, trusted-source bootstrap match, fresh installation and expected unconfigured readiness exit 3 passed. An independent rebuild produced identical ZIP bytes.
+- Static website: 18 local links/assets checked. Current files and nested archives were scanned for excluded application content, private paths and credentials.
+- Controller archive SHA-256: `dfdd3f7501a98c964b19e9d0189cdfb58881a0c4bc3d371616c8bf485d249e96`.
+- Controller manifest SHA-256: `9656112ebeb6a003f9339130f4c34e15fc7f13dcb1001185677af78cace9585d`.
+- Download ZIP SHA-256: `ddd4b83e137f246377c20bc87ed6e15896f9fcf8a36866400d5a87d72d8de376`.
+
+The initial aggregate run exposed one stale test expectation that treated schema 3 as invalid. After correcting the invalid-schema fixture, its 26-test module and the complete final suite passed. No runtime change was needed for that finding.
+
+These are offline packaging checks. They make no live provider call, alter no real budget, execute no customer project and do not establish full AIM orchestration, remote CI, publication, merge or deployment.
+
 # AIM Flow 0.1.0-beta.7
 
 Request concise replacements and retain private evidence when a new model response does not complete.

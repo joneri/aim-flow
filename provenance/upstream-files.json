@@ -1,6 +1,9 @@
 {
-  "controllerFiles": 50,
+  "controllerFiles": 53,
   "controllerPaths": [
+    "aim-flow.py",
+    "lib/flow_api_delivery.py",
+    "docs/API-DELIVERY.md",
     "aim-ci.py",
     "aim-ci-control.py",
     "aim-ci-release.py",
@@ -64,6 +67,14 @@
     "aim-ci.py": {
       "kind": "modified",
       "upstreamSha256": "55b97d6197df219a1141acc36b13625f701a25e8d3a9df3a4c75bf91f6b6bde5"
+    },
+    "aim-flow.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
+    "docs/API-DELIVERY.md": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
     },
     "docs/aim-ci-discover-project.md": {
       "kind": "modified",
@@ -241,6 +252,10 @@
       "kind": "modified",
       "upstreamSha256": "bc9f7ee1bdd0f4516fb8957037e7e7327e0df3806fbac6923aa8a67d92dde228"
     },
+    "lib/flow_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
     "lib/openai_budget.py": {
       "kind": "modified",
       "upstreamSha256": "86fbae433114037019a1975d437ed144f420e04ac22dd4f2f2bc82dbcf0185e8"
@@ -260,6 +275,10 @@
     "tests/production/catalog-verify.mjs": {
       "kind": "unchanged",
       "upstreamSha256": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e"
+    },
+    "tests/test_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
     },
     "tests/test_build_preparation.py": {
       "kind": "modified",
@@ -285,6 +304,10 @@
     "tests/test_docker_recipe.py": {
       "kind": "unchanged",
       "upstreamSha256": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf"
+    },
+    "tests/test_installed_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
     },
     "tests/test_intake_profile.py": {
       "kind": "added",
@@ -358,6 +381,8 @@
     "aim-ci-control.py": "781af5e10b7deedc6538c93a881ce36f52a72b3c058a161faacdf879364c1569",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
+    "aim-flow.py": "4bf84b5693befc03758cdf60999f59cd52d8b975f404ab6eb1837feeb97a0c5e",
+    "docs/API-DELIVERY.md": "9ed67ce099fa031283d5a9c64ae9e114fdc01d5b8aa1ad8fd000a1b11bda700a",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -374,7 +399,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
+    "lib/aim_ci/control_archive.py": "a15151c102b99b7e598bd83f7c9327ba95a19ce05c7b48db82272dfb4adfa35d",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -402,17 +427,20 @@
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
-    "lib/openai_budget.py": "cf499e1642641eac99d8b13c117a39a2196833bd88725379096c6ad5ead10352",
+    "lib/flow_api_delivery.py": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
+    "lib/openai_budget.py": "943748a36665bb5a165acb6ed5661e5af4e01e4d472b1c9bcb94ce0f9efd6600",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
     "tests/production/catalog-verify.mjs": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e",
+    "tests/test_api_delivery.py": "f610829ff4d0657e794df4c8138920a20825e254f544bfa02f565143197835e9",
     "tests/test_build_preparation.py": "60789968bbb448cf6f6b7f464f650a16aad66eb4a2e8157a15cb294c9277d3b7",
     "tests/test_content_size_contracts.py": "5b5e1e0188ed779f5a7d3447d6e8f53baf093357a1b6780504a58bdae19a104e",
-    "tests/test_control_package.py": "12219a7ab2094b3d189f0aefe1274ee6666b1d0417a08dc0933dec1a93474aa9",
-    "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
+    "tests/test_control_package.py": "ce4c659969a7fa09d37d93b409678f6c59841157ccbd09516813cf0a4279826c",
+    "tests/test_docker_engine.py": "0e8a487a5d43bec8a604ad62645d0d40d871190fd86520367dd4dbf85533d2ec",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
+    "tests/test_installed_api_delivery.py": "e2b9a3f2a0201f0fbc732e6296338c8043812cfa8d474d45d661fe83b2c66bf7",
     "tests/test_intake_profile.py": "89c497232c1582225be05fda4cd916dced617322bb31ac0130e4031d39372a81",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
@@ -430,6 +458,24 @@
     "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631",
     "tests/test_terminal_diagnostics.py": "011e9d53cc3aba8abe7888658cc193aae65a54e099e229220a33c7b7c6afab58"
   },
+  "localChanges": [
+    {
+      "adapterSourceSha256": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
+      "paths": [
+        "aim-flow.py",
+        "lib/flow_api_delivery.py",
+        "docs/API-DELIVERY.md",
+        "tests/test_api_delivery.py",
+        "tests/test_installed_api_delivery.py",
+        "lib/openai_budget.py",
+        "lib/aim_ci/control_archive.py",
+        "tests/test_control_package.py",
+        "tests/test_docker_engine.py"
+      ],
+      "summary": "Package explicit Sol/xhigh API proposals, scoped transport deadline and installed offline contracts. Keep source-only Codex prototype excluded.",
+      "version": "0.1.0-beta.8"
+    }
+  ],
   "schemaVersion": 2,
   "scope": "Product-only controller; unrelated legacy integrations are excluded.",
   "upstreamChanges": [

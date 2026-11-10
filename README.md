@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.7` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.8` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -19,9 +19,10 @@ AIM Flow helps you understand a software project, choose the next step and check
 - **Project size:** read complete selected source and project definitions without fixed product file-size, file-count or request-byte caps. Provider, approved spending and reviewed runtime limits still apply. See [size handling](docs/aim-ci-size-handling.md).
 - **Reviewed private candidates:** prepare an isolated local code candidate from an independently reviewed retained proposal, with new exact consent. This leaves the source checkout untouched and does not run or publish the project.
 - **Private failure diagnostics:** retain selected metadata and visible output for new incomplete responses, separately from accepted proposals. This evidence stays private and cannot authorize a retry. See [handling and retention](docs/aim-ci-onboarding.md#concise-patches-and-private-incomplete-response-evidence).
+- **Sol through OpenAI API:** the downloadable `aim-flow.py deliver-api` command previews exact Sol/xhigh patch requests, preserves campaign budget history and retains outcomes without replay. It returns a proposal for separate review and application. See [the API guide](docs/API-DELIVERY.md).
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the diagnostic update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the Sol packaging update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 

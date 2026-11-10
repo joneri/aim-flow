@@ -56,7 +56,7 @@ python3 -IBS /absolute/path/to/new-private-controller/aim-ci-control.py readines
 
 Unconfigured readiness normally exits **3** with `packageVerified: true` and `ready: false`. Exit **1** signals failure. Keep the installation outside your project. Project inspection additionally requires Git 2.54+ and its independently verified executable pin.
 
-The historical `aim-ci` names are intentionally preserved. See [BETA-SCOPE.md](BETA-SCOPE.md), [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The original detailed guide and original release metadata remain intact in `controller/`. Detailed current source instructions: https://github.com/joneri/aim-flow/blob/main/docs/QUICKSTART.md
+The installation also includes `aim-flow.py deliver-api` for explicit Sol/xhigh patch proposals. Read the installed `docs/API-DELIVERY.md` before configuring it. A no-key preview is read-only; actual API use needs exact authorization and established campaign history. The historical `aim-ci` names are intentionally preserved. See [BETA-SCOPE.md](BETA-SCOPE.md), [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The original detailed guide and original release metadata remain intact in `controller/`. Detailed current source instructions: https://github.com/joneri/aim-flow/blob/main/docs/QUICKSTART.md
 """
     files['README.md'] = readme.encode()
     files['LICENSE'] = license_bytes

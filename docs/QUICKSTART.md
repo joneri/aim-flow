@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.8.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.8.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 
@@ -79,3 +79,9 @@ The result is a separate local candidate, not a built, tested or deployable appl
 Follow [the output-allowance guide](aim-ci-onboarding.md#select-output-capacity-for-one-intake) before selecting a larger response. An allowance includes reasoning and structured output, and must fit both the pinned provider's capacity and the existing approved money/call limits.
 
 A larger allowance grants no new model call or retry. Historical retained work keeps its original allowance and accounting. Private-candidate preparation reconstructs that retained selection and offers no output override.
+
+## Use Sol through OpenAI API
+
+The verified beta.8 installation includes `aim-flow.py deliver-api`. Start with its no-key preview and the [Sol API guide](API-DELIVERY.md). This advanced route requires pinned request/source files and an existing established budget ledger. It keeps the same campaign and outstanding reservations across upgrades. It returns a private patch proposal, which needs separate review, application and testing. The ordinary mini intake remains available with its original contract.
+
+For upgrades, install into a new directory using the new download's matching bootstrap and pins. Beta.8 uses archive schema 3; older schema 2 archives require their original bootstrap. Do not overwrite old installations, campaign records or retained attempts.
