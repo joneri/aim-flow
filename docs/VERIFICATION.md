@@ -37,3 +37,7 @@ python3 scripts/verify_provenance.py
 `test_api_delivery.py` exercises exact preview authorization, strict Sol/xhigh requests, token/rate bounds, combined historical-and-new USD20 liability, campaign authority, durable reservation before dispatch, source/history drift, private terminal retention, unknown transport outcomes and no replay. `test_installed_api_delivery.py` repeats the same offline contracts against a freshly installed controller, without a checkout dependency. No test calls OpenAI or reads a real credential.
 
 The legacy mini controller's models, prices and budget rules remain unchanged. Only its credential transport accepts an optional scoped wall deadline with legacy defaults preserved. A prior live Sol proposal is separate pilot evidence, not a repeat qualification of this packaged release or full AIM orchestration.
+
+## Project-specific agent onboarding (unreleased development)
+
+`test_project_onboarding.py` checks the installed prepare/record/verify handoff with Python and nested JavaScript fixtures: exact citations, project-local reasoning, source/controller/Git drift, inert hostile text, schema/authority refusals, step ordering, protected inputs and exclusive private outputs. This verifies evidence retention and validation only. It does not show that Flow independently called an agent, understood a project correctly, executed CI, or deployed anything. See [onboarding boundaries](PROJECT-ONBOARDING.md).

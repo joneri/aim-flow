@@ -48,6 +48,26 @@ def main():
     readiness.add_argument('--config-sha256')
     readiness.add_argument('--git-sha256', help='Independently verified Git SHA-256 for optional local source inspection')
     discover = commands.add_parser('discover-project')
+    onboarding_prepare = commands.add_parser('prepare-project-onboarding',
+        description='Export committed evidence for project-specific agent reasoning without dispatch or execution.')
+    onboarding_prepare.add_argument('--project-doc', action='append', default=[])
+    onboarding_prepare.add_argument('--review-source', action='append', default=[])
+    onboarding_prepare.add_argument('--output', type=Path, required=True)
+    onboarding_record = commands.add_parser('record-project-onboarding',
+        description='Retain a source-cited agent assessment as a project-only draft, never execution authority.')
+    onboarding_record.add_argument('--output', type=Path, required=True)
+    for option in ('packet', 'assessment'):
+        onboarding_record.add_argument('--' + option, type=Path, required=True)
+        onboarding_record.add_argument('--' + option + '-sha256', required=True)
+    onboarding_verify = commands.add_parser('verify-project-onboarding')
+    onboarding_verify.add_argument('--instance', type=Path, required=True)
+    onboarding_verify.add_argument('--instance-sha256', required=True)
+    onboarding_commands = ('prepare-project-onboarding', 'record-project-onboarding', 'verify-project-onboarding')
+    for command in (onboarding_prepare, onboarding_record, onboarding_verify):
+        for option in ('checkout', 'git'):
+            command.add_argument('--' + option, type=Path, required=True)
+        for option in ('manifest-sha256', 'git-sha256', 'commit'):
+            command.add_argument('--' + option, required=True)
     root_preview = commands.add_parser('preview-root-admission',
                                        description='Preview exact local root intake without transport.')
     for option in ('profile', 'state-dir', 'legacy-budget'):
@@ -214,7 +234,7 @@ def main():
                         'propose-adaptation', 'run-reviewed-build',
                         'status-reviewed-build', 'cleanup-reviewed-build', 'prepare-reviewed-build',
                         'cleanup-build-preparation', 'draft-build-preparation', 'acquire-npm-tarballs', *configured_commands)
-    if args.action in offline_commands and sys.version_info < control_package.MIN_RUNTIME_PYTHON:
+    if args.action in (*offline_commands, *onboarding_commands) and sys.version_info < control_package.MIN_RUNTIME_PYTHON:
         minimum = control_package.RUNTIME_PYTHON_REQUIREMENT
         raise Refused(f'{args.action} requires Python {minimum} or newer. '
                       f'Found Python {sys.version.split()[0]} at {sys.executable}.')
@@ -237,6 +257,9 @@ def main():
     elif args.action == 'install-project':
         from aim_ci.project_installation import install_project
         result = install_project(ROOT, args)
+    elif args.action in onboarding_commands:
+        from aim_ci.project_onboarding import onboarding
+        result = onboarding(ROOT, args)
     elif args.action == 'discover-project':
         manifest = control_package.verify_installation(ROOT, args.manifest_sha256)
         from aim_ci.project_discovery import discover_project
