@@ -47,14 +47,17 @@ The [source inventory](provenance/upstream-files.json) records where the code ca
 
 [Artwork attribution and notices](THIRD-PARTY-NOTICES.md) · [Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
-Unreleased development: [project-specific agent onboarding](docs/PROJECT-ONBOARDING.md) exports committed evidence and retains source-cited installation, test, CI and deployment reasoning in a separate project instance. The optional `onboard-api` route can dispatch a separately approved Sol assessment and retain the resulting instance. A first live pilot returned useful but incomplete analysis. The compact response and explicit excerpt correction are offline-tested; no route executes the proposed plan.
+Unreleased development: [project-specific agent onboarding](docs/PROJECT-ONBOARDING.md) exports committed evidence and retains source-cited installation, test, CI and deployment reasoning in a separate project instance. The optional `onboard-api` route can dispatch a separately approved Sol assessment and retain the resulting instance. A first live pilot returned useful but incomplete analysis. A later compact live assessment produced a reviewed, source-bound instance. Assessment alone does not execute its proposed plan or authorize project actions.
 
 Unreleased development: [project-local validation handoffs](docs/PROJECT-VALIDATION.md) consume a reviewed onboarding instance and explicit project declaration. They preserve actual npm roots, lifecycle hooks and CI distinctions without executing the project or upgrading the existing runners.
 
 The unreleased project-local validation route now supports explicitly authorized, single-attempt offline npm jobs and source-bound execution receipts. See [project validation](docs/PROJECT-VALIDATION.md) for the preview, containment, runtime review and verification boundaries.
 
-The unreleased Linux container route can run reviewed Node 24 backend npm jobs
-with a private loopback namespace, offline cache and retained execution evidence.
-A real AIWebSite backend chain passed through the installed Flow controller.
-This is separate from hosted CI, full aggregate validation and release readiness;
-see the [container scope](docs/PROJECT-VALIDATION.md#linux-container-backend-jobs).
+The unreleased Linux container route can run reviewed Node 24 npm jobs with
+a private loopback namespace, offline cache and retained execution evidence.
+AIWebSite's real `npm ci` and combined `ci:release-readiness` frontend/backend
+chain passed through a fresh installed Flow controller. Schema v2 binds a
+separately reviewed utility image and an explicitly executable private workspace.
+This local aggregate is separate from hosted CI, native Windows, browser
+acceptance and a distributable release; see the
+[container scope](docs/PROJECT-VALIDATION.md#linux-container-backend-jobs).

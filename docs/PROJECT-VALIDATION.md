@@ -101,7 +101,7 @@ and refuse replay. Derived images remain local for review; completed job
 containers are removed only by exact owned identity.
 
 The network namespace has private loopback for HTTP fixtures and no external
-route. This is not the earlier macOS loopback policy. `/work` is noexec: explicit
+route. This is not the earlier macOS loopback policy. In schema v1, `/work` is noexec: explicit
 image Node invocations work, but native binaries and shebang executables in
 node_modules/.bin do not. This route is therefore not general frontend npm
 coverage. Existing macOS execution remains separate and unchanged.
@@ -119,3 +119,33 @@ Docker's observed terminal status and retained control/effect hashes. Files
 created in tmpfs are not themselves preserved. A pass remains ready:false,
 acceptance:not-established and deployment:not-authorized. Hosted CI, Windows,
 browser acceptance and release publication are separate work.
+
+### Explicit aggregate runtime extension (schema v2)
+
+Schema v1 keeps its noexec contract. V2 adds an explicit `workspaceExecution`
+choice (`noexec` or `exec`), an `inventoryBytes` limit no larger than the private
+workspace quota, and an optional `preparedImage`. Selecting exec changes only
+the newly created private tmpfs. Network:none, no host mounts or published ports,
+nonroot PID1, read-only image root, dropped capabilities and no-new-privileges
+remain required. Parent and child directly execute a copied, hash-checked ELF
+and generated shebang nonce stub. Exec must succeed; noexec must fail with EACCES.
+
+A prepared image is a local derivative, not a registry digest. Its specification
+pins the official Node base separately, the exact derivative ID, a reviewed
+preparation record and utility paths/hashes. The controller verifies recorded
+base-layer ancestry and inert image defaults; the helper checks actual Node/npm
+and utility bytes before project dispatch and after each stage. The preparation
+record must retain identical complete npm tree and Node fingerprints before/after
+preparation; the helper repeats the complete runtime fingerprint comparison. Layer ancestry alone is
+not proof that an overlay is safe. Utility package acquisition, repository
+signature checks and image preparation are separate authorized work, never an
+automatic fallback in this runner.
+
+V2 streams constructed PAX staging archives and checks actual size up to 512 MiB.
+The helper's explicit inventory bound can cover a full source/cache/install/build
+workspace up to the existing 2 GiB tmpfs quota. Its entry count and JSON report
+remain bounded. V1 keeps its 256 MiB staging and 512 MiB inventory ceilings.
+Normal npm lifecycle settings stay intact; v2 uses informational npm logs to
+retain lifecycle dispatch/exit evidence without changing script authorization.
+A successful aggregate is still local validation, not hosted CI, acceptance,
+artifact publication or deployment authority.

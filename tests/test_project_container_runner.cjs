@@ -132,3 +132,88 @@ test('namespace sweep includes detached sessions, skips PID1/zombies and rejects
   assert.throws(()=>runner.namespaceProcesses(root),/ownership/);
   await assert.rejects(runner.drainProcesses(()=>[99],()=>{},Date.now()-1),/deadline/);
 });
+
+test('v2 fields are explicit and v1 shape/default noexec contract remains accepted', () => {
+  const old = job(); const before = JSON.stringify(old); runner.validateJob(old);
+  assert.equal(JSON.stringify(old), before);
+  assert.deepEqual(runner.executionSettings(old), { workspaceExecution: 'noexec', inventoryBytes: 512 * 1024 * 1024, runtimeTools: {} });
+  const modern = { ...job(), schemaVersion: 2, workspaceExecution: 'exec', inventoryBytes: 2 * 1024 ** 3, runtimeFingerprints: null,
+    runtimeTools: { git: { path: '/usr/bin/git', sha256: 'c'.repeat(64) } } };
+  runner.validateJob(modern); assert.equal(runner.executionSettings(modern).workspaceExecution, 'exec');
+  runner.validateJob({ ...modern, workspaceExecution: 'noexec' });
+  const invalid = [j => delete j.workspaceExecution, j => j.workspaceExecution = 'auto', j => j.inventoryBytes = 0,
+    j => j.inventoryBytes = 2 * 1024 ** 3 + 1, j => j.inventoryBytes = 1.5, j => j.inventoryBytes = Infinity,
+    j => j.runtimeTools.git.path = 'usr/bin/git', j => j.runtimeTools.git.path = '/usr/bin/../git',
+    j => j.runtimeTools.git.path = '/usr//bin/git', j => j.runtimeTools.git.extra = true,
+    j => j.runtimeTools['../git'] = j.runtimeTools.git, j => j.runtimeTools.git.sha256 = 'bad'];
+  for (const change of invalid) { const value = structuredClone(modern); change(value); assert.throws(() => runner.validateJob(value)); }
+  assert.throws(() => runner.validateJob({ ...old, workspaceExecution: 'exec' }));
+});
+test('direct execution classification requires exact EACCES or exit zero and nonce', () => {
+  const denied = { termination: 'spawn-error', spawnErrorCode: 'EACCES', exitCode: null, stdout: '', stderr: '' };
+  const passed = { termination: null, spawnErrorCode: null, exitCode: 0, stdout: 'nonce', stderr: '' };
+  assert.equal(runner.classifyExecution('noexec', denied, 'nonce'), 'denied-EACCES');
+  assert.equal(runner.classifyExecution('exec', passed, 'nonce'), 'executed');
+  for (const wrong of [{ ...denied, spawnErrorCode: 'EPERM' }, { ...denied, spawnErrorCode: 'ENOENT' },
+    { ...denied, termination: 'timeout' }, { ...denied, exitCode: 126 }, { ...denied, stdout: 'executed' }, passed]) {
+    assert.throws(() => runner.classifyExecution('noexec', wrong, 'nonce'));
+  }
+  for (const wrong of [denied, { ...passed, stdout: 'wrong' }, { ...passed, exitCode: 1 }, { ...passed, stderr: 'warning' }]) {
+    assert.throws(() => runner.classifyExecution('exec', wrong, 'nonce'));
+  }
+});
+test('inventory byte cap is configurable without changing default or traversing links', t => {
+  const root = tmp(); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(root + '/a', '123'); fs.writeFileSync(root + '/b', '456'); fs.symlinkSync('/outside-not-read', root + '/link');
+  assert.equal(runner.inventory(root, Date.now() + 3000, 6).b.bytes, 3);
+  assert.throws(() => runner.inventory(root, Date.now() + 3000, 5), /Inventory byte bound/);
+  assert.throws(() => runner.inventory(root, Date.now() + 3000, 2 * 1024 ** 3 + 1));
+  assert.equal(runner.inventory(root, Date.now() + 3000).link.type, 'link');
+});
+test('runtime tool pins check canonical first PATH resolution, hash and executable mode', t => {
+  const root = tmp(); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(root + '/first'); fs.mkdirSync(root + '/second');
+  const actual = root + '/second/which.debianutils'; fs.writeFileSync(actual, 'reviewed executable bytes', { mode: 0o755 });
+  fs.symlinkSync('which.debianutils', root + '/second/which');
+  const tool = { which: { path: actual, sha256: runner.sha(fs.readFileSync(actual)) } };
+  const search = root + '/first:' + root + '/second';
+  assert.deepEqual(JSON.parse(JSON.stringify(runner.runtimeToolPins(tool, Date.now() + 3000, search))), tool);
+  fs.writeFileSync(root + '/first/which', 'shadow', { mode: 0o755 });
+  assert.throws(() => runner.runtimeToolPins(tool, Date.now() + 3000, search), /resolution/); fs.unlinkSync(root + '/first/which');
+  fs.appendFileSync(actual, 'changed'); assert.throws(() => runner.runtimeToolPins(tool, Date.now() + 3000, search), /hash drift/);
+  tool.which.sha256 = runner.sha(fs.readFileSync(actual)); fs.chmodSync(actual, 0o644);
+  assert.throws(() => runner.runtimeToolPins(tool, Date.now() + 3000, search), /resolution/);
+  fs.chmodSync(actual, 0o755); tool.which.path = root + '/second/which';
+  assert.throws(() => runner.runtimeToolPins(tool, Date.now() + 3000, search), /canonical/);
+});
+
+test('v2 fingerprint schema is exact, version bound and optional only as null', () => {
+  const modern = { ...job(), schemaVersion: 2, workspaceExecution: 'exec', inventoryBytes: 1024, runtimeTools: {},
+    runtimeFingerprints: { nodeVersion: '24.19.0', npmVersion: '11.17.0', nodeSha256: 'a'.repeat(64), npmCliSha256: 'b'.repeat(64), npmTreeSha256: 'c'.repeat(64) } };
+  runner.validateJob(modern); runner.validateJob({ ...modern, runtimeFingerprints: null });
+  for (const change of [j => delete j.runtimeFingerprints, j => delete j.runtimeFingerprints.npmTreeSha256,
+    j => j.runtimeFingerprints.extra = true, j => j.runtimeFingerprints.nodeSha256 = 'bad',
+    j => j.runtimeFingerprints.nodeVersion = '24.0.0', j => j.runtimeFingerprints.npmVersion = '10.0.0']) {
+    const value = structuredClone(modern); change(value); assert.throws(() => runner.validateJob(value));
+  }
+});
+test('npm fingerprint uses exact sorted canonical inventory and never follows symlinks', t => {
+  const root = tmp(); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.chmodSync(root, 0o755); fs.mkdirSync(root+'/bin', {mode:0o755});fs.chmodSync(root+'/bin',0o755);
+  fs.writeFileSync(root+'/bin/npm-cli.js','fixture',{mode:0o644});fs.chmodSync(root+'/bin/npm-cli.js',0o644);
+  fs.symlinkSync('/not-followed',root+'/link');
+  const entries=[{path:'.',mode:0o755,type:'directory'},{path:'bin',mode:0o755,type:'directory'},
+    {path:'bin/npm-cli.js',mode:0o644,type:'file',bytes:7,sha256:runner.sha('fixture')},
+    {path:'link',mode:fs.lstatSync(root+'/link').mode & 0o7777,type:'symlink',target:'/not-followed'}];
+  const ordered=entries.map(e=>Object.fromEntries(Object.keys(e).sort().map(k=>[k,e[k]])));
+  const expected=runner.sha(Buffer.from(JSON.stringify(ordered),'utf8'));
+  assert.equal(runner.npmTreeFingerprint(root,Date.now()+3000),expected);
+  fs.appendFileSync(root+'/bin/npm-cli.js','changed');assert.notEqual(runner.npmTreeFingerprint(root,Date.now()+3000),expected);
+  assert.throws(()=>runner.npmTreeFingerprint(root,Date.now()-1));
+});
+test('v2 info logs do not alter lifecycle flags and v1 logging stays unchanged', () => {
+  const old=runner.environment('/work',{},1), modern=runner.environment('/work',{},2);
+  assert.equal(old.npm_config_loglevel,undefined);assert.equal(modern.npm_config_loglevel,'info');
+  for(const key of ['npm_config_ignore_scripts','npm_config_foreground_scripts','npm_config_allow_scripts']) assert.equal(modern[key],undefined);
+  delete modern.npm_config_loglevel;assert.deepEqual(modern,old);
+});

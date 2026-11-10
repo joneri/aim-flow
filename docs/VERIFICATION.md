@@ -119,3 +119,82 @@ Final execution receipt:
 Both successful receipts remain preserved. Provenance covers 93 product files
 and 61 controller files. The unchanged beta.8 bundle-equality check still fails
 intentionally; a separate new versioned package is required.
+
+
+## Project-specific full aggregate, 2026-11-10
+
+A fresh installed development controller ran the real AIWebSite root `npm ci`
+followed by `npm run ci:release-readiness` at committed source
+`27cdc01052a88f130ae1d794d2d2ef6ae652204a`. This is one combined run, not a
+reconstruction from earlier component passes. Both stages exited 0:
+
+- Root offline install: 280 packages, 2.043 seconds.
+- Full aggregate: 12.448 seconds, including prebuild ZIP generation, 261 Astro
+  pages, 12 optimized images, plugin-package checks, Node Windows-contract
+  checks, 55 release-process assertions with stubbed production transports,
+  nested backend install of 81 packages and the actual backend suite's `ok`.
+- The backend runner awaits producer and mix-series suites; it reports no
+  numeric assertion count. The Windows contract is not native PowerShell.
+
+The separately approved local runtime adds Git/zip/unzip and their dependencies
+to the already-approved official Linux ARM64 Node 24.22.2/npm 11.19.1 image.
+All 26 Debian packages matched authenticated repository index hashes/sizes;
+three InRelease records were checked against the pinned base's trusted keyring.
+No packages were installed on the host. Preparation was source-free, followed
+by offline installation and nonroot/read-only/network:none runtime checks.
+Node, npm CLI and the full 2,381-entry npm tree remained byte-identical.
+
+The exact prepared image is
+`sha256:9e6f085dc3bbd2cf86da6d163fe108c8aaeaf968a6d51945cfc8a3fdb90712ae`.
+Schema v2 pins its official base separately, preparation provenance and tools.
+Its executable workspace is confined to a private 2 GiB tmpfs. The test keeps
+network:none, no host mounts/ports, read-only root, nonroot UID/GID 65534, dropped
+capabilities and no-new-privileges. Both parent/child probes passed actual local
+HTTP and direct ELF/shebang execution and confirmed external ENETUNREACH and
+protected-root/baseline write denial. Complete Node/npm fingerprints are checked
+before dispatch, before/after each stage and at completion.
+
+All 590 selected committed sources and 363 Linux cache files were verified.
+Copied sources were restored exactly by content/mode; they are mutable during
+stages, while the image baseline and original checkout stay protected. The
+report retained 21,644 output entries representing 744,687,473 file bytes before
+tmpfs disappeared. Three generated ZIP copies share SHA-256
+`0c460ca076c48cfbdcc3e84327adee756b3945ab3849dedc61ea14c43e9b518c`.
+Generated outputs themselves were not retained or published.
+
+Installed controller manifest:
+`1bf261074dd9675557277b36cf6e153b66707a8444ba2a0d5d005c0b5695c594`.
+Execution intent:
+`8f354c50d437507e7e04fde000a62b6c00a4a112e679f789f6f2d29954a1ff4a`.
+Completed receipt:
+`ba91d986a2e10d72b50b2d40d90c1da4e455cf563f620b688a00dceae89cbffd`.
+Completed staging/job containers were removed; prepared/derived images remain
+local for review. npm's allowScripts warning is retained, alongside explicit
+esbuild postinstall dispatch and exit 0. No universal hook-policy equivalence
+with another npm version is claimed.
+
+This supersedes the earlier aggregate-unrun state, not the other boundaries.
+The result remains ready:false, acceptance:not-established and
+deployment:not-authorized. Hosted Ubuntu/Node 22.12 engine qualification,
+native Windows, browser acceptance, production behavior and new release
+packaging remain separate. No model request, push or deployment occurred.
+The existing beta.8 download remains unchanged.
+
+
+Independent retained review reconciled all nine control hashes, seven completed
+effects, the outer receipt, installed bytes and the complete staging archive
+(955 regular files: sources, cache, helper and job). A separate installed verifier
+also exited 0. Original checkout HEAD/status/staged and unstaged diff observations
+were unchanged; this does not qualify dirty working-tree content as tested.
+
+Final regression covered 444 Python tests. The first invocation had 440 passes,
+one existing skip and three macOS execution-test failures/errors because the
+outer tool sandbox prevented `sandbox-exec` from applying its own profile. Only
+those three fixtures were rerun through the reviewed execution route; all three
+passed in 22.723 seconds with their network-denying/write-limited profiles
+unchanged. Thus 443 distinct tests have passing results across the full run and
+scoped rerun, not a claim that the first invocation passed. Node tests passed
+37/37 (21 container helper and 16 platform tests). Provenance, site and diff
+checks passed. The unchanged beta.8 bundle comparison still intentionally fails
+with `Bootstrap differs from trusted source checkout`; this development needs
+a new versioned package rather than replacement of beta.8.

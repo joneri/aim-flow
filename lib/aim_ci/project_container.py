@@ -4,7 +4,9 @@ The image baseline and original checkout are protected. The private working
 copy is mutable during a stage; restoration is checked, not assumed atomic.
 """
 import io
+import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -15,7 +17,7 @@ from urllib.parse import urlencode
 from . import control_package as package, docker_engine as docker
 from . import project_execution as local, project_onboarding as onboarding, project_validation as planning
 from .effects import EffectJournal
-from .owned_paths import Refused, new_owned_directory, read_owned_content, write_owned
+from .owned_paths import Refused, new_owned_directory, owned_file, read_owned_content, write_owned
 from .project_discovery import unique_json
 
 SPEC = 'aim-flow-project-container-spec'
@@ -26,13 +28,49 @@ NODE = '/usr/local/bin/node'
 NPM = '/usr/local/lib/node_modules/npm/bin/npm-cli.js'
 
 
+def prepared_runtime(value, official):
+    if value is None:return None
+    onboarding._keys(value, ('id','baseImageId','provenance','runtimeTools'), 'prepared runtime')
+    if (not re.fullmatch('sha256:[a-f0-9]{64}', value['id']) or value['id']==official['id']
+        or value['baseImageId']!=official['id']):raise Refused('Prepared runtime must name its exact official base and distinct local image')
+    onboarding._keys(value['provenance'], ('path','sha256'), 'runtime provenance')
+    _,record=planning.pinned(Path(value['provenance']['path']),value['provenance']['sha256'])
+    tools=value['runtimeTools']
+    if not isinstance(tools,dict) or not tools or len(tools)>32:raise Refused('Prepared runtime needs a bounded tool inventory')
+    for name,row in tools.items():
+        if not re.fullmatch('[a-z][a-z0-9_-]*',name) or name in ('node','npm'):raise Refused('Invalid additional runtime tool')
+        onboarding._keys(row,('path','sha256'),'runtime tool')
+        if not isinstance(row['path'],str) or not row['path'].startswith('/'):raise Refused('Runtime tool needs an absolute image path')
+        onboarding._source_path(row['path'][1:])
+        if not re.fullmatch('[a-f0-9]{64}',row['sha256']):raise Refused('Invalid runtime tool digest')
+    if (record.get('format')!='aim-flow-prepared-project-runtime' or record.get('schemaVersion')!=1
+        or record.get('baseImageId')!=official['id'] or record.get('imageId')!=value['id']
+        or record.get('runtimeTools')!=tools or record.get('baseRuntime')!=record.get('preparedRuntime')):
+        raise Refused('Prepared image differs from its separately reviewed provenance')
+    runtime=record.get('baseRuntime',{})
+    if (runtime.get('nodeVersion')!=official['nodeVersion'] or runtime.get('npmVersion')!=official['npmVersion']
+        or any(not isinstance(runtime.get(k),str) or not re.fullmatch('[a-f0-9]{64}',runtime[k])
+               for k in ('nodeSha256','npmCliSha256','npmTreeSha256'))):
+        raise Refused('Prepared image must preserve measured official Node/npm bytes')
+    for name in ('baseLayers','imageLayers'):
+        if not isinstance(record.get(name),list) or not record[name] or any(not re.fullmatch('sha256:[a-f0-9]{64}',v) for v in record[name]):
+            raise Refused('Missing prepared image layer inventory')
+    if (len(record['imageLayers'])<=len(record['baseLayers']) or
+        record['imageLayers'][:len(record['baseLayers'])]!=record['baseLayers']):raise Refused('Prepared image ancestry differs')
+    onboarding._texts(record.get('review'),'runtime preparation review')
+    if not record['review']:raise Refused('Runtime preparation needs a separate review')
+    return {**value,'record':record}
+
+
 def prepare(root, args):
     handoff = planning.derive(root, args)
     _, spec = planning.pinned(args.execution_spec, args.execution_spec_sha256)
+    version=spec.get('schemaVersion')
+    extra=('workspaceExecution','inventoryBytes','preparedImage') if version==2 else ()
     onboarding._keys(spec, ('format', 'schemaVersion', 'job', 'sourcePaths', 'docker', 'image', 'npmCache',
         'runtimeReview', 'sourceReview', 'applicationEnvironment', 'timeoutSeconds', 'outputBytes',
-        'memoryBytes', 'processCount', 'workspaceBytes'), 'container execution spec')
-    if spec['format'] != SPEC or type(spec['schemaVersion']) is not int or spec['schemaVersion'] != 1:
+        'memoryBytes', 'processCount', 'workspaceBytes',*extra), 'container execution spec')
+    if spec['format'] != SPEC or type(version) is not int or version not in (1,2):
         raise Refused('Unsupported project container spec')
     jobs = [j for j in handoff['jobs'] if j['id'] == spec['job']]
     if len(jobs) != 1 or jobs[0]['mode'] == 'hosted-reference' or jobs[0]['needs']:
@@ -46,6 +84,9 @@ def prepare(root, args):
     for key, (low, high) in bounds.items():
         if type(spec[key]) is not int or not low <= spec[key] <= high:
             raise Refused('Container resource limit outside supported bounds: '+key)
+    if version==2 and (spec['workspaceExecution'] not in ('exec','noexec') or
+        type(spec['inventoryBytes']) is not int or not 16*1024**2<=spec['inventoryBytes']<=spec['workspaceBytes']):
+        raise Refused('Explicit workspace execution mode and bounded inventory required')
     onboarding._keys(spec['docker'], ('path', 'sha256', 'endpoint'), 'Docker tool')
     tool = local.tool_identity({k: spec['docker'][k] for k in ('path', 'sha256')})
     endpoint = spec['docker']['endpoint']
@@ -59,6 +100,7 @@ def prepare(root, args):
         image['architecture'] not in ('arm64', 'amd64') or
         any(not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', image[k]) for k in ('nodeVersion', 'npmVersion'))):
         raise Refused('Pin an exact local official Node image and observed runtime versions')
+    prepared=prepared_runtime(spec['preparedImage'],image) if version==2 else None
     application = spec['applicationEnvironment']
     if not isinstance(application, dict): raise Refused('Invalid application environment')
     for name, value in application.items():
@@ -86,7 +128,8 @@ def prepare(root, args):
         if not set(required) <= sources.keys(): raise Refused('Stage manifest/lock missing from selected sources')
     state = onboarding._outside(args.state, root, Path(handoff['target']['checkout']))
     onboarding._outside(state, args.instance_controller, Path(handoff['target']['checkout']))
-    for path in [args.execution_spec, args.declaration, args.instance, Path(cache['path']), Path(tool['path'])]:
+    for path in [args.execution_spec, args.declaration, args.instance, Path(cache['path']), Path(tool['path']),
+                 *([Path(prepared['provenance']['path'])] if prepared else [])]:
         if path.is_relative_to(state) or state.is_relative_to(path): raise Refused('Attempt state overlaps pinned inputs')
     intent = {'format': 'aim-flow-project-container-intent', 'schemaVersion': 1,
         'controllerManifestSha256': args.manifest_sha256, 'executionSpecSha256': args.execution_spec_sha256,
@@ -98,46 +141,68 @@ def prepare(root, args):
         'sourceBoundary': 'Read-only image baseline and original checkout. Private tmpfs copied source is mutable during stages; exact final content/mode must match.',
         'authority': 'One separate exact operator grant. No model-derived authority, deployment or acceptance.',
         'excludedCoverage': handoff['excludedCoverage'], 'review': handoff['review'], 'agentUnknowns': handoff['agentUnknowns']}
+    if version==2:intent.update(schemaVersion=2,workspaceExecution=spec['workspaceExecution'],
+        inventoryBytes=spec['inventoryBytes'],preparedImage=prepared)
     return intent, reader
 
 
 def job_document(intent):
-    return {'format': 'aim-flow-project-container-job', 'schemaVersion': 1,
+    result={'format': 'aim-flow-project-container-job', 'schemaVersion': 1,
         'intentSha256': local.digest(intent), 'stages': [{k: s[k] for k in ('argv','root')} for s in intent['job']['stages']],
         'sources': {n: {k: r[k] for k in ('sha256','mode','bytes')} for n,r in intent['sources'].items()},
         'cache': intent['cache']['files'], 'runtime': {'nodePath': NODE, 'npmPath': NPM,
             'nodeVersion': intent['image']['nodeVersion'], 'npmVersion': intent['image']['npmVersion']},
         **{k: intent[k] for k in ('applicationEnvironment','timeoutSeconds','outputBytes')}}
+    if intent['schemaVersion']==2:result.update(schemaVersion=2,workspaceExecution=intent['workspaceExecution'],
+        inventoryBytes=intent['inventoryBytes'],runtimeTools=(intent['preparedImage'] or {}).get('runtimeTools',{}),
+        runtimeFingerprints=intent['preparedImage']['record']['baseRuntime'] if intent['preparedImage'] else None)
+    return result
+
+
+def file_identity(root,name,limit=None):
+    with os.fdopen(owned_file(root,name,os.O_RDONLY),'rb') as stream:
+        before=os.fstat(stream.fileno());count=0;sha=hashlib.sha256()
+        if limit is not None and before.st_size>limit:raise Refused('Staging archive exceeds its byte bound')
+        while chunk:=stream.read(min(65536,before.st_size+1-count)):
+            count+=len(chunk)
+            if count>before.st_size:raise Refused('File grew while measuring')
+            if limit is not None and count>limit:raise Refused('Staging archive exceeds its byte bound')
+            sha.update(chunk)
+        after=os.fstat(stream.fileno())
+    identity=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    if identity(before)!=identity(after) or count!=before.st_size:raise Refused('File changed while measuring')
+    return {'sha256':sha.hexdigest(),'bytes':count}
 
 
 def input_archive(root, state, intent, reader):
-    files = {'job.json': onboarding.encode(job_document(intent)), 'runner.cjs': read_owned_content(root, HELPER)}
-    package.check_digest(files['runner.cjs'], intent['helperSha256'], 'Container helper')
-    for name, row in intent['sources'].items():
-        raw = reader.blob(row['gitObject']); package.check_digest(raw, row['sha256'], 'Committed source')
-        files['source/'+name] = raw
-    for name, row in intent['cache']['files'].items():
-        raw = read_owned_content(Path(intent['cache']['path']), name)
-        package.check_digest(raw, row['sha256'], 'Pinned npm cache'); files['npm-cache/'+name] = raw
-    if sum(map(len, files.values())) > 256*1024**2: raise Refused('Container staging archive exceeds supported size')
-    buffer = io.BytesIO()
+    controls={'job.json':onboarding.encode(job_document(intent)),'runner.cjs':read_owned_content(root,HELPER)}
+    package.check_digest(controls['runner.cjs'],intent['helperSha256'],'Container helper')
+    names=[*controls,*('source/'+n for n in intent['sources']),*('npm-cache/'+n for n in intent['cache']['files'])]
+    limit=(512 if intent['schemaVersion']==2 else 256)*1024**2
     # npm content-addressed cache basenames exceed USTAR's 100-byte name field.
     # This archive is constructed here from validated regular-file inputs;
     # PAX long-path records do not import caller-controlled tar headers.
-    with tarfile.open(fileobj=buffer, mode='w', format=tarfile.PAX_FORMAT) as archive:
+    with os.fdopen(owned_file(state,'inputs.tar',os.O_WRONLY|os.O_CREAT|os.O_EXCL),'wb') as stream, tarfile.open(fileobj=stream, mode='w', format=tarfile.PAX_FORMAT) as archive:
         directories = {Path(LAYOUT.lstrip('/')), Path(LAYOUT.lstrip('/'))/'source', Path(LAYOUT.lstrip('/'))/'npm-cache'}
-        for name in files:
+        for name in names:
             directories.update(p for p in (Path(LAYOUT.lstrip('/'))/name).parents if str(p) != '.')
         for path in sorted(directories, key=lambda p: (len(p.parts), str(p))):
             item=tarfile.TarInfo(str(path));item.type=tarfile.DIRTYPE;item.mode=0o755;archive.addfile(item)
-        for name, raw in sorted(files.items()):
+        for name in sorted(names):
+            if name in controls:raw=controls[name]
+            elif name.startswith('source/'):
+                row=intent['sources'][name.removeprefix('source/')];raw=reader.blob(row['gitObject'])
+                package.check_digest(raw,row['sha256'],'Committed source')
+            else:
+                short=name.removeprefix('npm-cache/');raw=read_owned_content(Path(intent['cache']['path']),short)
+                package.check_digest(raw,intent['cache']['files'][short]['sha256'],'Pinned npm cache')
+            if stream.tell()+len(raw)+4096>limit:raise Refused('Container staging archive exceeds supported size')
             item=tarfile.TarInfo(LAYOUT.lstrip('/')+'/'+name);item.size=len(raw)
             source=intent['sources'].get(name.removeprefix('source/')) if name.startswith('source/') else None
             item.mode=0o755 if source and source['mode']=='100755' else 0o644
             if name.startswith('npm-cache/'): item.mode=intent['cache']['files'][name.removeprefix('npm-cache/')]['mode']
             archive.addfile(item,io.BytesIO(raw))
-    reader.verify_head(); raw=buffer.getvalue();write_owned(state,'inputs.tar',raw,exclusive=True)
-    return {'sha256':package.sha256(raw),'bytes':len(raw)}
+    reader.verify_head();return file_identity(state,'inputs.tar',limit)
 
 
 def checked_image(engine, intent):
@@ -154,15 +219,29 @@ def checked_image(engine, intent):
         or config.get('Volumes') or config.get('OnBuild') or pairs.get('NODE_VERSION')!=expected['nodeVersion']
         or not isinstance(env,list) or len(env)!=len(pairs)):
         raise Refused('Local Node image differs from the approved immutable runtime')
-    return {'imageId':row['Id'],'repoDigests':row['RepoDigests'],'os':row['Os'],'architecture':row['Architecture'],
+    result={'imageId':row['Id'],'repoDigests':row['RepoDigests'],'os':row['Os'],'architecture':row['Architecture'],
         'env':env,'layers':row.get('RootFS',{}).get('Layers')}
+    prepared=intent.get('preparedImage')
+    if prepared:
+        record=prepared['record'];image=engine._call('GET','/images/'+prepared['id']+'/json',(200,))
+        cfg=image.get('Config',{})
+        if (image.get('Id')!=prepared['id'] or image.get('Os')!=row['Os'] or image.get('Architecture')!=row['Architecture']
+            or image.get('RootFS',{}).get('Layers')!=record['imageLayers'] or result['layers']!=record['baseLayers']
+            or cfg.get('Env')!=env or cfg.get('Volumes') or cfg.get('OnBuild')
+            or cfg.get('Healthcheck') not in (None,{'Test':['NONE']})
+            or cfg.get('Entrypoint')!=['/bin/false'] or cfg.get('Cmd')!=['--prepared-runtime-only']
+            or cfg.get('User')!='65534:65534'):
+            raise Refused('Prepared runtime image differs from exact reviewed ancestry/configuration')
+        result.update(officialBaseImageId=row['Id'],imageId=prepared['id'],repoDigests=image.get('RepoDigests',[]),
+            layers=record['imageLayers'],preparationProvenanceSha256=prepared['provenance']['sha256'])
+    return result
 
 
 def payload(intent, image, label, *, staging=False):
     host={'NetworkMode':'none','ReadonlyRootfs':not staging,'Privileged':False,'CapDrop':['ALL'],
         'SecurityOpt':['no-new-privileges:true'],'RestartPolicy':{'Name':'no','MaximumRetryCount':0},'AutoRemove':False,
         'Memory':intent['memoryBytes'],'MemorySwap':intent['memoryBytes'],'PidsLimit':intent['processCount'],
-        'Tmpfs':{} if staging else {'/work':f"rw,nosuid,nodev,noexec,mode=1777,size={intent['workspaceBytes']}"},
+        'Tmpfs':{} if staging else {'/work':f"rw,nosuid,nodev,{intent.get('workspaceExecution','noexec')},mode=1777,size={intent['workspaceBytes']}"},
         'LogConfig':{'Type':'json-file','Config':{'max-size':'36m','max-file':'1'}}}
     return {'Image':image,'Entrypoint':['/bin/false'] if staging else [NODE,'--disable-sigusr1'],
         'Cmd':['--inert-staging-only'] if staging else [LAYOUT+'/runner.cjs'],
@@ -201,7 +280,7 @@ def execute(root,state,intent,reader):
     base=checked_image(engine,intent);write_owned(state,'base-image.json',onboarding.encode(base),exclusive=True)
     archive=input_archive(root,state,intent,reader);pin=local.digest(intent)
     stage_name='aim-flow-stage-'+pin[:24];run_name='aim-flow-job-'+pin[:24]
-    staged=payload(intent,intent['image']['id'],pin,staging=True)
+    staged=payload(intent,base['imageId'],pin,staging=True)
     def create(name,body):
         result=engine._call('POST','/containers/create?'+urlencode({'name':name}),(201,),body)
         return {'id':docker._container_id(result.get('Id'))}
@@ -212,11 +291,13 @@ def execute(root,state,intent,reader):
     argv=[intent['docker']['path'],'--host',intent['docker']['endpoint'],'container','cp','-',staged_id+':/']
     def upload():
         local.tool_identity({k:intent['docker'][k] for k in ('path','sha256')})
-        raw=read_owned_content(state,'inputs.tar');package.check_digest(raw,archive['sha256'],'Staging archive')
+        if file_identity(state,'inputs.tar')!=archive:raise Refused('Staging archive changed')
         try:
-            p=subprocess.run(argv,input=raw,cwd=state,env={'PATH':'/usr/bin:/bin','HOME':str(state),'DOCKER_CONFIG':str(state)},capture_output=True,timeout=120)
+            with os.fdopen(owned_file(state,'inputs.tar',os.O_RDONLY),'rb') as stream:
+                p=subprocess.run(argv,stdin=stream,cwd=state,env={'PATH':'/usr/bin:/bin','HOME':str(state),'DOCKER_CONFIG':str(state)},capture_output=True,timeout=120)
         except (OSError,subprocess.TimeoutExpired): raise Refused('Staging upload outcome unknown; do not resend') from None
         if p.returncode or len(p.stdout)+len(p.stderr)>10000:raise Refused('Staging upload did not confirm success')
+        if file_identity(state,'inputs.tar')!=archive:raise Refused('Staging archive changed during upload')
         return {'exitCode':p.returncode,'archive':archive}
     effect('stage:upload',{'argv':argv,'archive':archive},upload)
     observed=inspect_container(engine,staged_id,stage_name,staged)
@@ -260,14 +341,15 @@ def execute(root,state,intent,reader):
             'Container helper evidence is not independent product acceptance. No hosted CI, native Windows, browser or deployment qualification.',
             'Selected project code is reviewed, not treated as hostile. Same-UID project/helper execution is not an adversarial evidence trust boundary; inspector activation is disabled.',
             'Private tmpfs outputs cease at exit; only bounded report inventories/logs are retained. Derived image remains local for review.']}
-    result['limitations'].append('Workspace is noexec: explicit image Node invocations work, but native binaries and shebang CLIs in node_modules/.bin cannot execute. This is not general frontend npm coverage.')
+    result['limitations'].append('Workspace mode: '+intent.get('workspaceExecution','noexec')+'. Only that exact private mount mode is qualified; no persistent OS security setting is changed.')
+    if intent.get('preparedImage'):result['limitations'].append('Prepared runtime ancestry and pinned operator provenance are checked. Ancestry alone does not prove overlay safety; Node/npm/tool byte qualification and reviewed preparation remain required.')
     if read_owned_content(state,'container.stderr') or len(read_owned_content(state,'container.stdout'))>intent['outputBytes']:
         result['diagnostic']='Unexpected helper stderr or oversized report'
     result['status']='passed' if passing_report(intent,result) else 'failed'
     effect('job:remove',{'id':identifier},lambda:engine.remove(identifier))
     if engine._call('GET','/containers/'+identifier+'/json',(200,404)) is not None:raise Refused('Job cleanup not confirmed')
     result['containerCleanup']='confirmed-absent'
-    result['controlFiles']={n:package.sha256(read_owned_content(state,n)) for n in (
+    result['controlFiles']={n:file_identity(state,n)['sha256'] for n in (
         'base-image.json','inputs.tar','derived-image.json','container-created.json','container-terminal.json','container.stdout','container.stderr',
         'effects/effects.json','effects/effects-established.json')}
     return result
@@ -278,6 +360,32 @@ def passing_report(intent,result):
     report=result.get('report')
     expected_sources={n:{'sha256':r['sha256'],'mode':int(r['mode'],8)&0o777,'bytes':r['bytes']} for n,r in intent['sources'].items()}
     runtime=report.get('runtime',{}) if isinstance(report,dict) else {}
+    if not isinstance(runtime,dict):return False
+    prepared=intent.get('preparedImage')
+    if prepared and (runtime.get('nodeSha256')!=prepared['record']['baseRuntime']['nodeSha256'] or
+                     runtime.get('npmSha256')!=prepared['record']['baseRuntime']['npmCliSha256'] or
+                     runtime.get('runtimeFingerprints')!=prepared['record']['baseRuntime']):return False
+    if intent['schemaVersion']==2 and (not isinstance(report,dict) or
+        report.get('workspaceExecution')!=intent['workspaceExecution'] or report.get('inventoryBytes')!=intent['inventoryBytes'] or
+        runtime.get('runtimeTools')!=(prepared or {}).get('runtimeTools',{})):return False
+    if intent['schemaVersion']==2:
+        qualification=report.get('qualification',{})
+        if not isinstance(qualification,dict):return False
+        expected='executed' if intent['workspaceExecution']=='exec' else 'denied-EACCES'
+        peers=[qualification.get(name) for name in ('parent','child')]
+        for peer in peers:
+            if not isinstance(peer,dict):return False
+            mode=peer.get('workspaceExecution',{});readonly=peer.get('readonly',{})
+            if (not isinstance(mode,dict) or not isinstance(readonly,dict) or
+                mode.get('mode')!=intent['workspaceExecution'] or mode.get('elf')!=expected or mode.get('stub')!=expected
+                or mode.get('directExecution') is not True or peer.get('runtimeTools')!=(prepared or {}).get('runtimeTools',{})
+                or peer.get('uid')!=65534 or peer.get('gid')!=65534 or peer.get('interfaces')!=['lo']
+                or peer.get('loopbackHttp')!='passed' or peer.get('external')!='ENETUNREACH'
+                or peer.get('workWritable') is not True or peer.get('capabilities')!='none' or peer.get('noNewPrivileges') is not True
+                or any(readonly.get(k) not in ('EROFS','EPERM','EACCES') for k in ('baseline','root'))):return False
+        if (not isinstance(peers[0].get('networkNamespace'),str) or
+            not re.fullmatch(r'net:\[[0-9]+\]',peers[0]['networkNamespace']) or
+            peers[0]['networkNamespace']!=peers[1].get('networkNamespace')):return False
     return (isinstance(report,dict) and report.get('format')=='aim-flow-project-container-report' and report.get('schemaVersion')==1
         and report.get('intentSha256')==local.digest(intent)
         and report.get('status')=='passed' and report.get('qualificationPassed') is True
@@ -300,7 +408,8 @@ def verify(state,intent,pin):
     if unique_json(read_owned_content(state,'intent.json'))!=intent or result.get('intentSha256')!=local.digest(intent):raise Refused('Container intent changed')
     if result.get('status')!=('passed' if passing_report(intent,result) else 'failed'):raise Refused('Container status disagrees with evidence')
     for name,digest in result['controlFiles'].items():
-        onboarding._source_path(name);package.check_digest(read_owned_content(state,name),digest,'Container evidence')
+        onboarding._source_path(name)
+        if file_identity(state,name)['sha256']!=digest:raise Refused('Container evidence SHA-256 mismatch')
     try:retained_report=unique_json(read_owned_content(state,'container.stdout'))
     except (ValueError,UnicodeError):retained_report=None
     if retained_report!=result['report']:raise Refused('Retained helper report differs')

@@ -46,6 +46,19 @@ class ContainerTests(unittest.TestCase):
 
     def prepare(self):return container.prepare(self.f.current,self.args())
 
+    def prepared_spec(self):
+        image=self.spec['image'];runtime={'nodeVersion':image['nodeVersion'],'npmVersion':image['npmVersion'],
+            'nodeSha256':'1'*64,'npmCliSha256':'2'*64,'npmTreeSha256':'3'*64}
+        tools={'git':{'path':'/usr/bin/git','sha256':'4'*64}}
+        record={'format':'aim-flow-prepared-project-runtime','schemaVersion':1,'baseImageId':image['id'],
+            'imageId':'sha256:'+'c'*64,'baseLayers':['sha256:'+'d'*64],
+            'imageLayers':['sha256:'+'d'*64,'sha256:'+'e'*64],'baseRuntime':runtime,'preparedRuntime':copy.deepcopy(runtime),
+            'runtimeTools':tools,'review':['Synthetic prepared runtime evidence; no daemon execution.']}
+        path=self.case/'runtime-provenance.json';path.write_text(json.dumps(record)+'\n')
+        self.spec.update(schemaVersion=2,workspaceExecution='exec',inventoryBytes=64*1024**2,
+            preparedImage={'id':record['imageId'],'baseImageId':image['id'],'provenance':{'path':str(path),'sha256':sha(path)},'runtimeTools':tools})
+        self.save();return record,path
+
     def test_preview_binds_sources_limits_and_separate_authority_without_daemon(self):
         with patch.object(container.docker,'unix_request',side_effect=AssertionError('Unexpected transport')):
             result=container.execution(self.f.current,self.args())
@@ -114,6 +127,43 @@ class ContainerTests(unittest.TestCase):
         row['Config']['Env'].append('NODE_OPTIONS=--require evil')
         with self.assertRaises(Refused):container.checked_image(engine,intent)
 
+    def test_v2_exec_and_runtime_provenance_bind_separate_intent(self):
+        v1,_=self.prepare();self.assertNotIn('workspaceExecution',container.job_document(v1))
+        record,path=self.prepared_spec();intent,_=self.prepare();job=container.job_document(intent)
+        self.assertEqual(job['schemaVersion'],2);self.assertEqual(job['workspaceExecution'],'exec');self.assertEqual(job['runtimeTools'],record['runtimeTools'])
+        self.assertIn(',exec,',container.payload(intent,record['imageId'],'a'*64)['HostConfig']['Tmpfs']['/work'])
+        pin=container.local.digest(intent);self.spec['workspaceExecution']='noexec';self.save()
+        self.assertNotEqual(pin,container.local.digest(self.prepare()[0]))
+        self.spec['workspaceExecution']='unrestricted';self.save()
+        with self.assertRaises(Refused):self.prepare()
+        self.spec['workspaceExecution']='exec';self.spec['inventoryBytes']=3*1024**3;self.save()
+        with self.assertRaises(Refused):self.prepare()
+        self.spec['inventoryBytes']=64*1024**2;self.save();record['preparedRuntime']['nodeSha256']='f'*64
+        path.write_text(json.dumps(record)+'\n');self.spec['preparedImage']['provenance']['sha256']=sha(path);self.save()
+        with self.assertRaises(Refused):self.prepare()
+
+    def test_prepared_image_ancestry_and_inert_defaults_are_verified_without_pull(self):
+        record,_=self.prepared_spec();intent,_=self.prepare();i=intent['image']
+        env=['PATH=/usr/local/bin:/usr/bin:/bin','NODE_VERSION=24.22.2','YARN_VERSION=1.22.22']
+        base={'Id':i['id'],'RepoDigests':[i['repoDigest']],'Os':'linux','Architecture':'arm64','Config':{'Env':env},'RootFS':{'Layers':record['baseLayers']}}
+        derived={'Id':record['imageId'],'RepoDigests':[],'Os':'linux','Architecture':'arm64',
+            'Config':{'Env':env,'Entrypoint':['/bin/false'],'Cmd':['--prepared-runtime-only'],'User':'65534:65534'},'RootFS':{'Layers':record['imageLayers']}}
+        def request(method,path,expected):
+            self.assertEqual(method,'GET');return base if path=='/images/'+i['id']+'/json' else derived
+        engine=SimpleNamespace(_call=request)
+        self.assertEqual(container.checked_image(engine,intent)['imageId'],record['imageId'])
+        original=copy.deepcopy(derived)
+        for mutate in [lambda d:d['RootFS'].update(Layers=['sha256:'+'f'*64]),lambda d:d['Config'].update(User='0'),
+                       lambda d:d['Config'].update(Entrypoint=['sh']),lambda d:d['Config'].update(Volumes={'/host':{}}),
+                       lambda d:d['Config'].update(Env=[*env,'NODE_OPTIONS=--inspect'])]:
+            derived=copy.deepcopy(original);mutate(derived)
+            with self.assertRaises(Refused):container.checked_image(engine,intent)
+
+    def test_streamed_archive_measurement_refuses_limit_and_detects_changed_bytes(self):
+        path=self.case/'artifact';path.write_bytes(b'abcd')
+        self.assertEqual(container.file_identity(self.case,'artifact'),{'sha256':sha(path),'bytes':4})
+        with self.assertRaises(Refused):container.file_identity(self.case,'artifact',3)
+
     def test_report_pass_requires_actual_stages_restored_sources_runtime_and_terminal(self):
         intent,_=self.prepare();expected={n:{'sha256':r['sha256'],'mode':int(r['mode'],8)&0o777,'bytes':r['bytes']} for n,r in intent['sources'].items()}
         report={'format':'aim-flow-project-container-report','schemaVersion':1,'intentSha256':container.local.digest(intent),'status':'passed',
@@ -126,6 +176,31 @@ class ContainerTests(unittest.TestCase):
                        lambda r:r['report']['stages'][0].update(projectArgv=['npm','run','other']),lambda r:r.update(deadlineExceeded=True),
                        lambda r:r['terminal']['state'].update(ExitCode=1),lambda r:r['report'].update(sourcesAfter={})]:
             altered=copy.deepcopy(result);mutate(altered);self.assertFalse(container.passing_report(intent,altered))
+
+    def test_v2_report_requires_both_direct_exec_probes_and_measured_runtime_tree(self):
+        record,_=self.prepared_spec();intent,_=self.prepare()
+        sources={n:{'sha256':r['sha256'],'mode':int(r['mode'],8)&0o777,'bytes':r['bytes']} for n,r in intent['sources'].items()}
+        peer={'uid':65534,'gid':65534,'interfaces':['lo'],'networkNamespace':'net:[123]',
+            'loopbackHttp':'passed','external':'ENETUNREACH','workWritable':True,'capabilities':'none','noNewPrivileges':True,
+            'readonly':{'baseline':'EACCES','root':'EROFS'},'runtimeTools':record['runtimeTools'],
+            'workspaceExecution':{'mode':'exec','elf':'executed','stub':'executed','directExecution':True}}
+        report={'format':'aim-flow-project-container-report','schemaVersion':1,'intentSha256':container.local.digest(intent),
+            'status':'passed','ready':False,'acceptance':'not-established','deployment':'not-authorized','qualificationPassed':True,
+            'sourcesRestored':True,'sourcesBefore':sources,'sourcesAfter':sources,'workspaceExecution':'exec','inventoryBytes':intent['inventoryBytes'],
+            'qualification':{'parent':copy.deepcopy(peer),'child':copy.deepcopy(peer)},
+            'runtime':{'actualNodeVersion':'v24.22.2','actualNpmVersion':'11.19.1','nodePath':container.NODE,'npmPath':container.NPM,
+                'helperSha256':intent['helperSha256'],'nodeSha256':'1'*64,'npmSha256':'2'*64,
+                'runtimeFingerprints':record['baseRuntime'],'runtimeTools':record['runtimeTools']},
+            'stages':[{'exitCode':0,'termination':None,'index':0,'projectArgv':['npm','run','test'],'root':'web','sourcesAfter':sources}]}
+        result={'report':report,'terminal':{'state':{'ExitCode':0,'OOMKilled':False}},'deadlineExceeded':False,
+            'logs':{'exitCode':0,'termination':None},'diagnostic':None}
+        self.assertTrue(container.passing_report(intent,result))
+        for change in [lambda r:r['qualification'].pop('child'),lambda r:r['qualification']['child'].update(runtimeTools={}),
+                       lambda r:r['qualification']['parent']['workspaceExecution'].update(stub='denied-EACCES'),
+                       lambda r:r['qualification']['child'].update(networkNamespace='net:[456]'),
+                       lambda r:r['runtime']['runtimeFingerprints'].update(npmTreeSha256='f'*64),
+                       lambda r:r['qualification']['parent'].update(noNewPrivileges=False)]:
+            altered=copy.deepcopy(result);change(altered['report']);self.assertFalse(container.passing_report(intent,altered))
 
 
 if __name__=='__main__':unittest.main()
