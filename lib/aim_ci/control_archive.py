@@ -21,8 +21,12 @@ RUNTIME_PYTHON_REQUIREMENT = '.'.join(map(str, MIN_RUNTIME_PYTHON))
 MAX_FILE = 2_000_000
 MAX_ARCHIVE = 8_000_000
 VERSION_PATTERN = r'[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*)?'
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 FILES = (
+    'aim-flow.py',
+    'lib/flow_api_delivery.py',
+    'lib/flow_onboarding_delivery.py',
+    'docs/API-DELIVERY.md',
     'aim-ci.py',
     'aim-ci-control.py',
     'aim-ci-release.py',
@@ -71,6 +75,13 @@ FILES = (
     'lib/aim_ci/npm_acquisition.py',
     'lib/aim_ci/operator_readiness.py',
     'lib/aim_ci/project_installation.py',
+    'lib/aim_ci/project_onboarding.py',
+    'lib/aim_ci/project_validation.py',
+    'lib/aim_ci/project_execution.py',
+    'lib/aim_ci/project_container.py',
+    'lib/aim_ci/project_container_runner.cjs',
+    'docs/PROJECT-VALIDATION.md',
+    'docs/PROJECT-ONBOARDING.md',
     'lib/aim_ci/source_subset.py',
     'lib/aim_ci/model_support.py',
 )

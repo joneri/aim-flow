@@ -1,6 +1,10 @@
 {
-  "controllerFiles": 50,
+  "controllerFiles": 61,
   "controllerPaths": [
+    "aim-flow.py",
+    "lib/flow_api_delivery.py",
+    "lib/flow_onboarding_delivery.py",
+    "docs/API-DELIVERY.md",
     "aim-ci.py",
     "aim-ci-control.py",
     "aim-ci-release.py",
@@ -49,6 +53,13 @@
     "lib/aim_ci/npm_acquisition.py",
     "lib/aim_ci/operator_readiness.py",
     "lib/aim_ci/project_installation.py",
+    "lib/aim_ci/project_onboarding.py",
+    "lib/aim_ci/project_validation.py",
+    "lib/aim_ci/project_execution.py",
+    "lib/aim_ci/project_container.py",
+    "lib/aim_ci/project_container_runner.cjs",
+    "docs/PROJECT-VALIDATION.md",
+    "docs/PROJECT-ONBOARDING.md",
     "lib/aim_ci/source_subset.py",
     "lib/aim_ci/model_support.py"
   ],
@@ -64,6 +75,22 @@
     "aim-ci.py": {
       "kind": "modified",
       "upstreamSha256": "55b97d6197df219a1141acc36b13625f701a25e8d3a9df3a4c75bf91f6b6bde5"
+    },
+    "aim-flow.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
+    "docs/API-DELIVERY.md": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
+    "docs/PROJECT-ONBOARDING.md": {
+      "kind": "added",
+      "source": "AIM Flow source-bound project onboarding development"
+    },
+    "docs/PROJECT-VALIDATION.md": {
+      "kind": "added",
+      "source": "AIM Flow explicit isolated project container and aggregate validation development"
     },
     "docs/aim-ci-discover-project.md": {
       "kind": "modified",
@@ -221,13 +248,33 @@
       "kind": "unchanged",
       "upstreamSha256": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282"
     },
+    "lib/aim_ci/project_container.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit isolated project container and aggregate validation development"
+    },
+    "lib/aim_ci/project_container_runner.cjs": {
+      "kind": "added",
+      "source": "AIM Flow explicit isolated project container and aggregate validation development"
+    },
     "lib/aim_ci/project_discovery.py": {
       "kind": "modified",
       "upstreamSha256": "18fdbd5345317353225a868a802da589c5501cd3268d5660896844b723833dab"
     },
+    "lib/aim_ci/project_execution.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit project validation execution development"
+    },
     "lib/aim_ci/project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "457a8ce7046a021d4c8c39c3859d17e5a4fbe00d4308f2caf69da586803ce553"
+    },
+    "lib/aim_ci/project_onboarding.py": {
+      "kind": "added",
+      "source": "AIM Flow source-bound project onboarding development"
+    },
+    "lib/aim_ci/project_validation.py": {
+      "kind": "added",
+      "source": "AIM Flow project-local validation handoff development"
     },
     "lib/aim_ci/recipe_plan.py": {
       "kind": "modified",
@@ -240,6 +287,14 @@
     "lib/aim_ci/source_subset.py": {
       "kind": "modified",
       "upstreamSha256": "bc9f7ee1bdd0f4516fb8957037e7e7327e0df3806fbac6923aa8a67d92dde228"
+    },
+    "lib/flow_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
+    "lib/flow_onboarding_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow authorized onboarding assessment dispatch development"
     },
     "lib/openai_budget.py": {
       "kind": "modified",
@@ -260,6 +315,10 @@
     "tests/production/catalog-verify.mjs": {
       "kind": "unchanged",
       "upstreamSha256": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e"
+    },
+    "tests/test_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
     },
     "tests/test_build_preparation.py": {
       "kind": "modified",
@@ -286,6 +345,10 @@
       "kind": "unchanged",
       "upstreamSha256": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf"
     },
+    "tests/test_installed_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow Sol API beta.8 integration"
+    },
     "tests/test_intake_profile.py": {
       "kind": "added",
       "note": "Product-only fixtures; usage values and task labels are synthetic.",
@@ -307,6 +370,10 @@
       "kind": "modified",
       "upstreamSha256": "86a582d8e9e56e3a5f9b686f7fa2b4ac42e96f862d67e245e756fcafd30afcad"
     },
+    "tests/test_onboarding_api_delivery.py": {
+      "kind": "added",
+      "source": "AIM Flow authorized onboarding assessment dispatch development"
+    },
     "tests/test_operator_build.py": {
       "kind": "modified",
       "upstreamSha256": "3b244070eed86743fe66b745c26fe2e9372331927e95c82b3613f083df846ed3"
@@ -316,10 +383,22 @@
       "upstreamCommit": "5d2b63e6b580d1465e7978a23e9c4b45a5a887d1",
       "upstreamSha256": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5"
     },
+    "tests/test_project_container.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit isolated project container and aggregate validation development"
+    },
+    "tests/test_project_container_runner.cjs": {
+      "kind": "added",
+      "source": "AIM Flow explicit isolated project container and aggregate validation development"
+    },
     "tests/test_project_discovery_sizes.py": {
       "kind": "added",
       "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
       "upstreamSha256": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0"
+    },
+    "tests/test_project_execution.py": {
+      "kind": "added",
+      "source": "AIM Flow explicit project validation execution development"
     },
     "tests/test_project_installation.py": {
       "kind": "modified",
@@ -329,9 +408,17 @@
       "kind": "modified",
       "upstreamSha256": "0898d60cdeac39eea39b572f876ac9ead6115bccf788977114ebeceb8332cbd2"
     },
+    "tests/test_project_onboarding.py": {
+      "kind": "added",
+      "source": "AIM Flow source-bound project onboarding development"
+    },
     "tests/test_project_planning.py": {
       "kind": "modified",
       "upstreamSha256": "6967571de046f9e7049bc2c37a0711d75c398da450469ead6de020d228fcfb15"
+    },
+    "tests/test_project_validation.py": {
+      "kind": "added",
+      "source": "AIM Flow project-local validation handoff development"
     },
     "tests/test_recipe_execution.py": {
       "kind": "unchanged",
@@ -355,9 +442,13 @@
     }
   },
   "files": {
-    "aim-ci-control.py": "781af5e10b7deedc6538c93a881ce36f52a72b3c058a161faacdf879364c1569",
+    "aim-ci-control.py": "06c864dc48aadd64e4bdd5f9916e97406cb73521c103f2fa02e1949d2f5198d3",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
+    "aim-flow.py": "d08d2d93859854192e56dcd94cb56e666b4d2ae819412e3863d9fd22083513f7",
+    "docs/API-DELIVERY.md": "652809b169ca8a944369ad9eadc2890d28859c84aec612fca11ca3b66a228c36",
+    "docs/PROJECT-ONBOARDING.md": "3a230d854517ce9ce73938b29ccaee788141520b271d6fb78e396fdfca822603",
+    "docs/PROJECT-VALIDATION.md": "547c467b1ab7e30ca37013dd02c95dd46c48c945124bb925cee1c4a1e6abd622",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -374,7 +465,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "51f897aeaf97588bf5370e360979317923bb7f1ba71df42d5f48e5fe5fa8a7e5",
+    "lib/aim_ci/control_archive.py": "e0e0a535f4768c2b6cf3f72882c0d89e4b9b456afbf8ebae9910fe3f86d2b058",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -397,39 +488,95 @@
     "lib/aim_ci/platform_build.py": "7e8055bc15b0fe57fe222f225492b91e5f53133114a6352f0af354bc71352c44",
     "lib/aim_ci/products.py": "50008fc9cdaa45ecb32b9e2c39eb763efe74889dd881b943be4430231592dc20",
     "lib/aim_ci/project_adaptation.py": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282",
+    "lib/aim_ci/project_container.py": "72a73eb1cc2290f046975adc0bd2ff1386ac49456f4b356612be1db05aa1fb70",
+    "lib/aim_ci/project_container_runner.cjs": "48ea86ecee0cae01109ca16cdad0375636ca8d54074cd365570f306e742ce8c4",
     "lib/aim_ci/project_discovery.py": "57db6306a45240e9d0ba1aa0aa837badc3238c7d2be3ff40f3ecc51fa6d9c393",
+    "lib/aim_ci/project_execution.py": "2cf0bbef9fdbae9741c2f6bc9010344c56567792e3887ed816850ade7257ae55",
     "lib/aim_ci/project_installation.py": "db9e2a40daf937cb0a303ac0937ddd9a42f98951ea4668bd734602ac0ef0da6f",
+    "lib/aim_ci/project_onboarding.py": "6b496cbcac5174e477b764ce875d7064dd1ab2f7aa9466b97692964b160a94f2",
+    "lib/aim_ci/project_validation.py": "0b606eaceb8a03a64eb9103e10f8c2413250fb26e2d583e7d23e8e8b28cf8d57",
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
-    "lib/openai_budget.py": "cf499e1642641eac99d8b13c117a39a2196833bd88725379096c6ad5ead10352",
+    "lib/flow_api_delivery.py": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
+    "lib/flow_onboarding_delivery.py": "b5ce225b11d0d458a17a95a8108f33ebbab09d80bc06d524392ff89b7bd437d7",
+    "lib/openai_budget.py": "943748a36665bb5a165acb6ed5661e5af4e01e4d472b1c9bcb94ce0f9efd6600",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
     "tests/production/catalog-verify.mjs": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e",
+    "tests/test_api_delivery.py": "f610829ff4d0657e794df4c8138920a20825e254f544bfa02f565143197835e9",
     "tests/test_build_preparation.py": "60789968bbb448cf6f6b7f464f650a16aad66eb4a2e8157a15cb294c9277d3b7",
     "tests/test_content_size_contracts.py": "5b5e1e0188ed779f5a7d3447d6e8f53baf093357a1b6780504a58bdae19a104e",
-    "tests/test_control_package.py": "12219a7ab2094b3d189f0aefe1274ee6666b1d0417a08dc0933dec1a93474aa9",
-    "tests/test_docker_engine.py": "cc951ba9909ebcf3c7cb918a0057c6c9c982ebbca9856fa73935b0e6ef3b7112",
+    "tests/test_control_package.py": "ce4c659969a7fa09d37d93b409678f6c59841157ccbd09516813cf0a4279826c",
+    "tests/test_docker_engine.py": "0e8a487a5d43bec8a604ad62645d0d40d871190fd86520367dd4dbf85533d2ec",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
+    "tests/test_installed_api_delivery.py": "5ed75d445c2b1df2613582d17bf93561a6d6785aed3b49b9cf460ddd44f377c7",
     "tests/test_intake_profile.py": "89c497232c1582225be05fda4cd916dced617322bb31ac0130e4031d39372a81",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
     "tests/test_npm_platform_build.cjs": "6bc7b9e45e8894090e2fd287748901e5a1fb3728e0a89f4afdbb9af1d420b01e",
+    "tests/test_onboarding_api_delivery.py": "7553f37fc1136a2ce29f3d6581b230f9ffcc040409fa351077065711cb0f7a29",
     "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
     "tests/test_output_allowance.py": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5",
+    "tests/test_project_container.py": "cd92640c70c4daca911fdf898547be8fb196c1ab0a766b902d946833d637c749",
+    "tests/test_project_container_runner.cjs": "adc621ced2876fa9a9b059d6823d1301a7f44a373b887847cc9ce99513a772ea",
     "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
+    "tests/test_project_execution.py": "8690b1ee9da29a3434d277c636085379493f28366844b48157bba6d969112b82",
     "tests/test_project_installation.py": "f6b11b76ebfd6ff81ba2da1ccb02517940bfd4ea139d3e341908b20b1185e16c",
     "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
+    "tests/test_project_onboarding.py": "c46fc2ba142f0e811ee75bc0647089f6356906e957afffca0a01e6b1a0c0f2b9",
     "tests/test_project_planning.py": "b4e2cb5b3c898bdcb62631465458cf15fbf3216a6861b6e0e41cbf781f1ab35a",
+    "tests/test_project_validation.py": "2979de61d29d76d66668998496bb9c6e84993cd6bbedead938bb2bd346e4f2bb",
     "tests/test_recipe_execution.py": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4",
     "tests/test_source_check.py": "d01e71f3cca32d3338bf941328a6b68f88091c9d1ac44137d703d26907d96cc3",
     "tests/test_source_free_release.py": "4113d5fa7515f68d7b9d557c7ba6a5dfcff894c70c04a93de979b21898e4d68c",
     "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631",
     "tests/test_terminal_diagnostics.py": "011e9d53cc3aba8abe7888658cc193aae65a54e099e229220a33c7b7c6afab58"
   },
+  "localChanges": [
+    {
+      "adapterSourceSha256": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
+      "paths": [
+        "aim-flow.py",
+        "lib/flow_api_delivery.py",
+        "docs/API-DELIVERY.md",
+        "tests/test_api_delivery.py",
+        "tests/test_installed_api_delivery.py",
+        "lib/openai_budget.py",
+        "lib/aim_ci/control_archive.py",
+        "tests/test_control_package.py",
+        "tests/test_docker_engine.py"
+      ],
+      "summary": "Package explicit Sol/xhigh API proposals, scoped transport deadline and installed offline contracts. Keep source-only Codex prototype excluded.",
+      "version": "0.1.0-beta.8"
+    },
+    {
+      "paths": [
+        "aim-ci-control.py",
+        "lib/aim_ci/control_archive.py",
+        "lib/aim_ci/project_onboarding.py",
+        "docs/PROJECT-ONBOARDING.md",
+        "tests/test_project_onboarding.py"
+      ],
+      "summary": "Retain source-cited agent reasoning for installation, tests, CI and deployment in a project-only instance. No model dispatch or project execution; independent review and execution approval remain separate.",
+      "version": "unreleased-project-onboarding"
+    },
+    {
+      "paths": [
+        "aim-flow.py",
+        "lib/aim_ci/control_archive.py",
+        "lib/flow_onboarding_delivery.py",
+        "docs/PROJECT-ONBOARDING.md",
+        "tests/test_onboarding_api_delivery.py"
+      ],
+      "summary": "Dispatch an exactly authorized Sol project assessment with an operation ceiling and existing shared campaign. Validate source citations and retain a project-only instance without executing its proposed plan. Offline tested; live qualification pending.",
+      "version": "unreleased-onboarding-dispatch"
+    },
+    "Add explicitly granted project-local Node 24 container validation, private loopback isolation and retained source-bound execution evidence; preserve existing macOS and legacy recipe contracts."
+  ],
   "schemaVersion": 2,
   "scope": "Product-only controller; unrelated legacy integrations are excluded.",
   "upstreamChanges": [

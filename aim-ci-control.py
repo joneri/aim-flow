@@ -48,6 +48,50 @@ def main():
     readiness.add_argument('--config-sha256')
     readiness.add_argument('--git-sha256', help='Independently verified Git SHA-256 for optional local source inspection')
     discover = commands.add_parser('discover-project')
+    onboarding_prepare = commands.add_parser('prepare-project-onboarding',
+        description='Export committed evidence for project-specific agent reasoning without dispatch or execution.')
+    onboarding_prepare.add_argument('--project-doc', action='append', default=[])
+    onboarding_prepare.add_argument('--review-source', action='append', default=[])
+    onboarding_prepare.add_argument('--output', type=Path, required=True)
+    onboarding_record = commands.add_parser('record-project-onboarding',
+        description='Retain a source-cited agent assessment as a project-only draft, never execution authority.')
+    onboarding_record.add_argument('--output', type=Path, required=True)
+    for option in ('packet', 'assessment'):
+        onboarding_record.add_argument('--' + option, type=Path, required=True)
+        onboarding_record.add_argument('--' + option + '-sha256', required=True)
+    onboarding_verify = commands.add_parser('verify-project-onboarding')
+    onboarding_verify.add_argument('--instance', type=Path, required=True)
+    onboarding_verify.add_argument('--instance-sha256', required=True)
+    onboarding_commands = ('prepare-project-onboarding', 'record-project-onboarding', 'verify-project-onboarding')
+    for command in (onboarding_prepare, onboarding_record, onboarding_verify):
+        for option in ('checkout', 'git'):
+            command.add_argument('--' + option, type=Path, required=True)
+        for option in ('manifest-sha256', 'git-sha256', 'commit'):
+            command.add_argument('--' + option, required=True)
+    validation_commands = ('plan-project-validation', 'verify-project-validation')
+    execution_commands = ('run-project-validation', 'verify-project-validation-run')
+    container_commands = ('run-project-container-validation', 'verify-project-container-validation')
+    for name in (*validation_commands, *execution_commands, *container_commands):
+        command = commands.add_parser(name, description=('Preview or explicitly execute a project-local npm job with retained offline evidence.' if name in (*execution_commands, *container_commands) else 'Bind a project-local validation handoff without executing project code.'))
+        for option in ('instance', 'instance-controller', 'declaration', 'python'):
+            command.add_argument('--' + option, type=Path, required=True)
+        for option in ('manifest-sha256', 'instance-sha256', 'instance-controller-manifest-sha256', 'declaration-sha256', 'python-sha256'):
+            command.add_argument('--' + option, required=True)
+        if name == 'plan-project-validation':
+            command.add_argument('--output', type=Path, required=True)
+        elif name == 'verify-project-validation':
+            command.add_argument('--handoff', type=Path, required=True)
+            command.add_argument('--handoff-sha256', required=True)
+        else:
+            command.add_argument('--execution-spec', type=Path, required=True)
+            command.add_argument('--execution-spec-sha256', required=True)
+            command.add_argument('--state', type=Path, required=True)
+            if name in ('run-project-validation', 'run-project-container-validation'):
+                mode = command.add_mutually_exclusive_group(required=True)
+                mode.add_argument('--preview', action='store_true')
+                mode.add_argument('--authorize-intent')
+            else:
+                command.add_argument('--receipt-sha256', required=True)
     root_preview = commands.add_parser('preview-root-admission',
                                        description='Preview exact local root intake without transport.')
     for option in ('profile', 'state-dir', 'legacy-budget'):
@@ -214,7 +258,7 @@ def main():
                         'propose-adaptation', 'run-reviewed-build',
                         'status-reviewed-build', 'cleanup-reviewed-build', 'prepare-reviewed-build',
                         'cleanup-build-preparation', 'draft-build-preparation', 'acquire-npm-tarballs', *configured_commands)
-    if args.action in offline_commands and sys.version_info < control_package.MIN_RUNTIME_PYTHON:
+    if args.action in (*offline_commands, *onboarding_commands) and sys.version_info < control_package.MIN_RUNTIME_PYTHON:
         minimum = control_package.RUNTIME_PYTHON_REQUIREMENT
         raise Refused(f'{args.action} requires Python {minimum} or newer. '
                       f'Found Python {sys.version.split()[0]} at {sys.executable}.')
@@ -237,6 +281,18 @@ def main():
     elif args.action == 'install-project':
         from aim_ci.project_installation import install_project
         result = install_project(ROOT, args)
+    elif args.action in onboarding_commands:
+        from aim_ci.project_onboarding import onboarding
+        result = onboarding(ROOT, args)
+    elif args.action in execution_commands:
+        from aim_ci.project_execution import execution
+        result = execution(ROOT, args)
+    elif args.action in container_commands:
+        from aim_ci.project_container import execution
+        result = execution(ROOT, args)
+    elif args.action in validation_commands:
+        from aim_ci.project_validation import validation
+        result = validation(ROOT, args)
     elif args.action == 'discover-project':
         manifest = control_package.verify_installation(ROOT, args.manifest_sha256)
         from aim_ci.project_discovery import discover_project
@@ -342,6 +398,8 @@ def main():
     else:
         result = control_package.readiness(ROOT, args.manifest_sha256, args.product or 'catalog', args.checkout)
     print(json.dumps(result, indent=2))
+    if args.action in (*execution_commands, *container_commands) and result['status'] == 'failed':
+        return 3
     return 3 if args.action == 'readiness' and not result['ready'] else 0
 
 

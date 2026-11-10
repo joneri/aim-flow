@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.7` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.9` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -19,9 +19,10 @@ AIM Flow helps you understand a software project, choose the next step and check
 - **Project size:** read complete selected source and project definitions without fixed product file-size, file-count or request-byte caps. Provider, approved spending and reviewed runtime limits still apply. See [size handling](docs/aim-ci-size-handling.md).
 - **Reviewed private candidates:** prepare an isolated local code candidate from an independently reviewed retained proposal, with new exact consent. This leaves the source checkout untouched and does not run or publish the project.
 - **Private failure diagnostics:** retain selected metadata and visible output for new incomplete responses, separately from accepted proposals. This evidence stays private and cannot authorize a retry. See [handling and retention](docs/aim-ci-onboarding.md#concise-patches-and-private-incomplete-response-evidence).
+- **Sol through OpenAI API:** the downloadable `aim-flow.py deliver-api` command previews exact Sol/xhigh patch requests, preserves campaign budget history and retains outcomes without replay. It returns a proposal for separate review and application. See [the API guide](docs/API-DELIVERY.md).
 - **Inspectable receipts:** retain hashes, exact intent, results and recovery/cleanup evidence.
 
-An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; the diagnostic update does not repeat or extend that runtime proof. See the [evidence summary](docs/VERIFICATION.md).
+An earlier controller revision completed a real source-check qualification on 9 November 2026. Its check passed and its owned containers and derived image were removed. The current distribution is checked separately with offline regression and installation tests; later reviewed development also qualified one project-specific frontend/backend aggregate. Packaging does not repeat that execution or qualify other projects. See the [evidence summary](docs/VERIFICATION.md).
 
 ## First look
 
@@ -32,7 +33,7 @@ python3 aim-flow.py --version
 python3 aim-flow.py --help
 ```
 
-Start with [archive verification and read-only installation checks](docs/QUICKSTART.md). Project inspection additionally requires **Git 2.54+** with an independently checked executable pin. The execution path requires a reviewed, pinned Linux runtime and separate consent. This is not a one-command hosted service.
+Start with [archive verification and read-only installation checks](docs/QUICKSTART.md). Project inspection additionally requires **Git 2.54+** with an independently checked executable pin. Execution requires its selected adapter’s reviewed runtime and separate consent: the local sandbox adapter is macOS-specific; the container adapter uses an already-prepared Linux Docker runtime. This is not a one-command hosted service.
 
 ## What Beta means
 
@@ -45,3 +46,18 @@ AIM Flow is the standalone public beta of AIM's delivery-controller work. This r
 The [source inventory](provenance/upstream-files.json) records where the code came from and which parts have changed. Installation commands and requirements are explained in the [quickstart](docs/QUICKSTART.md).
 
 [Artwork attribution and notices](THIRD-PARTY-NOTICES.md) · [Source inventory](provenance/upstream-files.json) · [Release process](docs/RELEASING.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+
+Included in beta.9: [project-specific agent onboarding](docs/PROJECT-ONBOARDING.md) exports committed evidence and retains source-cited installation, test, CI and deployment reasoning in a separate project instance. The optional `onboard-api` route can dispatch a separately approved Sol assessment and retain the resulting instance. A first live pilot returned useful but incomplete analysis. A later compact live assessment produced a reviewed, source-bound instance. Assessment alone does not execute its proposed plan or authorize project actions.
+
+Included in beta.9: [project-local validation handoffs](docs/PROJECT-VALIDATION.md) consume a reviewed onboarding instance and explicit project declaration. They preserve actual npm roots, lifecycle hooks and CI distinctions without executing the project or upgrading the existing runners.
+
+The project-local validation route now supports explicitly authorized, single-attempt offline npm jobs and source-bound execution receipts. See [project validation](docs/PROJECT-VALIDATION.md) for the preview, containment, runtime review and verification boundaries.
+
+The Linux container route can run reviewed Node 24 npm jobs with
+a private loopback namespace, offline cache and retained execution evidence.
+AIWebSite's real `npm ci` and combined `ci:release-readiness` frontend/backend
+chain passed through a fresh installed Flow controller. Schema v2 binds a
+separately reviewed utility image and an explicitly executable private workspace.
+This local aggregate is separate from hosted CI, native Windows, browser
+acceptance and publication of this locally prepared package; see the
+[container scope](docs/PROJECT-VALIDATION.md#linux-container-backend-jobs).

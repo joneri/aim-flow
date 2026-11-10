@@ -603,7 +603,7 @@ class DockerEngineTests(unittest.TestCase):
         value = {'format': control_archive.FORMAT, 'schemaVersion': control_archive.SCHEMA_VERSION,
                  'version': '0.1.0-beta.2', 'files': {name: CONTROL for name in control_archive.FILES}}
         self.assertEqual(control_archive.parse_manifest(json.dumps(value)), value)
-        for version in (1, 0, True, 3):
+        for version in (1, 0, True, 2, 4):
             with self.subTest(schema=version), self.assertRaisesRegex(Refused, 'Invalid controller package manifest'):
                 control_archive.parse_manifest(json.dumps({**value, 'schemaVersion': version}))
         for files in ({}, dict(list(value['files'].items())[:-1]), {**value['files'], 'unexpected.py': CONTROL}):

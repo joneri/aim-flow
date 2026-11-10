@@ -313,7 +313,10 @@ class Campaign:
         return response
 
 
-def transport_from_key_file(path, *, require_private=False):
+def transport_from_key_file(path, *, require_private=False, deadline_seconds=REQUEST_DEADLINE_SECONDS):
+    # Scoped override for explicit Sol calls; legacy defaults and pricing remain unchanged.
+    if type(deadline_seconds) not in (int, float) or not 0 < deadline_seconds <= 3600:
+        raise Refused("Invalid API operation deadline")
     path = Path(path)
     safe_path(path)
     if require_private:
@@ -344,12 +347,12 @@ def transport_from_key_file(path, *, require_private=False):
         request = urllib.request.Request("https://api.openai.com/v1/" + endpoint,
                                          data=canonical(payload).encode(), method="POST",
                                          headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
-        deadline_at = time.monotonic() + REQUEST_DEADLINE_SECONDS
+        deadline_at = time.monotonic() + deadline_seconds
         try:
             # urllib does not automatically retry POSTs. No request/error body is logged.
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
-            with operation_deadline(REQUEST_DEADLINE_SECONDS):
-                with opener.open(request, timeout=180) as stream:
+            with operation_deadline(deadline_seconds):
+                with opener.open(request, timeout=min(180, deadline_seconds)) as stream:
                     if endpoint == 'responses' and payload.get('stream') is True:
                         return collect_response_stream(stream)
                     raw = stream.read(2_000_001)

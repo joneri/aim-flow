@@ -56,6 +56,10 @@ python3 -IBS /absolute/path/to/new-private-controller/aim-ci-control.py readines
 
 Unconfigured readiness normally exits **3** with `packageVerified: true` and `ready: false`. Exit **1** signals failure. Keep the installation outside your project. Project inspection additionally requires Git 2.54+ and its independently verified executable pin.
 
+The installation also includes `aim-flow.py deliver-api` for explicit Sol/xhigh patch proposals. Read the installed `docs/API-DELIVERY.md` before configuring it. A no-key preview is read-only; actual API use needs exact authorization and established campaign history. It also includes `onboard-api` for a separately approved source-cited assessment and project-local validation commands for reviewed npm stages. Read installed `docs/PROJECT-ONBOARDING.md` and `docs/PROJECT-VALIDATION.md`. An assessment is not execution permission. The macOS sandbox and Linux Docker adapters have separate prerequisites; no Docker startup, image/package download, platform qualification or deployment is authorized by installation.
+
+Archive schema 3 has an exact 61-file inventory in this release. Older beta.8 schema-3 archives have 53 files and need their own matching bootstrap. Preserve old installations, instances and budget history; do not mix bootstraps or silently migrate attempts.
+
 The historical `aim-ci` names are intentionally preserved. See [BETA-SCOPE.md](BETA-SCOPE.md), [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The original detailed guide and original release metadata remain intact in `controller/`. Detailed current source instructions: https://github.com/joneri/aim-flow/blob/main/docs/QUICKSTART.md
 """
     files['README.md'] = readme.encode()

@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.7 scope
+# AIM Flow 0.1.0-beta.9 scope
 
 ## Available paths
 
@@ -9,6 +9,12 @@
 5. A reviewed npm/Vite offline-build route with prior evidence for one pilot project and pinned environment.
 
 6. Preview or separately authorize preparation of an isolated private candidate. Preparation clones the pinned local commit without hardlinks and applies only the reviewed proposal there. It does not change the original checkout, call a model, run project code, push or open a pull request. Resume reconciles the same effect; withdrawal blocks later resume without deleting the candidate.
+
+7. Explicit Sol/xhigh Responses API patch proposals through installed `aim-flow.py deliver-api`, with exact preview authorization, retained historical liabilities and terminal evidence. This advanced path requires an established budget history, produces a separate proposal format and does not apply changes or activate all AIM roles.
+
+8. Source-cited project onboarding, with an optional separately budgeted Sol assessment. It records a project instance, never runtime authority.
+
+9. Reviewed project-local npm validation: source-bound declarations, explicit macOS or Linux-container execution grants, offline cache/runtime pins and retained receipts. One real combined frontend/backend aggregate passed in Linux ARM64/Node 24.
 
 These paths have different prerequisites and evidence. Their presence is not a general readiness or execution guarantee.
 
@@ -38,7 +44,7 @@ Legacy project-specific delivery routes are excluded from this distribution. No 
 
 ## Pilot fit
 
-A responsible operator, a trusted project, an explicitly reviewed source set and one useful existing source-only check are a good starting point. Projects requiring dependency installation, services, browser tests or builds need a separately reviewed path and qualification.
+A responsible operator, a trusted project, an explicitly reviewed source set and one useful existing source-only check are a good starting point. Dependency installation and local build/test sequences may use the separately reviewed project-local adapters. Services outside private loopback, browser tests and additional platforms still need their own supported path and qualification.
 
 ## Size and resources
 
@@ -47,3 +53,16 @@ Fixed source-file, request-byte, patch-size/count and default changed-line caps 
 This does not mean unlimited computer or model capacity. Actual provider constraints, approved money/call limits, per-run artifact/resource budgets and untrusted archive/protocol defenses still apply. The intake commands accept an explicit output allowance, bound to the exact request, grant and consent. Token preflight must fit the approved reservation before generation. Preview estimates cannot authorize or increase spending.
 
 The former formatter file-size guard was also removed. Its sandbox, protected inputs and deadline remain, but independent formatter disk-space enforcement is unqualified. Use trusted, reviewed projects. See [project size handling](aim-ci-size-handling.md) for the exact boundaries.
+
+
+## Platform evidence
+
+Package verification and the controller use Python 3.11+ on POSIX filesystems;
+project inspection additionally requires Git 2.54+. macOS sandbox execution and
+Linux Docker execution are separate adapters, not native Windows support.
+The tested aggregate used Linux ARM64 Node 24.22.2/npm 11.19.1 with no external
+network. Its Node Windows-contract check is not a PowerShell or Windows run.
+Hosted frontend Node 22.12, browser acceptance and production remain unqualified.
+Linux CI skips the macOS-only execution tests and cannot replace their retained
+local results. The hosted runner's Git prerequisite must be verified before
+calling its portable checks complete. No hosted run is claimed by local packaging.

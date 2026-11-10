@@ -79,7 +79,7 @@ class ControlPackageTests(unittest.TestCase):
         self.assertEqual(self.snapshot(self.destination), {**manifest['files'], 'control-manifest.json': digest(manifest_bytes)})
         self.assertEqual(members['aim-ci.py'], (ROOT / 'aim-ci.py').read_bytes())
         self.assertIn('lib/aim_ci/model_support.py', members)
-        self.assertEqual(manifest['schemaVersion'], 2)
+        self.assertEqual(manifest['schemaVersion'], 3)
         self.assertFalse(any(name.startswith('fixtures/api-probe/') for name in members))
         self.assertIn('tests/production/artifact-probe.mjs', members)
         for name, data in members.items():

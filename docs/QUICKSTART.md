@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.9.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.7.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.9.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 
@@ -54,7 +54,7 @@ Default readiness should report `packageVerified: true`, `ready: false` and exit
 
 Use [project-aware installation](aim-ci-install.md#install-for-a-projects-own-build-process) and [discovery](aim-ci-discover-project.md) to bind the exact committed source and independently pinned Git executable. A successful draft does not grant runtime permission.
 
-For this beta, a pilot should select one meaningful existing source-only npm check. It must fit the [supported contract](BETA-SCOPE.md), including explicit input selection and no dependency installation. Review its script and all selected code before preparing any runtime. Each preparation and execution needs the matching exact-intent consent and its own applicable limits.
+A first pilot can select one meaningful existing source-only npm check under the [source-check contract](BETA-SCOPE.md), with explicit inputs and no dependency installation. Reviewed projects needing install/build/test sequences can instead use the separate project-local validation adapter described below. Review its script and all selected code before preparing any runtime. Each preparation and execution needs the matching exact-intent consent and its own applicable limits.
 
 Never paste credentials into issues or commit them. Model intake is optional, separate and budget-bound. Start with the documented inspection commands before enabling any execution.
 
@@ -79,3 +79,29 @@ The result is a separate local candidate, not a built, tested or deployable appl
 Follow [the output-allowance guide](aim-ci-onboarding.md#select-output-capacity-for-one-intake) before selecting a larger response. An allowance includes reasoning and structured output, and must fit both the pinned provider's capacity and the existing approved money/call limits.
 
 A larger allowance grants no new model call or retry. Historical retained work keeps its original allowance and accounting. Private-candidate preparation reconstructs that retained selection and offers no output override.
+
+## Use Sol through OpenAI API
+
+The verified beta.9 installation includes `aim-flow.py deliver-api`. Start with its no-key preview and the [Sol API guide](API-DELIVERY.md). This advanced route requires pinned request/source files and an existing established budget ledger. It keeps the same campaign and outstanding reservations across upgrades. It returns a private patch proposal, which needs separate review, application and testing. The ordinary mini intake remains available with its original contract.
+
+For upgrades, install into a new directory using the new download's matching bootstrap and pins. Beta.9 uses archive schema 3 with an exact 61-file inventory. Beta.8 also used schema 3, but its 53-file archive requires its original matching bootstrap. Schema 2 archives likewise require their original bootstrap. Do not overwrite old installations, campaign records or retained attempts.
+
+
+## Assess and validate a project's actual workflow
+
+Use [project onboarding](PROJECT-ONBOARDING.md) to prepare a committed evidence
+packet, optionally authorize one bounded Sol assessment, and retain a reviewed
+project instance. This is analysis, not permission to run its plan. The compact
+API route explicitly discloses selected excerpts and keeps omitted facts unknown.
+
+Use [project-local validation](PROJECT-VALIDATION.md) with that instance and a
+separate source-cited declaration. Preview the actual named npm stages, source,
+runtime, offline cache and exact effects before granting one execution attempt.
+The macOS adapter and Linux Docker adapter have distinct prerequisites. A
+container aggregate may need an approved prepared utility image and executable
+private workspace; Flow does not acquire those automatically.
+
+The complete local AIWebSite frontend/backend aggregate is a qualified example,
+not a ready-made recipe for arbitrary projects. Native Windows, hosted CI,
+browser acceptance and production deployment are not established by that pass.
+Keep previous controllers, budgets, grants and attempt evidence intact.

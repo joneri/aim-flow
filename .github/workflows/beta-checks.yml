@@ -24,16 +24,16 @@ jobs:
         run: |
           git --version
           python3 -c 'import re, subprocess; version = tuple(map(int, re.search(r"git version (\d+)\.(\d+)", subprocess.check_output(["git", "--version"], text=True)).groups())); assert version >= (2, 54), "Git 2.54+ is required for the complete offline suite"'
-      - name: Run complete offline regression
+      - name: Run portable offline regression (platform skips reported)
         run: python3 -B -m unittest discover -s tests -p 'test_*.py' -v
       - name: Run Node protocol tests
-        run: node --test tests/test_npm_platform_build.cjs
+        run: node --test tests/test_npm_platform_build.cjs tests/test_project_container_runner.cjs
       - name: Check branded download
-        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.7.zip
+        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.9.zip
       - name: Build and verify branded package
         run: |
           python3 scripts/package_beta.py --output "$RUNNER_TEMP/aim-flow-beta"
-          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.7.zip"
+          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.9.zip"
       - name: Check static website
         run: python3 scripts/check_site.py
       - name: Show beta version
