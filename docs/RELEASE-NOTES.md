@@ -1,3 +1,76 @@
+# AIM Flow 0.1.0-beta.9
+
+Prepare a project-specific assessment, then separately review and run its real
+validation process. This package is prepared locally; remote CI/publication are
+not established.
+
+## Changes
+
+- Include source-cited project onboarding and optional compact Sol assessment
+  dispatch. Preserve partial/unknown outcomes and the distinction between model
+  prose and locally enriched citation evidence.
+- Add project-local npm declarations and explicit macOS/container execution
+  commands, with committed-source/runtime/cache pins and retained receipts.
+- Support separately reviewed local utility images and private executable
+  workspaces for complete npm aggregates while retaining network:none,
+  protected original sources and exact operator grants.
+- Preserve beta.8 Sol patch proposals, budget history, reservations and no-replay
+  semantics. No proposal or assessment becomes automatic execution authority.
+- Package an exact 61-file schema-3 controller. Beta.8's 53-file schema-3 archive
+  still needs its own matching bootstrap. Fresh installations and pinned
+  predecessor verification preserve older instances without in-place migration.
+- Update the workflow to run both Node suites, versioned downloads and explicit
+  platform limits. Beta.8's original ZIP remains unchanged.
+
+## Verification and boundaries
+
+The code baseline at `48ebdd068d8157293df195d2d0ff8e14a61afdc6` has 443 distinct
+Python passes across the complete run and three targeted macOS reruns, plus one
+existing skip, and 37 Node passes. The initial complete invocation itself failed
+three fixtures when its outer sandbox prevented sandbox-exec profile creation;
+the reviewed scoped rerun preserved the fixtures' own denial profiles. See
+[exact regression and runtime evidence](VERIFICATION.md).
+
+A fresh installed development controller previously ran the actual committed
+AIWebSite npm ci plus full ci:release-readiness aggregate: 261 pages, 12 image
+optimizations, package/Node Windows-contract checks, 55 stubbed release assertions
+and backend tests. That Linux ARM64/Node 24 qualification is retained separately
+from packaging. No customer project, model call, VM startup or image download
+is repeated by building this release.
+
+The package contains no customer sources, cache, runtime images, API keys or
+operator journals. It does not install Docker, configure a host, grant a budget
+or deploy. Hosted Node 22.12, native Windows/PowerShell, browser acceptance and
+production behavior remain unqualified. Git 2.54+ must be available to the hosted
+workflow; this has not been checked remotely because GitHub access was denied.
+
+Final packaging checks on 10 November 2026:
+
+- 13 focused package/install/version/archive-compatibility tests passed, including
+  both new regressions. All 28 Sol contracts passed from a source-free install.
+- Nine wrapper payload hashes, the source-bound bootstrap, exact 61-file
+  controller, fresh installation and expected unconfigured readiness exit 3
+  passed. Source and actual installed CLI report beta.9.
+- A second build produced byte-identical ZIP output. Independent archive,
+  privacy and installed-behavior review found no blocker.
+- The actual release installation successfully previewed the existing reviewed
+  project instance and 590-source aggregate. The preview created no attempt and
+  granted no execution. It does not repeat the earlier project pass.
+- Provenance: 93 reviewed source files; static site: 18 local links/assets; diff
+  check passed. The unchanged runtime logic retains the earlier regression
+  evidence; the long whole suite was not rerun for documentation/packaging.
+
+The first package candidate exposed a hardcoded beta.8 CLI label. It was not
+released; the bounded display-only fix now reads the installation's manifest
+version or the source checkout's VERSION. Invalid/oversized labels are refused.
+This display is not a substitute for pinned archive/readiness verification.
+The initial failed test and superseded artifact remain separate from the final
+passing package evidence.
+
+- ZIP SHA-256: `fe22b1a178498470d1d2fba9be6f9d4931634b968295f52efa7be8ef494ed734`.
+- Controller archive SHA-256: `6f7305874c69603135ac34b66f621b09f4eca0bf2366235ec10dc1b863f1ad7f`.
+- Installed manifest SHA-256: `3daca37e331e30429a27786dd98d73b74237c2b8316581ea574bba7f89a96d95`.
+
 # AIM Flow 0.1.0-beta.8
 
 Use the explicit Sol API proposal route from a verified installation.

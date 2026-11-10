@@ -198,3 +198,36 @@ scoped rerun, not a claim that the first invocation passed. Node tests passed
 checks passed. The unchanged beta.8 bundle comparison still intentionally fails
 with `Bootstrap differs from trusted source checkout`; this development needs
 a new versioned package rather than replacement of beta.8.
+
+
+## Beta.9 local package verification
+
+The previously unreleased onboarding/execution work is now included in a new
+locally prepared beta.9 download, preserving beta.8's bytes. This supersedes the
+older package-pending statements above, not hosted/publication or acceptance
+limits. Final ZIP SHA-256:
+`fe22b1a178498470d1d2fba9be6f9d4931634b968295f52efa7be8ef494ed734`.
+The exact 61-file release manifest is
+`3daca37e331e30429a27786dd98d73b74237c2b8316581ea574bba7f89a96d95`.
+
+Thirteen focused installation/package/version/archive-compatibility tests passed,
+including two new tests, and all 28 Sol contracts ran successfully from a
+source-free installation. Both source and actual ZIP installation print beta.9;
+pinned readiness returns expected exit 3, packageVerified:true and ready:false.
+A retained beta.9 installation previewed the prior reviewed project instance's
+590-source aggregate with executionAuthorized:false and no attempt creation.
+No customer-project execution, live provider request, image pull or VM startup
+was repeated for this release.
+
+Independent final archive and installed-behavior review passed, including nested
+metadata, all payload bytes, exact bootstrap reconstruction, privacy scan and
+beta.8 preservation. A rebuild was byte-identical. Source provenance, 18 static
+links/assets and whitespace checks passed. No long full-suite rerun is claimed
+for these documentation/packaging changes; unchanged engine coverage is the
+retained aggregate regression above. The first beta.9 candidate's hardcoded
+version-label failure was corrected and its scoped tests repeated; that candidate
+is superseded, not a passing release.
+
+The current GitHub fetch restriction remains an explicit publication blocker.
+No remote refresh, push, PR, hosted checks or Pages update was attempted for
+beta.9. See [publication steps and prerequisites](PUBLISHING.md).

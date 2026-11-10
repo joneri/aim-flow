@@ -1,6 +1,6 @@
 # Sol API proposal delivery
 
-`aim-flow.py deliver-api` is included in the beta.8 download as a separate, proposal-only route for `gpt-6.1-sol` with `xhigh` reasoning. It does not apply edits, run project code, accept a product, deploy, or retry. `run-local-intake` retains its existing pinned mini model and historical budget rules. The local Codex adapter remains separate.
+`aim-flow.py deliver-api` is included in the beta.9 download as a separate, proposal-only route for `gpt-6.1-sol` with `xhigh` reasoning. It does not apply edits, run project code, accept a product, deploy, or retry. `run-local-intake` retains its existing pinned mini model and historical budget rules. The local Codex adapter remains separate.
 
 ## Contract
 
@@ -63,10 +63,10 @@ Use Python 3.11+. Review `proposal.json`, retained response and accounting befor
 
 ## Install and upgrade
 
-Verify and install the beta.8 controller with its matching bootstrap and independent pins. Its archive uses schema 3 with an exact 53-file payload, including `aim-flow.py`, this guide and the Sol adapter. Older installations and their original matching bootstraps remain intact; install to a new directory rather than overwriting one. The new bootstrap intentionally refuses the older schema 2 layout.
+Verify and install the beta.9 controller with its matching bootstrap and independent pins. Its archive uses schema 3 with an exact 61-file payload, including `aim-flow.py`, this guide and the Sol adapter. Older installations and their original matching bootstraps remain intact; install to a new directory rather than overwriting one. The matching bootstrap intentionally refuses older schema 2 and beta.8 schema 3 inventories. Beta.8 has 53 payload files; this release has 61. Schema equality alone does not imply archive compatibility.
 
 Run `/absolute/path/to/new-private-controller/aim-flow.py deliver-api` with the arguments above. The installed command uses only its packaged modules; no source checkout, Git or Codex CLI is required. Preview requires an existing established budget history, selected source and request files, but no API key or network. This advanced route does not initialize a fresh campaign budget or replace the simpler mini intake.
 
 Keep the original campaign and authority files when upgrading. A new installation changes implementation pins, so preview the next operation again and authorize its new exact intent. Never edit an old receipt or reset an attempt to make it match a new version. Use the original installation to inspect an older retained operation.
 
-`deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation. Local Codex and Codex Cloud delivery are not included in beta.8.
+`deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation. Local Codex and Codex Cloud delivery are not included in this download.

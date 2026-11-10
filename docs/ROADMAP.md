@@ -4,7 +4,7 @@ AIM Flow aims to make the route from an intention to verified delivery repeatabl
 
 ## Next
 
-- Complete an independently reviewed real-project source-check pilot.
+- Extend the independently reviewed local aggregate evidence to hosted CI, native Windows and browser acceptance.
 - Simplify repeatable operator setup without weakening input and permission checks.
 - Improve the explanation of unsupported workflows and missing prerequisites.
 

@@ -1,6 +1,6 @@
 # Project-local validation handoffs
 
-This unreleased route consumes an independently reviewed, pinned onboarding instance and a separate project-local declaration. It produces actual named npm command handoffs without translating model prose into shell commands, changing shared recipes, invoking a provider or executing the project.
+This beta.9 planning route consumes an independently reviewed, pinned onboarding instance and a separate project-local declaration. It produces actual named npm command handoffs without translating model prose into shell commands, changing shared recipes, invoking a provider or executing the project.
 
 `plan-project-validation` and `verify-project-validation` require:
 
@@ -149,3 +149,21 @@ Normal npm lifecycle settings stay intact; v2 uses informational npm logs to
 retain lifecycle dispatch/exit evidence without changing script authorization.
 A successful aggregate is still local validation, not hosted CI, acceptance,
 artifact publication or deployment authority.
+
+
+## Platform and upgrade boundaries
+
+The macOS adapter requires the platform's sandbox-exec support and separately
+pinned Node/npm/Git/utilities. The Linux container adapter requires a separately
+available Docker Unix socket, an already-local official Node image, and any
+separately reviewed prepared image/cache. Installing Flow does not install or
+start Docker/Colima, pull images, download packages or configure security policy.
+The live aggregate qualification used Linux ARM64 in Colima on macOS; other
+hosts, Linux amd64, Windows, and hosted Actions remain separate qualifications.
+The Node Windows-contract fixture is not native Windows/PowerShell execution.
+
+Use this release's matching bootstrap and all independent pins for its exact
+61-file schema-3 archive. Beta.8's 53-file schema-3 archive needs the beta.8
+bootstrap. Preserve older installations and retained instances; the separate
+pinned predecessor-controller verifier validates their own onboarding protocol.
+An upgrade never turns an earlier preview into execution authorization.

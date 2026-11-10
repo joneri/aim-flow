@@ -1,12 +1,12 @@
-# Project-specific agent onboarding (development)
+# Project-specific agent onboarding (beta.9)
 
 Flow can now retain an agent's actual interpretation of an unfamiliar repository, rather than equating detected filenames with a working integration. The shared engine supplies evidence collection, binding and review rules. The project instance stores the selected commands, order, prerequisites, CI interpretation and deployment questions. No repository names or project-specific commands are added to Flow.
 
-The prepare/record/verify workflow is an **offline review handoff**. It makes no model call, installs nothing and executes no project code. An independently authorized coding agent (or a person) can read the packet and write the assessment. The optional development `onboard-api` route below can instead dispatch that assessment to Sol after its own exact authorization and spending approval. Neither route is a project execution adapter. Recording an assessment verifies its shape and exact source citations, not whether its reasoning is correct. Independent review, qualified execution and exact approval remain separate.
+The prepare/record/verify workflow is an **offline review handoff**. It makes no model call, installs nothing and executes no project code. An independently authorized coding agent (or a person) can read the packet and write the assessment. The optional `onboard-api` route below can instead dispatch that assessment to Sol after its own exact authorization and spending approval. Neither route is a project execution adapter. Recording an assessment verifies its shape and exact source citations, not whether its reasoning is correct. Independent review, qualified execution and exact approval remain separate.
 
 ## Workflow
 
-Use a freshly built and installed development controller containing these commands, Python 3.11+, Git 2.54+, and independently retained controller/Git pins. Keep all outputs in a private directory outside the controller and project checkout.
+Use a freshly verified beta.9 controller containing these commands, Python 3.11+, Git 2.54+, and independently retained controller/Git pins. Keep all outputs in a private directory outside the controller and project checkout.
 
 1. Run `prepare-project-onboarding` with `--manifest-sha256`, `--checkout`, `--commit`, `--git`, `--git-sha256` and a new `--output` path. Add `--project-doc README.md` and repeat `--review-source` for relevant scripts, nested manifests, deployment definitions and other committed text. Existing discovery contributes root manifests and detected CI/container files automatically. The output receipt gives the packet SHA-256.
 2. Give the packet to an authorized agent for analysis. Its `agentTask` explains the assignment and trust boundaries. Do not automatically send private source to an external service: model use and source transmission need their own authorization. Missing referenced files require another explicitly selected packet, not a guessed conclusion.
@@ -56,11 +56,11 @@ Step commands, effects and reasoning are unverified agent proposals. The engine 
 The offline tests use committed Python and nested JavaScript fixtures, hostile instruction text and marker commands that must never run. They cover installed CLI round trips, literal citations, target/controller/Git drift, source selection, schema escalation, cycles, links, output overlap and overwrite refusal. They are not live model, build, browser, CI or deployment qualification.
 
 
-## Authorized Sol dispatch (unreleased development)
+## Authorized Sol dispatch
 
 `aim-flow.py onboard-api` can generate the assessment itself through the OpenAI Responses API, pinned to `gpt-6.1-sol`, `xhigh`, standard tier, streaming and `store: false`. The initial live pilot reached Sol but exhausted its output allowance; it did not yield a complete assessment. The compact contract below is an offline-tested correction, not a live-qualified completion. No project commands are executed, even when the returned plan proposes installation, CI or deployment.
 
-Use an installed development controller that includes `lib/flow_onboarding_delivery.py`. Prepare a new packet with that installation's exact manifest pin. The dispatch configuration requires these fields, with optional `sourceRanges` described below:
+Use an installed beta.9 controller that includes `lib/flow_onboarding_delivery.py`. Prepare a new packet with that installation's exact manifest pin. The dispatch configuration requires these fields, with optional `sourceRanges` described below:
 
 ```json
 {
