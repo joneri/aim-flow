@@ -63,7 +63,7 @@ class CommitReader:
                        'GIT_OPTIONAL_LOCKS': '0', 'GIT_TERMINAL_PROMPT': '0', 'GIT_NO_LAZY_FETCH': '1',
                        'GIT_ALLOW_PROTOCOL': '', 'GIT_NO_REPLACE_OBJECTS': '1'}
         command = [self.git, '--no-replace-objects', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', *args]
-        result = subprocess.run(command, cwd=self.checkout, env=environment, capture_output=True, timeout=20)
+        result = subprocess.run(command, cwd=self.checkout, env=environment, capture_output=True, timeout=None)
         if missing_ok and result.returncode == 1 and not result.stdout and not result.stderr:
             return None
         if result.returncode or (maximum is not None and len(result.stdout) > maximum):

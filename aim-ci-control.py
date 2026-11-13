@@ -92,6 +92,26 @@ def main():
                 mode.add_argument('--authorize-intent')
             else:
                 command.add_argument('--receipt-sha256', required=True)
+    release_commands = ('run-project-command', 'verify-project-command')
+    for name in release_commands:
+        command = commands.add_parser(name, description='Drive one reviewed project-owned command; retain unknown outcomes without replay.')
+        for option in ('declaration', 'state'):
+            command.add_argument('--' + option, type=Path, required=True)
+        for option in ('manifest-sha256', 'declaration-sha256'):
+            command.add_argument('--' + option, required=True)
+        if name == 'run-project-command':
+            mode = command.add_mutually_exclusive_group(required=True)
+            mode.add_argument('--preview', action='store_true')
+            mode.add_argument('--authorize-intent')
+        else:
+            command.add_argument('--receipt-sha256', required=True)
+    plan_derivation = commands.add_parser('derive-project-validation',
+        description='Derive an untrusted typed npm plan and resource needs from verified onboarding.')
+    for option in ('instance', 'instance-controller', 'python', 'resource-catalog', 'output'):
+        plan_derivation.add_argument('--' + option, type=Path, required=True)
+    for option in ('manifest-sha256', 'instance-sha256', 'instance-controller-manifest-sha256',
+                   'python-sha256', 'resource-catalog-sha256'):
+        plan_derivation.add_argument('--' + option, required=True)
     root_preview = commands.add_parser('preview-root-admission',
                                        description='Preview exact local root intake without transport.')
     for option in ('profile', 'state-dir', 'legacy-budget'):
@@ -290,6 +310,12 @@ def main():
     elif args.action in container_commands:
         from aim_ci.project_container import execution
         result = execution(ROOT, args)
+    elif args.action in release_commands:
+        from aim_ci.project_command import command
+        result = command(ROOT, args)
+    elif args.action == 'derive-project-validation':
+        from aim_ci.project_plan_derivation import planning
+        result = planning(ROOT, args)
     elif args.action in validation_commands:
         from aim_ci.project_validation import validation
         result = validation(ROOT, args)
@@ -398,6 +424,8 @@ def main():
     else:
         result = control_package.readiness(ROOT, args.manifest_sha256, args.product or 'catalog', args.checkout)
     print(json.dumps(result, indent=2))
+    if args.action in release_commands and result['status'] not in ('command-preview', 'project-receipt-matched', 'runtime-preparation-completed'):
+        return 3
     if args.action in (*execution_commands, *container_commands) and result['status'] == 'failed':
         return 3
     return 3 if args.action == 'readiness' and not result['ready'] else 0

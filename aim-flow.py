@@ -25,6 +25,111 @@ if sys.argv[1:] == ['--version']:
     except (OSError, ValueError, AttributeError):
         raise SystemExit('Cannot read a valid local AIM Flow version.')
     print('AIM Flow ' + value)
+elif sys.argv[1:2] == ['reconcile-runtime']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_runtime_recovery import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['accept-local']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_owner_acceptance import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['deliver']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_delivery_chain import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['continue-release']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_release_continuation import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['publish-github']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_github_publication import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['deliver-github']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_github_delivery import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['review-candidate-api']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_candidate_review import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['derive-intake']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_requirement_intake import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['repair-and-validate']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_repair_run import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['repair-candidate']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_repair_candidate import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['resume-candidate']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_resume_candidate import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['run']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_run import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['review-executed-work']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_execution_review import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['validate-work']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_workflow_validation import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['work']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_workflow import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
 elif sys.argv[1:2] == ['onboard-api']:
     sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
     from flow_onboarding_delivery import main

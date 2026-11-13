@@ -121,6 +121,70 @@ class OnboardingApiTests(unittest.TestCase):
         for path in self.state.iterdir(): self.assertEqual(path.stat().st_mode & 0o077, 0)
         self.assertEqual(result['reservation']['reservedNanoUsd'], api.reservation(self.count, self.c['maxOutputTokens']))
 
+    def test_optional_requirement_is_exact_pinned_private_path_free_and_not_authority(self):
+        plain = self.preview()
+        self.assertNotIn('requirement', json.loads(plain['request']['input']))
+        self.assertEqual(plain['request'], agent.request_payload(self.packet, self.c['maxOutputTokens']))
+        requirement = self.case / 'private-user-story.md'
+        requirement.write_text('Pause and resume the carousel. Verify keyboard and browser behavior.\n')
+        self.c['requirement'] = self.pin(requirement); self.save()
+        preview = self.preview()
+        self.assertEqual(json.loads(preview['request']['input'])['requirement'], requirement.read_text())
+        self.assertNotIn(str(requirement), json.dumps(preview['request']))
+        self.assertIn('not execution authority', preview['request']['instructions'])
+        self.assertEqual(preview['intent']['requirement'], {**self.pin(requirement), 'disclosedBytes': requirement.stat().st_size})
+        self.assertNotEqual(preview['intentSha256'], plain['intentSha256'])
+        result = self.execute()
+        self.assertEqual(result['status'], 'assessment-ready-for-independent-review')
+        self.assertFalse(result['executionAuthorized']); self.assertFalse(result['deploymentAuthorized'])
+
+    def test_requirement_drift_during_preflight_blocks_generation_and_reservation(self):
+        requirement = self.case / 'story.md'; requirement.write_text('Original task')
+        self.c['requirement'] = self.pin(requirement); self.save()
+        def mutate(endpoint, payload):
+            result = self.post(endpoint, payload)
+            requirement.write_text('Changed task')
+            return result
+        self.assertEqual(self.execute(mutate)['status'], 'preflight-refused')
+        self.assertEqual(self.calls, ['responses/input_tokens'])
+        self.assertEqual(api.Campaign(self.c).read()['requests'], [])
+
+    def test_registered_capabilities_are_typed_private_path_free_and_not_qualification(self):
+        row = {'kind': 'browser-runtime', 'capabilities': {'nodeVersion': '24.22.2',
+            'npmVersion': '11.19.1', 'platform': 'linux', 'architecture': 'arm64',
+            'browserPackages': {'playwright': '1.58.2'}}}
+        self.c['availableCapabilities'] = [row]; self.save()
+        preview = self.preview()
+        self.assertEqual(json.loads(preview['request']['input'])['availableCapabilities'], [row])
+        self.assertIn('not actual runtime qualification', preview['request']['instructions'])
+        self.assertIn('npm run SCRIPT', preview['request']['instructions'])
+        for field, value in [('identity', '/private/runtime'), ('executionSpec', {'path': '/private/spec'}),
+                             ('qualification', 'secret prose')]:
+            unsafe = {**row, field: value}
+            self.c['availableCapabilities'] = [unsafe]; self.save()
+            with self.assertRaises(Refused): self.preview()
+        self.c['availableCapabilities'] = [{'kind': 'node-runtime',
+            'capabilities': {'nodeVersion': '/private/runtime'}}]; self.save()
+        with self.assertRaises(Refused): self.preview()
+        self.c['availableCapabilities'] = [{'kind': 'browser-runtime',
+            'capabilities': {'browserPackages': {'playwright': '1.2.3-' + 'x' * 200000}}}]; self.save()
+        with self.assertRaises(Refused): self.preview()
+        self.assertFalse(self.state.exists()); self.assertEqual(self.calls, [])
+
+    def test_requirement_bounds_encoding_and_mutable_location_fail_before_dispatch(self):
+        requirement = self.case / 'story.md'
+        for text in ('a' * agent.MAX_REQUIREMENT_BYTES, 'å' * (agent.MAX_REQUIREMENT_BYTES // 2)):
+            requirement.write_text(text)
+            self.assertEqual(agent.requirement_text(self.pin(requirement)), text)
+        for raw in (b'', b'\xff', b'a' * (agent.MAX_REQUIREMENT_BYTES + 1), b'\0'):
+            requirement.write_bytes(raw); self.c['requirement'] = self.pin(requirement); self.save()
+            with self.assertRaises(Refused): self.preview()
+        campaign = Path(self.c['campaignDirectory']); campaign.mkdir()
+        requirement = campaign / 'story.md'; requirement.write_text('Task')
+        self.c['requirement'] = self.pin(requirement); self.save()
+        with self.assertRaises(Refused): self.preview()
+        self.assertFalse(self.state.exists()); self.assertEqual(self.calls, [])
+
     def test_exact_consent_and_explicit_scope_required_before_key_access(self):
         with patch.object(agent, 'transport_from_key_file', side_effect=AssertionError('credential read')):
             with self.assertRaises(Refused):

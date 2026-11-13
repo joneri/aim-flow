@@ -105,10 +105,12 @@ class DockerEngine:
         self.request = request
         self.response = response
 
-    def _call(self, method, route, expected, payload=None):
+    def _call(self, method, route, expected, payload=None, *, timeout_seconds=5):
+        if type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 180:
+            raise Refused('Docker metadata deadline must be 1..180 seconds')
         body = None if payload is None else json.dumps(payload, separators=(',', ':')).encode()
         try:
-            code, data = self.request(self.endpoint, method, _API + route, body, 5)
+            code, data = self.request(self.endpoint, method, _API + route, body, timeout_seconds)
         except (OSError, http.client.HTTPException) as error:
             raise Refused(f'Docker {method} outcome is unknown ({type(error).__name__})') from None
         if type(code) is not int or code not in expected:

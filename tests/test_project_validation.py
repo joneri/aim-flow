@@ -24,6 +24,17 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+class ProducerDeadlineTests(unittest.TestCase):
+    def test_metadata_default_is_unbounded_and_explicit_positive_values_have_no_arbitrary_ceiling(self):
+        self.assertIsNone(validation.producer_timeout({}))
+        self.assertIsNone(validation.producer_timeout({'producerVerificationTimeoutSeconds': None}))
+        for value in (1, 900, 1800, 7200):
+            self.assertEqual(validation.producer_timeout({'producerVerificationTimeoutSeconds': value}), value)
+        for value in (0, True, False, -1, '900'):
+            with self.assertRaises(Refused):
+                validation.producer_timeout({'producerVerificationTimeoutSeconds': value})
+
+
 class ProjectValidationTests(unittest.TestCase):
     setUpClass = classmethod(fixtures.ProjectOnboardingTests.setUpClass.__func__)
     git_run = fixtures.ProjectOnboardingTests.git_run
@@ -61,6 +72,8 @@ class ProjectValidationTests(unittest.TestCase):
             (self.checkout / (prefix + 'package-lock.json')).write_text(json.dumps({
                 'name': package['name'], 'version': '1.0.0', 'lockfileVersion': 3,
                 'packages': {'': {'name': package['name'], 'version': '1.0.0'}}}, indent=2) + '\n')
+        (self.checkout / 'app.txt').write_text('baseline application\n')
+        (self.checkout / 'obsolete.txt').write_text('removed by reviewed candidate\n')
         self.git_run('add', '.'); self.git_run('commit', '-qm', 'Project gates')
         self.commit = self.git_run('rev-parse', 'HEAD')
         packet = self.prepare(); self.record(self.assessment(packet))
@@ -236,10 +249,9 @@ class ProjectValidationTests(unittest.TestCase):
         child = 'import time; from pathlib import Path; time.sleep(1); Path(' + repr(str(marker)) + ').touch(); time.sleep(60)'
         leader = 'import subprocess,sys; from pathlib import Path; p=subprocess.Popen([sys.executable,"-IBS","-c",' + repr(child) + ']); Path(' + repr(str(pid_file)) + ').write_text(str(p.pid))'
         try:
-            with patch.object(validation, 'VERIFIER_TIMEOUT', 0.5):
-                with self.assertRaises(Refused):
-                    validation.verification_process([str(Path(sys.executable).resolve()), '-IBS', '-c', leader],
-                                                    self.case, {'PATH': '/usr/bin:/bin'})
+            with self.assertRaises(Refused):
+                validation.verification_process([str(Path(sys.executable).resolve()), '-IBS', '-c', leader],
+                                                self.case, {'PATH': '/usr/bin:/bin'}, timeout_seconds=0.5)
             time.sleep(1.1)
             self.assertTrue(pid_file.exists())
             self.assertFalse(marker.exists(), 'Exited verifier leader must not leave its child running')
@@ -255,6 +267,92 @@ class ProjectValidationTests(unittest.TestCase):
         self.assertEqual(value['runtimes']['local-node24']['qualification'], 'not-verified-by-planning')
         self.assertTrue(value['readiness']['blockers'])
         self.assertTrue(all(j['status'] in ('not-run', 'reference-only') for j in value['jobs']))
+
+    def candidate_git(self, *args):
+        return subprocess.check_output([str(self.git), '-c', 'core.hooksPath=/dev/null',
+            '-c', 'core.fsmonitor=false', '-c', 'commit.gpgSign=false', *args], cwd=self.candidate,
+            env=self.env, text=True).strip()
+
+    def candidate(self):
+        self.candidate = self.case / 'candidate'
+        shutil.copytree(self.checkout, self.candidate)
+        (self.candidate / 'app.txt').write_text('reviewed application change\n')
+        (self.candidate / 'app.txt').chmod(0o755)
+        (self.candidate / 'added.bin').write_bytes(b'\x00binary addition')
+        (self.candidate / 'obsolete.txt').unlink()
+        self.candidate_git('add', '.'); self.candidate_git('commit', '-qm', 'Reviewed application changes')
+        self.d.update(schemaVersion=2, target={'checkout': str(self.candidate),
+            'commit': self.candidate_git('rev-parse', 'HEAD'), 'tree': self.candidate_git('rev-parse', 'HEAD^{tree}')},
+            candidateReview={'reference': 'Independent diff review, not model regeneration',
+                'qualifications': ['Selected definitions unchanged; application behavior needs execution and acceptance.'],
+                'changedPaths': ['app.txt', 'added.bin', 'obsolete.txt']})
+        self.save()
+
+    def test_candidate_installed_handoff_preserves_base_and_binds_full_diff(self):
+        before = self.instance_path.read_bytes(); self.candidate()
+        self.validation_cli(); value = json.loads(self.output.read_bytes())
+        self.assertEqual(value['schemaVersion'], 2)
+        self.assertEqual(value['target'], self.d['target'])
+        self.assertEqual(value['candidate']['baseTarget'], self.instance['target'])
+        self.assertEqual(value['candidate']['changes']['app.txt']['after']['mode'], '100755')
+        self.assertIsNone(value['candidate']['changes']['added.bin']['before'])
+        self.assertIsNone(value['candidate']['changes']['obsolete.txt']['after'])
+        self.assertFalse(value['ready']); self.assertFalse(value['executionAuthorized'])
+        self.assertEqual(value['agentUnknowns'], self.instance['assessment']['unknowns'])
+        self.assertEqual(self.instance_path.read_bytes(), before)
+        self.assertEqual(self.git_run('rev-parse', 'HEAD'), self.commit)
+        self.validation_cli(verify=True)
+
+    def test_candidate_review_requires_complete_paths_exact_tree_and_schema(self):
+        self.candidate(); original = copy.deepcopy(self.d)
+        changes = [lambda d: d['candidateReview']['changedPaths'].remove('obsolete.txt'),
+            lambda d: d['candidateReview']['changedPaths'].append('unreviewed.txt'),
+            lambda d: d['candidateReview']['changedPaths'].append('app.txt'),
+            lambda d: d['candidateReview'].update(qualifications=[]),
+            lambda d: d['target'].update(tree='0'*40),
+            lambda d: d.update(schemaVersion=1), lambda d: d.update(schemaVersion=True),
+            lambda d: d['candidateReview'].update(executionAuthorized=True)]
+        for change in changes:
+            self.d = copy.deepcopy(original); change(self.d); self.save()
+            with self.assertRaises(Refused): validation.derive(self.current, self.args())
+
+    def test_candidate_changed_definition_and_nonancestor_refuse(self):
+        self.candidate()
+        (self.candidate / 'package.json').write_text('{"scripts":{"ci:gate":"deploy"}}\n')
+        self.candidate_git('add', '.'); self.candidate_git('commit', '-qm', 'Changed definition')
+        self.d['target'].update(commit=self.candidate_git('rev-parse', 'HEAD'), tree=self.candidate_git('rev-parse', 'HEAD^{tree}'))
+        self.d['candidateReview']['changedPaths'].append('package.json'); self.save()
+        with self.assertRaisesRegex(Refused, 'changes assessed or validation definitions'):
+            validation.derive(self.current, self.args())
+        self.candidate_git('checkout', '--orphan', 'unrelated')
+        self.candidate_git('commit', '-qm', 'Unrelated history')
+        self.d['target'].update(commit=self.candidate_git('rev-parse', 'HEAD'), tree=self.candidate_git('rev-parse', 'HEAD^{tree}')); self.save()
+        with self.assertRaisesRegex(Refused, 'descend'):
+            validation.derive(self.current, self.args())
+
+    def test_candidate_links_and_original_output_overlap_refuse(self):
+        self.candidate(); args = self.args(); args.output = self.checkout / 'receipt.json'
+        with self.assertRaisesRegex(Refused, 'outside'):
+            validation.validation(self.current, args)
+        (self.candidate / 'added.bin').unlink(); (self.candidate / 'added.bin').symlink_to('app.txt')
+        self.candidate_git('add', '.'); self.candidate_git('commit', '-qm', 'Unapproved linked input')
+        self.d['target'].update(commit=self.candidate_git('rev-parse', 'HEAD'), tree=self.candidate_git('rev-parse', 'HEAD^{tree}')); self.save()
+        with self.assertRaisesRegex(Refused, 'not links or submodules'):
+            validation.derive(self.current, self.args())
+
+    def test_candidate_execution_requires_changes_and_ignores_dirty_files(self):
+        from aim_ci import project_execution as execution
+        self.candidate(); value = validation.derive(self.current, self.args())
+        with self.assertRaisesRegex(Refused, 'every changed current'):
+            execution.source_selection(self.current, value, self.instance, ['app.txt'])
+        (self.candidate / 'app.txt').write_text('dirty content must not be copied')
+        (self.candidate / 'extra.txt').write_text('untracked content')
+        sources, reader = execution.source_selection(self.current, value, self.instance, ['app.txt', 'added.bin'])
+        self.assertEqual(sources['app.txt']['sha256'], value['candidate']['changes']['app.txt']['after']['sha256'])
+        self.assertNotIn('extra.txt', sources)
+        value['target']['tree'] = '0'*40
+        with self.assertRaisesRegex(Refused, 'tree differs'):
+            execution.source_selection(self.current, value, self.instance, ['app.txt', 'added.bin'])
 
 
 if __name__ == '__main__': unittest.main()

@@ -1,0 +1,13 @@
+# Flow-owned requirement intake and run
+
+`aim-flow.py run` accepts repeated `--allow-directory` arguments to derive its own source context, editable paths and immutable process definitions from the original pinned requirement and exact committed source. Without these arguments the existing run interface and grants are unchanged.
+
+Supply `--config` and `--config-sha256` for the base workflow configuration, `--state` for a new private intake directory, and broad edit boundaries such as `--allow-directory src --allow-directory tests`. The base configuration supplies source/requirement pins, resource catalog, budget and generation limits. Its four per-file selection fields may be omitted: Flow derives and replaces them. No operator extraction of the `derive-intake` JSON output is needed.
+
+The first invocation is a **no-paid preview with local writes**. It retains the deterministic intake report, generated workflow configuration, and exact proposed outer grant under the intake state directory. It neither reads a provider credential nor dispatches a provider, container, project command, or publication. Do not supply a key or authorization on that first invocation. Inspect the report and proposed grant, including disclosures, limits and derived paths. Heuristic retrieval is not a guarantee of semantic completeness.
+
+Repeat the same invocation with `--authorize-intent` set to the returned `intentSha256` and the approved credential route to drive the existing run. `--review-executed` opts into the existing fourth model phase; it must be present in the preview and later invocations. The intake grant binds the base configuration pin, report pin, generated configuration pin and exact existing child run intent. It is not interchangeable with an old run or work grant. It grants no publication or deployment.
+
+Use the same invocation without new authorization to resume an already dispatched run, or add `--verify` to verify completed evidence without dispatch or reconstruction. Missing inputs, changed scope/budget/limits/source, changed derived artifacts, and unrecorded children fail closed. An interrupted initial preview is not silently repaired. A dispatch whose child state is absent is reported as unknown and is never replayed automatically.
+
+Results expose `intakeEvidence.workflowConfig` (path and SHA-256) and `intakeEvidence.workflowState` (the actual existing child run state), plus the intake and grant pins. A delivery driver can consume these directly. Preview exposes the generated configuration pin and child state in its bound `intent`; downstream delivery still requires its separate authorization and evidence checks.

@@ -66,6 +66,18 @@ class ContainerTests(unittest.TestCase):
         self.assertEqual(result['intent']['job']['stages'][0]['argv'],['npm','run','test']);self.assertFalse(self.state.exists())
         with self.assertRaises(Refused):container.execution(self.f.current,self.args(preview=False,authorize_intent='0'*64))
 
+    def test_read_mode_policy_is_explicit_in_intent_and_job_without_widening_resources(self):
+        original, _ = self.prepare()
+        self.spec['sourceReadModePolicy'] = container.SOURCE_READ_MODE_POLICY; self.save()
+        intent, _ = self.prepare()
+        self.assertEqual(intent['sourceReadModePolicy'], container.SOURCE_READ_MODE_POLICY)
+        self.assertEqual(container.job_document(intent)['sourceReadModePolicy'], container.SOURCE_READ_MODE_POLICY)
+        for key in ('memoryBytes', 'timeoutSeconds', 'workspaceBytes', 'processCount', 'network'):
+            self.assertEqual(intent[key], original[key])
+        for value in (None, True, 'restore-content'):
+            self.spec['sourceReadModePolicy'] = value; self.save()
+            with self.subTest(value=value), self.assertRaises(Refused): self.prepare()
+
     def test_prepare_rejects_unknown_fields_paths_runtime_overrides_and_limits(self):
         original=copy.deepcopy(self.spec)
         changes=[lambda s:s.update(argv=['sh']),lambda s:s.update(processCount=True),lambda s:s.update(workspaceBytes=0),
@@ -75,6 +87,24 @@ class ContainerTests(unittest.TestCase):
         for change in changes:
             self.spec=copy.deepcopy(original);change(self.spec);self.save()
             with self.assertRaises((Refused,ValueError)):self.prepare()
+
+    def test_candidate_preview_binds_changes_and_protects_original_checkout(self):
+        original=copy.deepcopy(self.f.d)
+        def restore():
+            self.f.d=original;self.f.save()
+        self.addCleanup(restore)
+        self.f.candidate()
+        with self.assertRaisesRegex(Refused,'every changed current'):
+            self.prepare()
+        self.spec['sourcePaths']+=['app.txt','added.bin'];self.save()
+        intent,reader=self.prepare()
+        self.assertEqual(intent['target'],self.f.d['target'])
+        self.assertEqual(intent['candidate']['baseTarget'],self.f.instance['target'])
+        self.assertEqual(intent['sources']['app.txt']['sha256'],intent['candidate']['changes']['app.txt']['after']['sha256'])
+        self.assertIn('network:none',intent['network'])
+        with self.assertRaisesRegex(Refused,'outside'):
+            container.prepare(self.f.current,self.args(state=self.f.checkout/'attempt'))
+        self.assertFalse(self.state.exists())
 
     def test_staging_archive_is_regular_pinned_and_empty_cache_directory_exists(self):
         intent,reader=self.prepare();self.state.mkdir()
@@ -164,6 +194,17 @@ class ContainerTests(unittest.TestCase):
         self.assertEqual(container.file_identity(self.case,'artifact'),{'sha256':sha(path),'bytes':4})
         with self.assertRaises(Refused):container.file_identity(self.case,'artifact',3)
 
+    def test_artifact_spec_pins_contract_and_job_without_changing_absent_contract(self):
+        original,_=self.prepare();self.assertNotIn('artifactCapture',original)
+        self.assertNotIn('artifactCapture',container.job_document(original))
+        self.spec['artifactCapture']=ArtifactCaptureTests().contract();self.save()
+        intent,_=self.prepare()
+        self.assertEqual(intent['artifactCapture'],self.spec['artifactCapture'])
+        self.assertEqual(container.job_document(intent)['artifactCapture'],self.spec['artifactCapture'])
+        self.assertNotEqual(container.local.digest(intent),container.local.digest(original))
+        self.spec['artifactCapture']['files'][0]['path']='web/package.json';self.save()
+        with self.assertRaises(Refused):self.prepare()
+
     def test_report_pass_requires_actual_stages_restored_sources_runtime_and_terminal(self):
         intent,_=self.prepare();expected={n:{'sha256':r['sha256'],'mode':int(r['mode'],8)&0o777,'bytes':r['bytes']} for n,r in intent['sources'].items()}
         report={'format':'aim-flow-project-container-report','schemaVersion':1,'intentSha256':container.local.digest(intent),'status':'passed',
@@ -203,4 +244,81 @@ class ContainerTests(unittest.TestCase):
             altered=copy.deepcopy(result);change(altered['report']);self.assertFalse(container.passing_report(intent,altered))
 
 
-if __name__=='__main__':unittest.main()
+
+
+class ArtifactCaptureTests(unittest.TestCase):
+    def contract(self):
+        return {'schemaVersion':1,'files':[{'path':'results/test.json','mediaType':'application/json'}],
+            'maxFiles':2,'maxFileBytes':1024,'maxTotalBytes':2048}
+
+    def evidence(self, raw=b'{"ok":true}'):
+        import base64
+        c=self.contract();row={**c['files'][0],'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'base64':base64.b64encode(raw).decode()}
+        intent={'artifactCapture':c,'sources':{'package.json':{}},'outputBytes':100000}
+        report={'artifacts':[row],'outputs':{'project/results/test.json':{'type':'file','bytes':row['bytes'],'sha256':row['sha256']}}}
+        return intent,report
+
+    def test_capture_total_is_granted_with_report_headroom_not_eight_mib_ceiling(self):
+        contract = self.contract()
+        contract.update(maxFileBytes=4*1024**2, maxTotalBytes=10*1024**2)
+        container.artifact_capture(contract, {}, 32_000_000)
+        with self.assertRaisesRegex(Refused, 'headroom'):
+            container.artifact_capture(contract, {}, 16_000_000)
+
+    def test_valid_bytes_and_legacy_absence(self):
+        intent,report=self.evidence();container.validate_artifacts(intent,report,required=True)
+        container.validate_artifacts({}, {}, required=True)
+        container.validate_artifacts(intent, {}, required=False)
+        with self.assertRaises(Refused):container.validate_artifacts(intent,{'artifacts':None},required=False)
+        with self.assertRaises(Refused):container.validate_artifacts(intent,{},required=True)
+        with self.assertRaises(Refused):container.validate_artifacts({},report)
+
+    def test_tampering_types_inventory_and_bounds_refused(self):
+        for size in (True, 1.0):
+            intent,report=self.evidence(b'0')
+            report['outputs']['project/results/test.json']['bytes']=size
+            with self.assertRaises(Refused):container.validate_artifacts(intent,report,required=True)
+        changes=[lambda r:r['artifacts'][0].update(bytes=True),lambda r:r['artifacts'][0].update(sha256='0'*64),
+            lambda r:r['artifacts'][0].update(base64='!!!!'),lambda r:r['artifacts'][0].update(mediaType='image/png'),
+            lambda r:r['artifacts'][0].update(path='../x'),lambda r:r['artifacts'].append(r['artifacts'][0]),
+            lambda r:r['outputs']['project/results/test.json'].update(type='link'),lambda r:r['artifacts'][0].update(extra=True)]
+        for change in changes:
+            intent,report=self.evidence();change(report)
+            with self.assertRaises(Refused):container.validate_artifacts(intent,report,required=True)
+        for raw in (b'{"x":1,"x":2}',b'NaN',b'\xff',b'no JSON'):
+            intent,report=self.evidence(raw)
+            with self.assertRaises(Refused):container.validate_artifacts(intent,report,required=True)
+        for change in (lambda c:c.update(maxFiles=True),lambda c:c.update(maxFileBytes=4194305),
+                       lambda c:c['files'][0].update(path='package.json'),lambda c:c['files'][0].update(path='../x'),
+                       lambda c:c['files'].append(c['files'][0])):
+            c=self.contract();change(c)
+            with self.assertRaises(Refused):container.artifact_capture(c,{'package.json':{}},100000)
+        with self.assertRaises(Refused):container.artifact_capture(self.contract(),{},4096)
+
+    def test_real_node_capture_roundtrips_through_python_verifier(self):
+        import shutil
+        import subprocess
+        node=shutil.which('node')
+        if not node:self.skipTest('Node helper unavailable')
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();(root/'project/results').mkdir(parents=True)
+            (root/'project/results/test.json').write_text('{"ok":true}')
+            script="""const r=require(process.argv[1]),root=process.argv[2],c=JSON.parse(process.argv[3]);
+const outputs=r.inventory(root,Date.now()+5000);
+process.stdout.write(JSON.stringify({outputs,artifacts:r.captureArtifacts(root+'/project',c,{},100000,outputs,Date.now()+5000)}));"""
+            result=subprocess.run([node,'-e',script,str(ROOT/'lib/aim_ci/project_container_runner.cjs'),str(root),json.dumps(self.contract())],capture_output=True,check=True,timeout=10)
+            report=json.loads(result.stdout);intent,_=self.evidence()
+            container.validate_artifacts(intent,report,required=True)
+
+    def test_png_signature_and_content_pin(self):
+        import base64
+        raw=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=')
+        intent,report=self.evidence(raw)
+        intent['artifactCapture']['files'][0]['mediaType']='image/png';report['artifacts'][0]['mediaType']='image/png'
+        container.validate_artifacts(intent,report,required=True)
+        intent,report=self.evidence(b'not png')
+        intent['artifactCapture']['files'][0]['mediaType']='image/png';report['artifacts'][0]['mediaType']='image/png'
+        with self.assertRaises(Refused):container.validate_artifacts(intent,report,required=True)
+
+
+if __name__ == '__main__':unittest.main()

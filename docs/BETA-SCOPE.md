@@ -1,4 +1,4 @@
-# AIM Flow 0.1.0-beta.9 scope
+# AIM Flow 0.1.0-beta.10 scope
 
 ## Available paths
 
@@ -15,6 +15,10 @@
 8. Source-cited project onboarding, with an optional separately budgeted Sol assessment. It records a project instance, never runtime authority.
 
 9. Reviewed project-local npm validation: source-bound declarations, explicit macOS or Linux-container execution grants, offline cache/runtime pins and retained receipts. One real combined frontend/backend aggregate passed in Linux ARM64/Node 24.
+
+10. Budget-governed repair iteration, source-bound incremental verification and separately reviewed project-native host execution.
+
+11. Exact candidate publication, guarded PR/merge/CI handoff and delegation to an existing project release command. Explicit owner verification-scope decisions and runtime inventory recovery retain separate receipts and never turn failed execution into acceptance.
 
 These paths have different prerequisites and evidence. Their presence is not a general readiness or execution guarantee.
 
@@ -40,7 +44,7 @@ These paths have different prerequisites and evidence. Their presence is not a g
 - Strict denial of container-internal loopback, which remains available in the qualified runtime.
 - Reusable issue-to-production delivery for arbitrary external projects.
 
-Legacy project-specific delivery routes are excluded from this distribution. No new repository is granted merge or deployment authority. Customer-specific qualification is separate from this release.
+The generic candidate, repair, GitHub delivery and release-continuation adapters are included. Their presence grants no repository merge or deployment authority; each project needs source-bound configuration, applicable permission and actual qualification. Project-specific operator data and application sources are excluded.
 
 ## Pilot fit
 
@@ -62,7 +66,7 @@ project inspection additionally requires Git 2.54+. macOS sandbox execution and
 Linux Docker execution are separate adapters, not native Windows support.
 The tested aggregate used Linux ARM64 Node 24.22.2/npm 11.19.1 with no external
 network. Its Node Windows-contract check is not a PowerShell or Windows run.
-Hosted frontend Node 22.12, browser acceptance and production remain unqualified.
+The presence of GitHub/release adapters does not qualify production feature acceptance or native assistive-technology interoperability. See [verification](VERIFICATION.md) for offline controller checks.
 Linux CI skips the macOS-only execution tests and cannot replace their retained
 local results. The hosted runner's Git prerequisite must be verified before
 calling its portable checks complete. No hosted run is claimed by local packaging.

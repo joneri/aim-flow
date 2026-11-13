@@ -17,7 +17,7 @@ import time
 
 from . import control_package as package, project_onboarding as onboarding, project_validation as planning
 from .effects import EffectJournal
-from .owned_paths import Refused, new_owned_directory, read_owned_content, safe_path, write_owned
+from .owned_paths import Refused, new_owned_directory, owned_directory, read_owned_content, safe_path, write_owned
 from .project_discovery import CommitReader
 
 SPEC = 'aim-flow-project-execution-spec'
@@ -29,23 +29,52 @@ def digest(value):
     return package.sha256(onboarding.encode(value))
 
 
+def runtime_file_bytes(path, expected):
+    """Read ordinary dependency files without relaxing private control ownership."""
+    parent = owned_directory(path.parent)
+    try:
+        fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+    finally:
+        os.close(parent)
+    with os.fdopen(fd, 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        if (not stat.S_ISREG(before.st_mode) or
+                (before.st_dev, before.st_ino, before.st_mode, before.st_nlink) !=
+                (expected.st_dev, expected.st_ino, expected.st_mode, expected.st_nlink)):
+            raise Refused('Runtime file changed after inventory')
+        raw = stream.read(before.st_size + 1); after = os.fstat(stream.fileno())
+    identity = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+                              value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+    if len(raw) != before.st_size or identity(before) != identity(after):
+        raise Refused('Runtime file changed while read')
+    return raw
+
+
 def tree_identity(root):
-    """Pin complete npm/cache bytes and modes; only internal relative links."""
+    """Pin dependency bytes, modes and internal aliases; external aliases refuse."""
     root = Path(root)
     if not root.is_absolute() or root.resolve() != root or not root.is_dir():
         raise Refused('Runtime tree must be an existing canonical directory')
     safe_path(root)
+    inventory = [(path, path.lstat()) for path in sorted(root.rglob('*'))]
+    aliases = {}
+    for path, info in inventory:
+        if stat.S_ISREG(info.st_mode):
+            aliases.setdefault((info.st_dev, info.st_ino), []).append(str(path.relative_to(root)))
     files = {}
-    for path in sorted(root.rglob('*')):
+    for path, info in inventory:
         name = str(path.relative_to(root))
-        info = path.lstat()
         if stat.S_ISLNK(info.st_mode):
             target = os.readlink(path)
             if os.path.isabs(target) or not path.resolve().is_relative_to(root) or not path.resolve().is_file():
                 raise Refused('Runtime links must resolve to files within the pinned tree')
             files[name] = {'link': target}
         elif stat.S_ISREG(info.st_mode):
-            files[name] = {'sha256': package.sha256(read_owned_content(root, name)), 'mode': stat.S_IMODE(info.st_mode)}
+            group = aliases[(info.st_dev, info.st_ino)]
+            if info.st_nlink != len(group):
+                raise Refused('Runtime hard links must remain entirely within the pinned tree')
+            files[name] = {'sha256': package.sha256(runtime_file_bytes(path, info)), 'mode': stat.S_IMODE(info.st_mode)}
+            if info.st_nlink > 1: files[name]['hardlinkPaths'] = group
         elif not stat.S_ISDIR(info.st_mode):
             raise Refused('Unsupported runtime tree entry')
     return {'path': str(root), 'sha256': digest(files), 'files': files}
@@ -74,8 +103,14 @@ def source_selection(root, handoff, instance, names):
     if not names or len(set(names)) != len(names):
         raise Refused('Select distinct committed execution source files')
     for name in names: onboarding._source_path(name)
+    if 'candidate' in handoff:
+        required = {name for name, change in handoff['candidate']['changes'].items() if change['after'] is not None}
+        if not required <= set(names):
+            raise Refused('Execution sources must include every changed current candidate file')
     target, git = handoff['target'], instance['packet']['git']
     reader = CommitReader(root, Path(target['checkout']), Path(git['path']), git['sha256'], target['commit'])
+    if reader.tree != target['tree']:
+        raise Refused('Execution source tree differs from the validation handoff')
     entries = {name: (mode, kind, oid) for name, mode, kind, oid in reader.entries(reader.commit, *names)}
     result = {}
     for name in names:
@@ -164,6 +199,8 @@ def prepare(root, args):
         raise Refused('Source write exceptions require exact selected source files')
     state = onboarding._outside(args.state, root, Path(handoff['target']['checkout']))
     onboarding._outside(state, args.instance_controller, Path(handoff['target']['checkout']))
+    if 'candidate' in handoff:
+        onboarding._outside(state, root, Path(handoff['candidate']['baseTarget']['checkout']))
     for path in [args.execution_spec, args.declaration, args.instance, *[Path(v['path']) for v in (*tools.values(),*utilities.values())],
                  Path(npm['path']), *([Path(cache['path'])] if cache else [])]:
         if path.is_relative_to(state) or state.is_relative_to(path):
@@ -171,6 +208,7 @@ def prepare(root, args):
     intent = {'format': INTENT, 'schemaVersion': 1, 'controllerManifestSha256': args.manifest_sha256,
         'handoffSha256': digest(handoff), 'executionSpecSha256': args.execution_spec_sha256,
         'target': handoff['target'], 'state': str(state), 'job': job, 'sources': sources,
+        **({'candidate': handoff['candidate']} if 'candidate' in handoff else {}),
         'tools': tools, 'utilities':utilities,'applicationEnvironment':application,'sourceWriteExceptions':source_exceptions, 'npmTree': {'path': npm['path'], 'sha256': npm['sha256']},
         'npmCache': None if cache is None else {'path': cache['path'], 'sha256': cache['sha256']},
         'runtimeReview': spec['runtimeReview'], 'sourceReview': spec['sourceReview'],

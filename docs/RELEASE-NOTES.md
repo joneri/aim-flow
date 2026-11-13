@@ -1,3 +1,61 @@
+# AIM Flow 0.1.0-beta.10 — prepared locally
+
+Collect the pilot's controller corrections while preserving immutable prior
+reviews, attempts, budget history and existing downloads. Local preparation precedes an explicitly owner-authorized public branch/PR. No
+release tag or Pages publication is implied by a source push.
+
+## Changes
+
+- Iterate genuine candidate repairs within shared spending and paid-generation
+  authority, without hardcoded repair depth. Reuse source-bound read-only evidence
+  through authenticated flat input closures; invalidate changed inputs and retain
+  unknown outcomes without replay.
+- Derive diagnostics from the actual reused source-review state. Preserve complete
+  source contexts, repair provenance, prior findings and original authority.
+- Add reviewed project-native host execution and runtime preparation. Support
+  complete internal dependency hardlink groups, keep external/private aliases
+  refused, and reconcile the known completed-install inventory failure read-only.
+- Bind canonical Git helper discovery behind private executable aliases. Keep old
+  intent semantics and bind helper hashes for new automatic qualifications.
+- Make finding severity/impact meaningful. Preserve concrete failures; distinguish
+  original outcomes from suggested nonessential verification methods. Separate
+  explicit owner scope acceptance from unchanged model review and delivery rights.
+- Include exact-candidate GitHub delivery and project release continuation. These
+  adapters still require project-specific reviewed declarations and actual owner
+  authority; the product is not unattended delivery for arbitrary repositories.
+- Run the full offline suite with a configurable hosted deadline; the default
+  uses the runner’s 360-minute maximum rather than the old 15-minute stop.
+- Package a source-bound 100-file schema-3 controller. Earlier schema-3 archives
+  require their original matching bootstrap. Preserve prior downloads unchanged.
+- Exclude private pilot sources, operator paths, decisions, API payloads, budgets,
+  credentials, journals and screenshots from the collected release and bundle.
+
+## Verification and remaining limits
+
+Local verification completed so far:
+
+- All 47 Node protocol/capture tests passed; no skips or failures.
+- Source provenance verified: 184 files, including the exact 100-file controller.
+- Nine wrapper payload hashes, trusted-source bootstrap verification, fresh
+  installation and expected unconfigured readiness exit 3 passed.
+- Static site: 18 local links/assets passed. Prior beta.8/beta.9 ZIP bytes are
+  unchanged. Source and nested-package privacy review found no private operator
+  paths, pilot journals, customer sources or real credentials. Literal dummy
+  tokens/header markers in refusal tests remain intentional synthetic fixtures.
+- The complete 947-case Python suite is in progress. The installed loop integration
+  for reused source-review diagnostics has passed; no full-suite result is claimed.
+
+Package pins:
+
+- ZIP SHA-256: `01afe2fa4e3dbeadd18f752ee7d5b41b15e46f3aecfd443a6df2f7c2504663ec`.
+- Controller archive SHA-256: `7e9879bd32d4ac3144dcc011659af65fad8661544e4fa6a3b03dc3879a7ab9a7`.
+- Installed manifest SHA-256: `5123d3bfdf47dd987293b5a324aa9cc34052c539f4b0600e8fa852b57fb12e15`. No new paid model call or live deployment is
+part of these checks. These checks qualify controller contracts and packaging only. They do not
+establish production frontend/backend acceptance or native assistive-technology
+interoperability. Private pilot operations and outcomes are excluded from this
+public release record. See [verification](VERIFICATION.md) and
+[remaining autonomy gaps](AUTONOMY-GAPS.md).
+
 # AIM Flow 0.1.0-beta.9
 
 Prepare a project-specific assessment, then separately review and run its real
