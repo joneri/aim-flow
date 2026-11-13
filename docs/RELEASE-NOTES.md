@@ -1,3 +1,21 @@
+# AIM Flow 0.1.0-beta.11
+
+Package the source improvements from merged PR #4 in a new versioned download.
+The beta.10 ZIP and previous downloads remain byte-identical.
+
+- Include change-focused onboarding and reviewed `reuse-local-test` scheduling
+  for adjacent identical tests in one validation attempt. Required CI, install,
+  deployment, authorization and no-replay boundaries remain intact.
+- Keep the focused installed contracts, consolidated repair-lineage fixture and
+  structural regression checks in the source repository.
+- Bind active download verification to every current controller source file and
+  the version. Check website/download metadata and the active checksum together,
+  so an internally valid but stale archive cannot satisfy publication CI.
+- Automatic CI remains 17 cases. Full regression requires explicit manual opt-in.
+
+This release does not claim a completed deep-lineage run, broader cross-candidate
+per-test caching, a new customer deployment or new production acceptance.
+
 # AIM Flow 0.1.0-beta.10 — release candidate
 
 Collect the pilot's controller corrections while preserving immutable prior

@@ -6,22 +6,19 @@ below; confirm the exact remote commit, hosted checks and live download before
 claiming a new version is published. Do not replace an existing repository or
 assume remote main is unchanged from a cached local observation.
 
-## Previous reviewed download (beta.9)
+## Active release: beta.11
 
-- Version: `0.1.0-beta.9`.
-- ZIP: `site/downloads/aim-flow-0.1.0-beta.9.zip`.
-- ZIP SHA-256: `fe22b1a178498470d1d2fba9be6f9d4931634b968295f52efa7be8ef494ed734`.
-- Controller archive SHA-256: `6f7305874c69603135ac34b66f621b09f4eca0bf2366235ec10dc1b863f1ad7f`.
-- Installed manifest SHA-256: `3daca37e331e30429a27786dd98d73b74237c2b8316581ea574bba7f89a96d95`.
-- Bootstrap SHA-256: `c74237ca0e65bcb495f60c82d9b69ad492ae2e95fba2c7f310b792f04604aa41`.
+Source VERSION and the active download are `0.1.0-beta.11`. This release packages
+the controller changes from merged [PR #4](https://github.com/joneri/aim-flow/pull/4).
+The prior beta.10 and earlier ZIPs remain unchanged. Active pins live in
+`site/downloads/release.json` and `site/downloads/SHA256SUMS`.
 
-The previous beta.8 ZIP remains unchanged. The bootstrap is bound to this
-release's exact 61-file inventory; matching schema numbers do not make older
-bootstraps interchangeable. End users need independently trusted expected pins.
-
-## Local beta.10 preparation
-
-Source VERSION is `0.1.0-beta.10`. The generic source and prepared package are published for review in [PR #2](https://github.com/joneri/aim-flow/pull/2) on `codex/beta10-pilot-fixes-20261113`. No release tag or Pages publication is claimed; the full final-source CI result remains separate. Preserve the old download bytes. The owner has now explicitly authorized publishing the generic beta.10 fixes to the existing public repository. A prior tool refusal is not permission to bypass a control; retain that history and use the newly approved ordinary publication route. See [release notes](RELEASE-NOTES.md) for local checks.
+The branded bundle check with `--current-source` must match every controller
+file, wrapper notice and active version to the reviewed release checkout. An
+internally consistent historical archive is not evidence of a current download.
+Publication is verified only after exact-commit CI, Pages and actual HTTPS
+version/hash checks succeed. No customer application or retained pilot controller
+is modified by this release.
 
 ## Network and publication prerequisites
 
@@ -45,14 +42,15 @@ that GitHub is inaccessible. Record the outcome of each subsequent step.
    reviewed isolated branch and open a **draft PR**. A PR run cannot deploy Pages.
 4. Verify remote commit/tree and the exact commit's portable CI results. The
    workflow requires Git 2.54+; the beta.9 PR runner passed that prerequisite. It runs
-   both Node suites and reports platform-specific Python skips. Linux CI does
+   the 17 selected contracts plus package/source/site checks; full suites require
+   explicit manual opt-in. Linux CI does
    not run the 13 macOS-only sandbox execution fixtures.
 5. Confirm authorization for the main-branch update and Pages publication.
    Configure Pages to use GitHub Actions only when authorized. The existing
-   workflow publishes `site/` after checks on main push or manual main dispatch.
+   workflow publishes `site/` after checks on main push only.
 6. Verify the actual HTTPS page, download, version, checksum, guides and notices
-   before calling beta.9 public. Optionally create an authorized pre-release
-   tagged `v0.1.0-beta.9` with this ZIP and checksum file.
+   before calling the release public. Optional tags/pre-releases are separate
+   publication steps and are not created by this checklist.
 
 Publication does not authorize AIWebSite changes, production deployment, budget
 reset, new credentials or inherited project permissions. Keep incomplete and

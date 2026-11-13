@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Check static local links/assets and refuse externally hosted executable assets."""
 from html.parser import HTMLParser
+import hashlib
+import json
+import zipfile
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -21,6 +24,21 @@ docs = {}
 for p in ROOT.rglob('*.html'):
     d=Document(); d.feed(p.read_text());docs[p.resolve()]=d
 if not docs: errors.append('No HTML files')
+version=(ROOT.parent/'VERSION').read_text().strip()
+metadata=json.loads((ROOT/'downloads/release.json').read_text())
+download='downloads/aim-flow-'+version+'.zip'
+if metadata['version']!=version: errors.append('Download metadata version differs from VERSION')
+if not any(value==download for doc in docs.values() for _,_,value in doc.links):
+    errors.append('Website does not link to the current versioned download')
+current=ROOT/download
+if current.is_file():
+    expected=hashlib.sha256(current.read_bytes()).hexdigest()+'  '+current.name
+    if expected not in (ROOT/'downloads/SHA256SUMS').read_text().splitlines():
+        errors.append('Current download checksum is missing or stale')
+    with zipfile.ZipFile(current) as archive:
+        packaged=json.loads(archive.read('aim-flow-'+version+'/release.json'))
+    if packaged!=metadata:
+        errors.append('Website download metadata differs from the active ZIP')
 for p,d in docs.items():
     for tag,key,value in d.links:
         u=urlsplit(value)
