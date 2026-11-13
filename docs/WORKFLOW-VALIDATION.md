@@ -313,7 +313,7 @@ Delivery verifies the explicitly retained execution location rather than assumin
 all phases were executed under one controller or inside the new state directory.
 
 
-## Change-focused test scheduling (development after beta.10)
+## Change-focused test scheduling (included in beta.11)
 
 Onboarding now asks for the smallest source-supported checks for the requirement,
 with affected scope, purpose and timing made explicit. Existing project filters
@@ -345,5 +345,6 @@ universal inference that a frontend path makes backend or Windows CI optional;
 project-required release guards continue to apply. Cross-candidate per-test input
 closures and project-declared impact/filter rules remain future work. The existing
 whole-validation reuse still requires its exact source/runtime/producer bindings.
-This source increment does not replace the already published beta.10 download or
-hot-patch retained installed controllers.
+The beta.11 download includes this implementation. Previous beta.10 download
+bytes and retained installed controllers remain unchanged; install the new version
+separately rather than hot-patching historical controllers.

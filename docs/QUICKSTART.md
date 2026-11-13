@@ -36,11 +36,11 @@ Then verify the controller archive and install:
 
 ```sh
 python3 -IBS /path/to/aim-ci-bootstrap.pyz verify \
-  --archive /path/to/aim-ci-control-0.1.0-beta.10.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.11.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256
 
 python3 -IBS /path/to/aim-ci-bootstrap.pyz install \
-  --archive /path/to/aim-ci-control-0.1.0-beta.10.tar.gz \
+  --archive /path/to/aim-ci-control-0.1.0-beta.11.tar.gz \
   --sha256 EXPECTED_ARCHIVE_SHA256 \
   --destination /absolute/path/to/new-private-controller
 
@@ -82,7 +82,7 @@ A larger allowance grants no new model call or retry. Historical retained work k
 
 ## Use Sol through OpenAI API
 
-The verified beta.10 installation includes `aim-flow.py deliver-api`. Start with its no-key preview and the [Sol API guide](API-DELIVERY.md). This advanced route requires pinned request/source files and an existing established budget ledger. It keeps the same campaign and outstanding reservations across upgrades. It returns a private patch proposal, which needs separate review, application and testing. The ordinary mini intake remains available with its original contract.
+The verified beta.11 installation includes `aim-flow.py deliver-api`. Start with its no-key preview and the [Sol API guide](API-DELIVERY.md). This advanced route requires pinned request/source files and an existing established budget ledger. It keeps the same campaign and outstanding reservations across upgrades. It returns a private patch proposal, which needs separate review, application and testing. The ordinary mini intake remains available with its original contract.
 
 For upgrades, install into a new directory using the new download's matching bootstrap and pins. Beta.10 uses archive schema 3 with an exact 100-file inventory. Beta.9 has 61 files and requires its own bootstrap. Beta.8 also used schema 3, but its 53-file archive requires its original matching bootstrap. Schema 2 archives likewise require their original bootstrap. Do not overwrite old installations, campaign records or retained attempts.
 
