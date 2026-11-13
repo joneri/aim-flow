@@ -1,4 +1,4 @@
-"""One explicit second repair; real installed lineage/accounting, synthetic provider only."""
+"""One chain through six repairs; real installed lineage/accounting, synthetic provider only."""
 import copy
 import json
 from pathlib import Path
@@ -16,7 +16,15 @@ import test_repair_candidate as fixtures
 
 
 class SecondRepairTests(fixtures.RepairTests):
-    def test_second_repair_keeps_canonical_authority_prior_candidate_and_all_rejected_evidence(self):
+    def test_one_chain_keeps_authority_accounting_and_publication_through_six_repairs(self):
+        # Do not invoke test methods or rebuild already-checked prefixes. Each
+        # helper advances this one real fixture and retains its negative checks.
+        self.second_repair()
+        self.third_repair()
+        self.fourth_repair()
+        self.fifth_and_sixth_repairs()
+
+    def second_repair(self):
         first = self.grant_repair()
         first_config = self.pin(self.rpath); first_state = self.rs
         first_snapshot = {str(p): p.read_bytes() for p in first_state.rglob('*') if p.is_file() and '.git' not in p.parts}
@@ -77,8 +85,7 @@ class SecondRepairTests(fixtures.RepairTests):
             repair.prepare(path, self.pin(path)['sha256'], self.case / 'third')
         self.assertFalse(self.container_calls)
 
-    def test_explicit_funded_third_repair_from_valid_source_findings_preserves_every_ancestor(self):
-        self.test_second_repair_keeps_canonical_authority_prior_candidate_and_all_rejected_evidence()
+    def third_repair(self):
         second = self.repaired(verify_only=True)
         old = Path(self.wc['campaignDirectory'])
         before = (old / 'budget.json').read_bytes()
@@ -137,8 +144,7 @@ class SecondRepairTests(fixtures.RepairTests):
                 with self.assertRaises(Refused): self.repaired()
         self.assertFalse(self.container_calls)
 
-    def test_explicit_fourth_repair_preserves_all_three_predecessors_and_publication_links(self):
-        self.test_explicit_funded_third_repair_from_valid_source_findings_preserves_every_ancestor()
+    def fourth_repair(self):
         # The preceding negative test intentionally persisted ordinal4 while
         # patch.dict restored the in-memory third configuration. Restore that
         # fixture input before reusing the completed third producer.
@@ -178,8 +184,7 @@ class SecondRepairTests(fixtures.RepairTests):
         with self.assertRaises(Refused): self.repaired()
         self.assertFalse(self.container_calls)
 
-    def test_fifth_and_sixth_repair_keep_real_git_lineage_and_publication_binding(self):
-        self.test_explicit_fourth_repair_preserves_all_three_predecessors_and_publication_links()
+    def fifth_and_sixth_repairs(self):
         self.rc['repairOrdinal'] = 4; self.save_repair()
         previous = self.repaired(verify_only=True)
         old_text = '// synthetic fourth repair\n'

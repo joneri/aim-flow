@@ -75,6 +75,76 @@ class RefinementTests(unittest.TestCase):
         self.fixture.packet['approvedPlan'] = json.dumps({'assessment':{'steps':self.steps}})
         with self.assertRaisesRegex(Refused, 'unsupported command'): self.apply()
 
+    def duplicate_test_plan(self):
+        self.steps = [
+            dict(id='test', area='tests', command='npm run test', workingDirectory='.', dependsOn=[]),
+            dict(id='repeat', area='tests', command='npm run test', workingDirectory='.', dependsOn=['test'])]
+        self.rows = [dict(stepId=s['id'], kind=kind, evidenceSteps=evidence, executionDependsOn=[],
+            analysis='The same committed test in the same attempt supports the repeated outcome; no intervening work.',
+            sources=[self.fixture.ref('scripts/generate.js')])
+            for s, kind, evidence in zip(self.steps, ['finite-local', 'reuse-local-test'], [[], ['test']])]
+        self.fixture.body['executionRefinement'] = self.rows
+        self.sync_duplicate_plan()
+
+    def sync_duplicate_plan(self):
+        self.fixture.packet['approvedPlan'] = json.dumps({'assessment': {'steps': self.steps}})
+        self.derived = {'declaration': {'runtimes': [dict(id='runtime', requirements=['fixture'], sources=[])],
+            'jobs': [dict(id=s['id'], mode='local-sequence', runtime='runtime', needs=s['dependsOn'],
+            coverage='Fixture test outcome', effects=['Fixture-only'], prerequisites=['Reviewed source'], sources=[],
+            stages=[{'root': s['workingDirectory'], 'operation': 'run', 'script': s['command'][8:]}])
+            for s in self.steps]}, 'resourceNeeds': [], 'unsupportedSteps': []}
+
+    def test_reuses_reviewed_adjacent_identical_tests_once_and_retains_obligations(self):
+        self.duplicate_test_plan()
+        original = copy.deepcopy(self.derived)
+        value = self.apply()
+        self.assertEqual([j['id'] for j in value['declaration']['jobs']], ['test'])
+        self.assertEqual(value['acceptanceObligations'], [self.steps[1]])
+        self.assertEqual(value['reusedLocalTests'][0]['stepId'], 'repeat')
+        self.assertEqual(value['reusedLocalTests'][0]['producerStepId'], 'test')
+        self.assertEqual(self.derived, original)
+        # The actual workflow composer consumes this selected declaration.
+        from flow_workflow_validation import compose
+        declaration, graph = compose(value)
+        self.assertEqual(len(declaration['jobs'][0]['stages']), 1)
+        self.assertEqual([row['id'] for row in graph], ['test'])
+
+    def test_reuse_cannot_remove_installation_ci_or_deployment(self):
+        for index in (0, 1):
+            for area in ('installation', 'ci', 'deployment'):
+                self.duplicate_test_plan()
+                self.steps[index]['area'] = area
+                self.sync_duplicate_plan()
+                with self.subTest(index=index, area=area), self.assertRaises(Refused):
+                    self.apply()
+
+    def test_reuse_requires_same_exact_command_and_working_directory(self):
+        for field, value in [('command', 'npm run other'), ('workingDirectory', 'web')]:
+            self.duplicate_test_plan()
+            self.steps[1][field] = value
+            self.sync_duplicate_plan()
+            with self.subTest(field=field), self.assertRaises(Refused):
+                self.apply()
+
+    def test_reuse_refuses_intervening_work_and_nonfinite_or_multiple_producers(self):
+        self.duplicate_test_plan()
+        self.steps.insert(1, dict(id='build', area='tests', command='npm run build', workingDirectory='.', dependsOn=['test']))
+        self.rows.insert(1, dict(stepId='build', kind='finite-local', evidenceSteps=[], executionDependsOn=['test'],
+            analysis='Build changes generated outputs', sources=[self.fixture.ref('scripts/generate.js')]))
+        self.steps[2]['dependsOn'] = ['build']
+        self.sync_duplicate_plan()
+        with self.assertRaises(Refused): self.apply()
+        for producers in ([], ['test', 'test'], ['repeat']):
+            self.duplicate_test_plan()
+            self.rows[1]['evidenceSteps'] = producers
+            with self.subTest(producers=producers), self.assertRaises(Refused): self.apply()
+
+    def test_reuse_is_explicit_and_does_not_assume_other_tests_are_equivalent(self):
+        self.duplicate_test_plan()
+        self.rows[1].update(kind='finite-local', evidenceSteps=[], executionDependsOn=['test'])
+        self.assertEqual([j['id'] for j in self.apply()['declaration']['jobs']], ['test', 'repeat'])
+        self.assertNotIn('reusedLocalTests', self.apply())
+
     def test_opt_in_is_explicit(self):
         self.assertFalse(refinement.requested({}))
         for value in (False, 1, 'true'):

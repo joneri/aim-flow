@@ -6,7 +6,7 @@
     "test_api_delivery.ApiDeliveryTests.test_no_replay_same_state_or_same_payload_new_state",
     "test_verification_runtime.VerificationRuntimeTests.test_real_process_cache_hit_and_changed_or_deleted_descriptor_relative_source",
     "test_verification_runtime.VerificationRuntimeTests.test_cached_output_tamper_is_refused",
-    "test_verification_runtime.VerificationRuntimeTests.test_minimal_pinned_producer_without_validation_package_is_source_bound",
+    "test_execution_refinement.RefinementTests.test_reuse_cannot_remove_installation_ci_or_deployment",
     "test_repair_loop.RepairLoopTests.test_six_repairs_are_budget_driven_and_verification_never_repeats_paid_phases",
     "test_repair_loop.RepairLoopTests.test_unknown_accounting_outcome_and_changed_prefix_refuse_more_work",
     "test_owner_acceptance.OwnerScopeTests.test_concrete_defect_failed_execution_or_missing_evidence_cannot_be_accepted",

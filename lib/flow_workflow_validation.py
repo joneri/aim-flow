@@ -626,7 +626,9 @@ def advance(c, wc, ws, candidate, instance, derived, catalog, intent, state, key
         unsupportedSteps=derived['unsupportedSteps'], agentUnknowns=derived['agentUnknowns'],
         resourceNeeds=derived['resourceNeeds'],
         **({'acceptanceObligations': derived['acceptanceObligations'],
-            'executionRefinement': derived['executionRefinement']} if c.get('refineExecutionPlan') else {}),
+            'executionRefinement': derived['executionRefinement'],
+            **({'reusedLocalTests': derived['reusedLocalTests']} if 'reusedLocalTests' in derived else {})
+            } if c.get('refineExecutionPlan') else {}),
         resourceObservations='Catalog capabilities select a pinned attempt; inert model-requested version/presence probes are not shell-dispatched or promoted to acceptance.',
         **({'executionBackend': backend, 'executionReceipt': workflow.pin(attempt / 'result.json')} if backend == 'host' else {}),
         projectCommandsExecuted=bool((result.get('report') or {}).get('stages')), nextStage='independent-execution-and-product-acceptance-review-required')

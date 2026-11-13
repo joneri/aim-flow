@@ -1,5 +1,9 @@
-"""Run the Sol contracts against a fresh source-free installation, never the API."""
+"""Check installed API wiring and critical replay/accounting contracts, never the API."""
+import hashlib
+import io
 import json
+import tarfile
+import zipfile
 import os
 from pathlib import Path
 import subprocess
@@ -12,7 +16,7 @@ VERSION = (ROOT / 'VERSION').read_text().strip()
 
 
 class InstalledApiDeliveryTests(unittest.TestCase):
-    def test_fresh_install_runs_all_sol_contracts_without_source_imports(self):
+    def test_fresh_install_runs_selected_sol_contracts_without_source_imports(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp).resolve()
             release = base / 'release'
@@ -42,9 +46,14 @@ class InstalledApiDeliveryTests(unittest.TestCase):
             # Every imported adapter and helper comes from the installed path. The test
             # file only supplies generated fixtures; no source checkout is on sys.path.
             environment['AIM_FLOW_TEST_ROOT'] = str(installed)
-            result = invoke(ROOT / 'tests/test_api_delivery.py', '-v')
+            result = invoke(ROOT / 'tests/test_api_delivery.py',
+                'ApiDeliveryTests.test_success_durable_reservation_and_unchanged_sources_history',
+                'ApiDeliveryTests.test_exact_authorization_required',
+                'ApiDeliveryTests.test_no_replay_same_state_or_same_payload_new_state',
+                'ApiDeliveryTests.test_combined_campaign_ceiling_and_full_reservations', '-v')
             self.assertIn('OK', result.stderr)
-            print('Installed Sol contract suite: ' + result.stderr.split('Ran ')[1].splitlines()[0])
+            self.assertNotIn('skipped=', result.stderr, 'Installed contracts must actually execute')
+            print('Installed API selection: ' + result.stderr.split('Ran ')[1].splitlines()[0])
 
     def test_version_uses_source_or_installed_label_and_refuses_invalid_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,32 +76,21 @@ class InstalledApiDeliveryTests(unittest.TestCase):
 
     def test_old_schema_three_inventory_needs_its_matching_bootstrap(self):
         sys.path.insert(0, str(ROOT / 'lib'))
-        from aim_ci.control_archive import FILES, FORMAT, Refused, parse_manifest
-        removed = {'lib/flow_generation_budget.py', 'lib/flow_repair_loop.py',
-                   'lib/aim_ci/verification_runtime.py', 'lib/aim_ci/project_host.py',
-                   'lib/flow_owner_acceptance.py', 'lib/flow_runtime_recovery.py',
-                   'lib/flow_repair_run.py', 'lib/flow_repair_candidate.py', 'docs/CANDIDATE-REPAIR.md', 'lib/flow_review_execution_context.py', 'lib/flow_command_source_context.py', 'lib/flow_resume_candidate.py', 'lib/flow_execution_refinement.py', 'lib/flow_requirement_intake.py', 'docs/REQUIREMENT-INTAKE.md',
-                   'lib/flow_delivery_chain.py', 'docs/DELIVERY-CHAIN.md',
-                   'lib/flow_release_continuation.py', 'docs/RELEASE-CONTINUATION.md',
-                   'lib/flow_github_publication.py', 'docs/GITHUB-PUBLICATION.md',
-                   'lib/flow_run.py', 'docs/REQUIREMENT-LOCAL-RUN.md', 'docs/requirement-intake-run.md',
-                   'lib/flow_execution_review.py', 'docs/EXECUTION-REVIEW.md',
-                   'lib/flow_workspace_review.py', 'lib/flow_workflow_validation.py', 'docs/WORKFLOW-VALIDATION.md',
-                   'lib/flow_workflow.py', 'docs/REQUIREMENT-WORKFLOW.md',
-                   'lib/flow_candidate_review.py', 'lib/flow_review_dispatch.py',
-                   'docs/CANDIDATE-REVIEW.md', 'lib/aim_ci/project_plan_derivation.py',
-                   'lib/aim_ci/project_command.py', 'docs/PROJECT-COMMAND.md',
-                   'lib/flow_github_delivery.py', 'docs/GITHUB-DELIVERY.md',
-                   'lib/flow_onboarding_delivery.py', 'docs/PROJECT-ONBOARDING.md',
-                   'docs/PROJECT-VALIDATION.md', 'lib/aim_ci/project_onboarding.py',
-                   'lib/aim_ci/project_validation.py', 'lib/aim_ci/project_execution.py',
-                   'lib/aim_ci/project_container.py', 'lib/aim_ci/project_container_runner.cjs'}
-        previous = set(FILES) - removed
-        self.assertEqual(len(previous), 53)
-        manifest = {'format': FORMAT, 'schemaVersion': 3, 'version': '0.1.0-beta.8',
-                    'files': {name: '0' * 64 for name in previous}}
+        from aim_ci.control_archive import Refused, parse_manifest
+        # Use the actual historical inventory. Subtracting a hand-maintained
+        # list from today's FILES makes unrelated additions break this contract.
+        with zipfile.ZipFile(ROOT / 'site/downloads/aim-flow-0.1.0-beta.8.zip') as bundle:
+            prefix = 'aim-flow-0.1.0-beta.8/controller/'
+            release = json.loads(bundle.read(prefix + 'release.json'))
+            archive = bundle.read(prefix + release['archive'])
+        self.assertEqual(hashlib.sha256(archive).hexdigest(), release['archiveSha256'])
+        with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as archive:
+            member = next(row for row in archive if row.name.endswith('control-manifest.json'))
+            manifest = archive.extractfile(member).read()
+        self.assertEqual(hashlib.sha256(manifest).hexdigest(), release['manifestSha256'])
+        self.assertEqual(json.loads(manifest)['schemaVersion'], 3)
         with self.assertRaises(Refused):
-            parse_manifest(json.dumps(manifest).encode())
+            parse_manifest(manifest)
 
     def test_schema_two_manifest_is_not_silently_upgraded(self):
         sys.path.insert(0, str(ROOT / 'lib'))

@@ -311,3 +311,39 @@ review and project execution. No old grant, receipt or installation is rewritten
 Unknown, missing, changed or failed validation cannot acquire passing reuse.
 Delivery verifies the explicitly retained execution location rather than assuming
 all phases were executed under one controller or inside the new state directory.
+
+
+## Change-focused test scheduling (development after beta.10)
+
+Onboarding now asks for the smallest source-supported checks for the requirement,
+with affected scope, purpose and timing made explicit. Existing project filters
+may be selected only when their syntax is evidenced. Aggregate scripts and normal
+npm hooks must be traced before scheduling their component checks separately.
+Early local feedback, exact-commit hosted CI and production observations serve
+different purposes; completing one does not manufacture the others.
+
+An independently reviewed execution refinement can use `reuse-local-test` for a
+repeated **tests-area** step. It must name exactly one earlier `finite-local`
+tests step in `evidenceSteps`, use empty `executionDependsOn`, and retain the exact
+same literal supported npm-run command and working directory. No intervening
+step is allowed except other aliases of the same producer. Both steps must have
+actual derived local command adapters. Installation operations, CI/deployment
+steps, different commands/roots and intervening work are refused. There is no
+automatic command deduplication: independent repeated runs remain finite steps.
+
+The normal composer then dispatches the producer once. Its ordinary failure
+handling still stops validation. The skipped step remains in
+`acceptanceObligations`; `reusedLocalTests` records a planned evidence mapping,
+not a passing test or product acceptance. Source citations, retained provider
+review, exact candidate/runtime inputs, phase authorization and dispatch journals
+remain mandatory. Historical grants/reviews are not edited or replayed.
+
+This is reuse **within one validation attempt**, not a cache for tests on another
+candidate, environment or production state. Selecting a smaller alternate test
+command must happen in the assessed, source-reviewed plan. There is no safe
+universal inference that a frontend path makes backend or Windows CI optional;
+project-required release guards continue to apply. Cross-candidate per-test input
+closures and project-declared impact/filter rules remain future work. The existing
+whole-validation reuse still requires its exact source/runtime/producer bindings.
+This source increment does not replace the already published beta.10 download or
+hot-patch retained installed controllers.
