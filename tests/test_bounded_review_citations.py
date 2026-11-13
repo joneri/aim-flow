@@ -87,9 +87,27 @@ class BoundedCitationTests(unittest.TestCase):
         snapshot = copy.deepcopy(old)
         new = base.citation_schema(old, base.CITATION_PROTOCOL)
         self.assertEqual(old, snapshot)
-        self.assertNotIn('lineCount', json.dumps(old))
-        self.assertNotIn('endLine', json.dumps(new))
-        self.assertEqual(json.dumps(new).count('"maximum": 40'), 6)
+        def citation_sites(value, path=()):
+            sites = {}
+            if isinstance(value, dict):
+                properties = value.get('properties', {})
+                if 'path' in properties and 'startLine' in properties:
+                    sites[path] = properties
+                for key, child in value.items():
+                    sites.update(citation_sites(child, (*path, key)))
+            elif isinstance(value, list):
+                for index, child in enumerate(value):
+                    sites.update(citation_sites(child, (*path, index)))
+            return sites
+        legacy, current = citation_sites(old), citation_sites(new)
+        self.assertTrue(legacy)
+        self.assertEqual(current.keys(), legacy.keys())
+        for path, properties in current.items():
+            with self.subTest(schemaPath=path):
+                self.assertNotIn('lineCount', legacy[path])
+                self.assertIn('endLine', legacy[path])
+                self.assertNotIn('endLine', properties)
+                self.assertEqual(properties['lineCount'], {'type': 'integer', 'minimum': 1, 'maximum': 40})
         compact.validate_shape(self.body, new)
         for index in range(6):
             for value in (0, -1, 41, True, 1.0, '1', None):

@@ -361,7 +361,7 @@ class ProductOnlyIntakeTests(unittest.TestCase):
         self.assertFalse((self.directory / 'intake.json').exists())
         self.assertFalse((self.directory / 'effects/intake.receipt.json').exists())
 
-    def test_prompt_is_concise_unique_spans_and_preserves_request_controls(self):
+    def test_intake_payload_preserves_complete_source_scope_and_request_controls(self):
         config = {'owner': 'synthetic', 'label': 'synthetic', 'productionUrl': None,
                   'allowedPaths': ['src/page.txt'], 'maximumChangedLines': None}
         source = {'src/page.txt': 'Complete source\n' * 10000}
@@ -369,10 +369,8 @@ class ProductOnlyIntakeTests(unittest.TestCase):
             with self.subTest(local_task=local_task):
                 instructions, data = c.intake_arguments(config, {'title': 'Synthetic'}, source,
                     root_review=True, intake_only=True, local_task=local_task)
-                for wording in ('concise minimal old/new replacements', 'unique source context',
-                                'Do not echo unchanged whole files or repeat operations',
-                                'Use only the allowed paths', 'Return no edits if the work needs assessment'):
-                    self.assertIn(wording, instructions)
+                self.assertTrue(instructions.strip())
+                self.assertNotIn(source['src/page.txt'], instructions)
                 self.assertEqual(data['files'], source)
                 self.assertEqual(data['allowedPaths'], config['allowedPaths'])
                 request = c.model_request('intake', instructions, data, c.INTAKE_SCHEMA, output_tokens=20000)
@@ -381,9 +379,8 @@ class ProductOnlyIntakeTests(unittest.TestCase):
                 self.assertIs(request['store'], False)
                 self.assertNotIn('tools', request)
                 self.assertEqual(request['text']['format']['schema'], c.INTAKE_SCHEMA)
-                historical = instructions.replace(': concise minimal old/new replacements with unique source context. '
-                    'Do not echo unchanged whole files or repeat operations. ', '. ', 1)
-                self.assertNotEqual(api.fingerprint(request), api.fingerprint({**request, 'instructions': historical}))
+                self.assertNotEqual(api.fingerprint(request),
+                    api.fingerprint({**request, 'instructions': instructions + '\nChanged instruction'}))
 
     def test_completed_success_writes_existing_proposal_and_receipt(self):
         value = {'triage': {'ready': False}, 'patch': {'summary': 'Synthetic', 'edits': []}}

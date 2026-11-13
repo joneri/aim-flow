@@ -242,6 +242,39 @@ class ContinuationTests(fixtures.RequirementWorkflowTests):
         request = json.loads((self.ps/'review-attempt/request.json').read_bytes())
         self.assertEqual(request['text']['format']['name'], 'candidate_workspace_refinement_v2')
 
+    def test_reviewed_duplicate_test_executes_once_and_verifies_without_replay(self):
+        original_assessment = self.assessment
+        def repeated_assessment(packet):
+            value = original_assessment(packet)
+            repeated = copy.deepcopy(value['steps'][-1])
+            repeated.update(id='repeat', dependsOn=['test'])
+            value['steps'].append(repeated)
+            return value
+        with patch.object(self, 'assessment', side_effect=repeated_assessment):
+            self.grant()
+        self.pc['refineExecutionPlan'] = True
+        self.save_phase_config()
+        self.review_body['executionRefinement'] = [
+            {'stepId': key, 'kind': kind, 'evidenceSteps': evidence,
+             'executionDependsOn': deps, 'analysis': 'Same source-bound adjacent test supports both obligations.',
+             'sources': [{'path': 'candidate/web/package.json', 'startLine': 1, 'endLine': 1}]}
+            for key, kind, evidence, deps in [
+                ('install', 'finite-local', [], []),
+                ('test', 'finite-local', [], ['install']),
+                ('repeat', 'reuse-local-test', ['test'], [])]]
+        with patch.object(container, 'execute', side_effect=self.execute_fake):
+            result = self.grant_phase()
+            self.assertEqual(result['status'], 'local-validation-passed', result)
+            self.assertEqual(len(self.container_calls), 1)
+            stages = self.container_calls[0]['job']['stages']
+            self.assertEqual([stage['argv'] for stage in stages], [['npm', 'ci'], ['npm', 'run', 'test']])
+            self.assertEqual(result['reusedLocalTests'][0]['producerStepId'], 'test')
+            self.assertEqual([step['id'] for step in result['acceptanceObligations']], ['repeat'])
+            calls = list(self.wcalls)
+            self.assertEqual(self.phase(), result)
+            self.assertEqual(self.wcalls, calls)
+            self.assertEqual(len(self.container_calls), 1)
+
     def test_refinement_blocked_step_stops_before_container(self):
         self.grant()
         self.pc['refineExecutionPlan'] = True

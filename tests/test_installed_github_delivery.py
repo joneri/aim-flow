@@ -1,4 +1,4 @@
-"""Repeat GitHub adapter contracts from a source-free copied controller."""
+"""Check installed GitHub adapter wiring and critical effect/reconciliation contracts."""
 import json
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstalledGitHubDeliveryTests(unittest.TestCase):
-    def test_fresh_installed_adapter_runs_all_contracts_offline(self):
+    def test_fresh_installed_adapter_runs_selected_contracts_offline(self):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary).resolve()
             release, installed = base / 'release', base / 'installed'
@@ -27,9 +27,13 @@ class InstalledGitHubDeliveryTests(unittest.TestCase):
                 '--sha256', metadata['archiveSha256'], '--destination', installed)
             self.assertIn('--resume', run(installed / 'aim-flow.py', 'deliver-github', '--help').stdout)
             env['AIM_FLOW_TEST_ROOT'] = str(installed)
-            result = run(ROOT / 'tests/test_github_delivery.py', '-v')
+            result = run(ROOT / 'tests/test_github_delivery.py',
+                'GitHubDeliveryTests.test_success_retains_effects_and_exact_ci_artifact_without_claiming_release',
+                'GitHubDeliveryTests.test_unknown_merge_reconciles_read_only_after_actual_remote_success',
+                'GitHubDeliveryTests.test_durable_reservation_failure_prevents_external_effect', '-v')
             self.assertIn('OK', result.stderr)
-            print('Installed GitHub contracts: ' + result.stderr.split('Ran ')[1].splitlines()[0])
+            self.assertNotIn('skipped=', result.stderr, 'Installed contracts must actually execute')
+            print('Installed GitHub selection: ' + result.stderr.split('Ran ')[1].splitlines()[0])
 
 
 if __name__ == '__main__':

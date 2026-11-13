@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -39,8 +40,10 @@ class ProjectExecutionTests(unittest.TestCase):
         f.d['instanceSha256']=sha(f.instance_path);f.d['target']=f.instance['target'];
         serial=copy.deepcopy(f.d['jobs'][1]);serial['id']='serial-component';serial['stages']*=2;f.d['jobs'].append(serial);f.save()
         cls.handoff=execution.planning.derive(f.current,f.args())
-        node=Path('/opt/homebrew/bin/node').resolve();git=Path('/Applications/Xcode.app/Contents/Developer/usr/bin/git').resolve()
-        npm=Path('/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js').resolve();sandbox=Path('/usr/bin/sandbox-exec')
+        paths = {name: shutil.which(name) for name in ('node', 'git', 'npm', 'sandbox-exec')}
+        if not all(paths.values()):
+            raise unittest.SkipTest('Real macOS execution requires node, git, npm and sandbox-exec on PATH')
+        node, git, npm, sandbox = (Path(paths[name]).resolve() for name in ('node', 'git', 'npm', 'sandbox-exec'))
         npm_tree=execution.tree_identity(npm.parent.parent)
         cls.base={'format':execution.SPEC,'schemaVersion':1,'job':'nested-component',
             'sourcePaths':['web/package.json','scripts/check.py'],

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       full_regression:
-        description: 'Explicitly run all 950 Python and 47 Node tests instead of the 17-case smoke selection'
+        description: 'Explicitly run complete Python and Node regression instead of the 17-case smoke selection'
         type: boolean
         default: false
       offline_timeout_minutes:
