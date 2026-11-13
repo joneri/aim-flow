@@ -59,6 +59,25 @@ class VerificationRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'authentication'): self.invoke()
         self.assertEqual(len(self.launches), 1)
 
+    def test_early_onboarding_without_validation_module_is_traced_and_source_bound(self):
+        (self.controller / 'lib/aim_ci/project_validation.py').unlink()
+        self.command[3] = 'verify-project-onboarding'
+        first = self.invoke()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(self.invoke().stdout, first.stdout)
+        self.assertEqual(len(self.launches), 1)
+        self.data.write_text('changed historical input')
+        self.assertIn(b'changed historical input', self.invoke().stdout)
+        self.assertEqual(len(self.launches), 2)
+
+    def test_missing_newer_or_broken_existing_validation_dependency_is_not_hidden(self):
+        module = self.controller / 'lib/aim_ci/project_validation.py'
+        module.unlink()
+        self.assertNotEqual(self.invoke().returncode, 0)
+        module.write_text('import deliberately_absent_validation_dependency\n')
+        self.command[3] = 'verify-project-onboarding'
+        self.assertNotEqual(self.invoke().returncode, 0)
+
     def test_controller_code_change_invalidates_input_closure(self):
         self.invoke()
         self.entry.write_text(self.entry.read_text().replace('verified', 'updated'))

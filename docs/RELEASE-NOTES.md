@@ -15,6 +15,9 @@ release tag or Pages publication is implied by a source push.
 - Add reviewed project-native host execution and runtime preparation. Support
   complete internal dependency hardlink groups, keep external/private aliases
   refused, and reconcile the known completed-install inventory failure read-only.
+- Preserve read-only verification of early onboarding installations that predate
+  the project-validation module; retain tracing and reject missing newer or
+  broken existing dependencies.
 - Bind canonical Git helper discovery behind private executable aliases. Keep old
   intent semantics and bind helper hashes for new automatic qualifications.
 - Make finding severity/impact meaningful. Preserve concrete failures; distinguish
@@ -42,15 +45,19 @@ Local verification completed so far:
   unchanged. Source and nested-package privacy review found no private operator
   paths, pilot journals, customer sources or real credentials. Literal dummy
   tokens/header markers in refusal tests remain intentional synthetic fixtures.
-- The complete 947-case Python suite is in progress. The installed loop integration
-  for reused source-review diagnostics has passed; no full-suite result is claimed.
+- The initial 947-case Python run exposed three early-onboarding compatibility
+  errors. Their common bootstrap cause is fixed; all 22 focused runtime/diagnostic
+  tests and an additional missing/broken-dependency refusal test passed. The broad
+  run continues; the updated suite has 949 cases. No full-suite pass is claimed.
 
 Package pins:
 
-- ZIP SHA-256: `01afe2fa4e3dbeadd18f752ee7d5b41b15e46f3aecfd443a6df2f7c2504663ec`.
-- Controller archive SHA-256: `7e9879bd32d4ac3144dcc011659af65fad8661544e4fa6a3b03dc3879a7ab9a7`.
-- Installed manifest SHA-256: `5123d3bfdf47dd987293b5a324aa9cc34052c539f4b0600e8fa852b57fb12e15`. No new paid model call or live deployment is
-part of these checks. These checks qualify controller contracts and packaging only. They do not
+- ZIP SHA-256: `7377d5463e0a2b752f289f617b6cf9800f717a30b02346623db56504f3f6cb12`.
+- Controller archive SHA-256: `344bcce74cda2454dbd8e3901fd7a0fe655064b773c2a571bad6d41425525dda`.
+- Installed manifest SHA-256: `253baae8988a633c8060357b7baef518e0dad5fe573789083f4efd4f5d1e1ab2`.
+
+No new paid model call or live deployment is part of these checks. These checks
+qualify controller contracts and packaging only. They do not
 establish production frontend/backend acceptance or native assistive-technology
 interoperability. Private pilot operations and outcomes are excluded from this
 public release record. See [verification](VERIFICATION.md) and

@@ -569,13 +569,19 @@ def bootstrap(store, trace_path, command, deadline):
     sys.path.insert(0, str(root / 'lib'))
     # Load this runtime exactly once; nested calls share its trace.
     sys.modules['aim_ci.verification_runtime'] = sys.modules[__name__]
-    from aim_ci import project_validation
+    # Early onboarding installations predate project validation entirely. Their
+    # fixed read-only entry point still gets traced; it has no nested validation
+    # transport to replace. Do not hide missing dependencies in newer commands.
+    if (not validation_wrapper(command) and command[3] == 'verify-project-onboarding'
+            and not (root / 'lib/aim_ci/project_validation.py').is_file()):
+        project_validation = None
+    else:
+        from aim_ci import project_validation
     # Only the subprocess transport is replaced, never a semantic check.
     def nested(cmd, cwd, env, *, metadata_limit=64000, timeout_seconds=None, expected_terminal_failure=None):
         return evaluate(cmd, cwd, env, _transport, metadata_limit=metadata_limit,
                         timeout_seconds=None, store=store, _deadline=deadline,
                         expected_terminal_failure=expected_terminal_failure)
-    project_validation.verification_process = nested
     original_transport = getattr(project_validation, '_verification_process', None)
     def direct(cmd, cwd, env, **kw):
         if validation_wrapper(cmd):
@@ -583,7 +589,9 @@ def bootstrap(store, trace_path, command, deadline):
         if original_transport is None:
             raise ValueError('No historical transport for unrecognized verification command')
         return original_transport(cmd, cwd, env, **kw)
-    project_validation._verification_process = direct
+    if project_validation is not None:
+        project_validation.verification_process = nested
+        project_validation._verification_process = direct
     trace = Trace(store)
     try:
         import flow_api_delivery as api
