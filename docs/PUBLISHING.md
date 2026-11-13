@@ -21,7 +21,7 @@ bootstraps interchangeable. End users need independently trusted expected pins.
 
 ## Local beta.10 preparation
 
-Source VERSION is `0.1.0-beta.10`. The new package and metadata are prepared locally only; no push, tag, release or Pages publication has been performed for this collection. Preserve the old download bytes. The owner has now explicitly authorized publishing the generic beta.10 fixes to the existing public repository. A prior tool refusal is not permission to bypass a control; retain that history and use the newly approved ordinary publication route. See [release notes](RELEASE-NOTES.md) for local checks.
+Source VERSION is `0.1.0-beta.10`. The generic source and prepared package are published for review in [PR #2](https://github.com/joneri/aim-flow/pull/2) on `codex/beta10-pilot-fixes-20261113`. No release tag or Pages publication is claimed; the full final-source CI result remains separate. Preserve the old download bytes. The owner has now explicitly authorized publishing the generic beta.10 fixes to the existing public repository. A prior tool refusal is not permission to bypass a control; retain that history and use the newly approved ordinary publication route. See [release notes](RELEASE-NOTES.md) for local checks.
 
 ## Network and publication prerequisites
 

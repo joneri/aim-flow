@@ -112,8 +112,10 @@ class ExecutedRunTests(fixtures.FullRunTests):
         self.assertEqual(preview['intent']['schemaVersion'],2)
         self.assertEqual(preview['intent']['maximumGenerationAttempts'],4)
         self.assertIn('PNG',preview['intent']['reviewExecuted']['disclosure'])
+        # The declared 32 MB report reserves JSON/base64 headroom; the removed
+        # fixed eight-MiB ceiling must not reappear in the outer grant.
         self.assertEqual(preview['intent']['reviewExecuted']['artifactBounds'],
-            {'maxFiles':8,'maxFileBytes':4194304,'maxTotalBytes':8388608})
+            {'maxFiles':8,'maxFileBytes':4194304,'maxTotalBytes':11987712})
         with patch.object(container,'execute',side_effect=self.execute_with_artifacts):
             result=self.full(preview['intentSha256'],transport=self.post_all)
             self.assertEqual(result['status'],'local-feature-evidence-reviewed',result)

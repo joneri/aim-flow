@@ -569,11 +569,13 @@ def bootstrap(store, trace_path, command, deadline):
     sys.path.insert(0, str(root / 'lib'))
     # Load this runtime exactly once; nested calls share its trace.
     sys.modules['aim_ci.verification_runtime'] = sys.modules[__name__]
-    # Early onboarding installations predate project validation entirely. Their
-    # fixed read-only entry point still gets traced; it has no nested validation
-    # transport to replace. Do not hide missing dependencies in newer commands.
-    if (not validation_wrapper(command) and command[3] == 'verify-project-onboarding'
-            and not (root / 'lib/aim_ci/project_validation.py').is_file()):
+    trace = Trace(store)
+    validation_module = root / 'lib/aim_ci/project_validation.py'
+    trace.observe(str(validation_module), content=True)
+    # Historical/minimal producers need not implement project validation. Trace
+    # their fixed entry point without inventing a dependency. If their own code
+    # requires a missing module, that import still fails naturally below.
+    if not validation_module.is_file():
         project_validation = None
     else:
         from aim_ci import project_validation
@@ -592,7 +594,6 @@ def bootstrap(store, trace_path, command, deadline):
     if project_validation is not None:
         project_validation.verification_process = nested
         project_validation._verification_process = direct
-    trace = Trace(store)
     try:
         import flow_api_delivery as api
     except ImportError:

@@ -159,13 +159,14 @@ class GitHubPublicationTests(unittest.TestCase):
         root_patch = patch.object(pub, 'ROOT', self.installation); root_patch.start(); self.addCleanup(root_patch.stop)
         self.api = FakeGitHub(self)
 
-    def test_explicit_producer_deadline_is_bounded_and_forwarded(self):
-        self.c['candidateVerification']['producerVerificationTimeoutSeconds'] = 900
-        with patch.object(pub.project_validation, 'verification_process',
-                          wraps=pub.project_validation.verification_process) as called:
-            pub.verify_producer(self.c)
-        self.assertEqual(called.call_args.kwargs['timeout_seconds'], 900)
-        for value in (0, 901, True, '900'):
+    def test_explicit_producer_deadline_is_configurable_and_forwarded(self):
+        for value in (900, 901, 7200, None):
+            self.c['candidateVerification']['producerVerificationTimeoutSeconds'] = value
+            with patch.object(pub.project_validation, 'verification_process',
+                              wraps=pub.project_validation.verification_process) as called:
+                pub.verify_producer(self.c)
+            self.assertEqual(called.call_args.kwargs['timeout_seconds'], value)
+        for value in (0, -1, True, '900'):
             self.c['candidateVerification']['producerVerificationTimeoutSeconds'] = value
             with self.assertRaises(Refused): pub.verify_producer(self.c)
         self.c['candidateVerification'].pop('producerVerificationTimeoutSeconds')

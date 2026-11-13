@@ -73,10 +73,30 @@ class VerificationRuntimeTests(unittest.TestCase):
     def test_missing_newer_or_broken_existing_validation_dependency_is_not_hidden(self):
         module = self.controller / 'lib/aim_ci/project_validation.py'
         module.unlink()
+        self.entry.write_text('from aim_ci import project_validation\n')
         self.assertNotEqual(self.invoke().returncode, 0)
         module.write_text('import deliberately_absent_validation_dependency\n')
         self.command[3] = 'verify-project-onboarding'
         self.assertNotEqual(self.invoke().returncode, 0)
+
+    def test_minimal_pinned_producer_without_validation_package_is_source_bound(self):
+        package = self.controller / 'lib/aim_ci'
+        for path in package.iterdir():
+            path.unlink()
+        package.rmdir()
+        first = self.invoke()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(self.invoke().stdout, first.stdout)
+        self.assertEqual(len(self.launches), 1)
+        self.data.write_text('changed minimal producer input')
+        self.assertIn(b'changed minimal producer input', self.invoke().stdout)
+        self.assertEqual(len(self.launches), 2)
+        # The decision not to patch a transport is itself source-bound.
+        package.mkdir()
+        (package / '__init__.py').write_text('')
+        (package / 'project_validation.py').write_text('verification_process = None\n')
+        self.assertEqual(self.invoke().returncode, 0)
+        self.assertEqual(len(self.launches), 3)
 
     def test_controller_code_change_invalidates_input_closure(self):
         self.invoke()

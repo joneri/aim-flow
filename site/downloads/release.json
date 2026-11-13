@@ -2,18 +2,18 @@
   "bootstrapSha256": "923e58c8699c4becd7cc8fd9fe474412b26daf0b2898695fbc405d363073c35c",
   "channel": "beta",
   "controllerArchive": "controller/aim-ci-control-0.1.0-beta.10.tar.gz",
-  "controllerArchiveSha256": "344bcce74cda2454dbd8e3901fd7a0fe655064b773c2a571bad6d41425525dda",
-  "controllerManifestSha256": "253baae8988a633c8060357b7baef518e0dad5fe573789083f4efd4f5d1e1ab2",
+  "controllerArchiveSha256": "05c732667c5f328ccf2fe0b58ea4d476eac041777e674570f3432314eb504cb5",
+  "controllerManifestSha256": "ecf236417f772e66710f807a404279f71cb48a7b75cf3fc106187717e400ecc4",
   "filesSha256": {
     "BETA-SCOPE.md": "5b7a2ed602d45d908347e74fc3614d3402d8184a7ee42ff38f39a6f9439c6e9e",
     "LICENSE": "5bac14f1eeb03a07bea99437ace3fd87926d9507483cd49cd552e62753af795d",
-    "README.md": "b1b0bc6d1dd8fa8b4079fcff60a5e5a586b295f6713eb36c593074ff56ca9aca",
+    "README.md": "296276d2f2757ccc3ad38dd00f3e73bfdde3f3d7ce36a7ed1db8d8762b832ac5",
     "THIRD-PARTY-NOTICES.md": "e299962d1fbf476b3f3e9f8010c36b94d82665da8d3f66e34d9f9baedbde46b3",
     "aim-ci-size-handling.md": "1a8ad614974d0a4a0aa40f5021c678f161ebf4bebec900f8162bba223dbf2fe5",
     "controller/README.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
     "controller/aim-ci-bootstrap.pyz": "923e58c8699c4becd7cc8fd9fe474412b26daf0b2898695fbc405d363073c35c",
-    "controller/aim-ci-control-0.1.0-beta.10.tar.gz": "344bcce74cda2454dbd8e3901fd7a0fe655064b773c2a571bad6d41425525dda",
-    "controller/release.json": "fe0af6c3f0f925b4ee85df9d35a04eda8d31581cb6630bb5b839f787a1b2284e"
+    "controller/aim-ci-control-0.1.0-beta.10.tar.gz": "05c732667c5f328ccf2fe0b58ea4d476eac041777e674570f3432314eb504cb5",
+    "controller/release.json": "fc1caea57f891e16cc68ad8e9e8e6973abb53a3959231264221c395559c3251f"
   },
   "license": "MIT",
   "product": "AIM Flow",
