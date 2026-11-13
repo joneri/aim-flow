@@ -103,6 +103,18 @@
     "lib/aim_ci/model_support.py"
   ],
   "fileOrigins": {
+    ".github/workflows/beta-checks.yml": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
+    },
+    "CONTRIBUTING.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
+    },
+    "README.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
+    },
     "aim-ci-control.py": {
       "kind": "modified",
       "upstreamSha256": "9fc8ca1b0413ffbb011b593d1ce69fe9d352bfe89c1002e73c72eec11a839139"
@@ -138,6 +150,10 @@
     "docs/CANDIDATE-REVIEW.md": {
       "kind": "added",
       "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "docs/CI.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
     },
     "docs/DELIVERY-CHAIN.md": {
       "kind": "added",
@@ -182,6 +198,10 @@
     "docs/RELEASE-NOTES.md": {
       "kind": "added",
       "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "docs/RELEASING.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
     },
     "docs/REQUIREMENT-INTAKE.md": {
       "kind": "added",
@@ -532,6 +552,10 @@
       "kind": "added",
       "source": "AIM Flow beta.10 controller and release consolidation"
     },
+    "scripts/run_smoke.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
+    },
     "tests/production/artifact-probe.mjs": {
       "kind": "modified",
       "upstreamSha256": "0c8229a166d068a5c6b68923aa5a2f830aa3c93450b816fd87268549ead3c0d7"
@@ -539,6 +563,10 @@
     "tests/production/catalog-verify.mjs": {
       "kind": "unchanged",
       "upstreamSha256": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e"
+    },
+    "tests/smoke-contracts.json": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
     },
     "tests/test_api_delivery.py": {
       "kind": "added",
@@ -846,6 +874,9 @@
     }
   },
   "files": {
+    ".github/workflows/beta-checks.yml": "68149a6c37256076f98c36b528c51bee936f80247126c6b7aac79ed710f5f4e5",
+    "CONTRIBUTING.md": "77e817380018ceb6bb8442b78f39398c614806b62c5add510376a5226c5e7d84",
+    "README.md": "8a457f89a69bc396b07f7ec95f35ef859b9291cba3d314f2c716a0011498e384",
     "aim-ci-control.py": "b2afb8530f3ad410b9720484350c1ad1ad696a08bd2c1ad18d7c2751bdd1d04b",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
@@ -855,6 +886,7 @@
     "docs/BETA-SCOPE.md": "5b7a2ed602d45d908347e74fc3614d3402d8184a7ee42ff38f39a6f9439c6e9e",
     "docs/CANDIDATE-REPAIR.md": "1e5fce9c0ab6986f545390d72ba5562a287e7ee5d6685fc30e7720cff0be99ee",
     "docs/CANDIDATE-REVIEW.md": "7f3be28fd81608204d5c2d82817b3f52bd3a1692d577c196c56bf0ccc8522e4f",
+    "docs/CI.md": "d09294e3058c3a4e18eb409cf9b3b151c732698f3bd4eb3648d770f904205f0c",
     "docs/DELIVERY-CHAIN.md": "51d30afb621042665d39135315b1e9c17fc7cd54afafae95da2f3dbc37ff99e8",
     "docs/EXECUTION-REVIEW.md": "27cf37e49dd61fe83e500aae3286342d7fef44dc065005cdde0b5ac61da8a4ff",
     "docs/GITHUB-DELIVERY.md": "7464a23526df8fadb3238d32aa9f0fb3a6c42e1442233bbd702c85163fd0547a",
@@ -865,11 +897,12 @@
     "docs/PUBLISHING.md": "069de47dc421ffbbe6d4aa550ec61e9d8367b000e1e7c3c9c4097ebf682f9e0b",
     "docs/QUICKSTART.md": "a69eaf9356584d09bea9ff2d92cc34e487669795c97440e23bf166bef0f0c622",
     "docs/RELEASE-CONTINUATION.md": "5af15012242b4a52cf01a6cca781b23fed0a57bc564634671252ef57eac9828f",
-    "docs/RELEASE-NOTES.md": "8ec42493ada9a0ae09e0ce1c2e68045b880b3959b979a93eee30330e31df03ea",
+    "docs/RELEASE-NOTES.md": "01d0da7790579a0ef8f704c0f40ed2e7fa5e83216a4248fdc0e35c9cabf143da",
+    "docs/RELEASING.md": "059eb8f80c454c7220a33a4de6e751c033951cc11cafc56f0db6608e0c7d9ebc",
     "docs/REQUIREMENT-INTAKE.md": "4dd100b2dbdde1cd7c14ceb8b10b26d54916dc07e5db0dc0eb1890e25c72a6db",
     "docs/REQUIREMENT-LOCAL-RUN.md": "196095115289eea0da4d6862796aba49754411a236e01dc59b1e00a7ac2f4278",
     "docs/REQUIREMENT-WORKFLOW.md": "37baf681103bd5b0708729dce8da3e8ed24782513b3cfabcf909a6347424c6cc",
-    "docs/VERIFICATION.md": "9e326ea2beeda99369d3ea79c19b862ffe30c1857c38af0051fb342e5677474c",
+    "docs/VERIFICATION.md": "276f9e2aa0a34550234f8e9195a4a4e9362d54ecd6e0528c131461ba3e467405",
     "docs/WORKFLOW-VALIDATION.md": "5cd14bf7ce556b51d994912ad4894d8d3620bdecace3d423c3461a3bfd92c0bd",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
@@ -953,8 +986,10 @@
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
     "scripts/package_beta.py": "2653b0b3aa1185fbd74124a7524ba92727f316a0548040222cd4e15c4f3aec6f",
+    "scripts/run_smoke.py": "3bff911dd505d8063b92292808014b27a37af0210b95f2abbc427fc8b031cf6c",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
     "tests/production/catalog-verify.mjs": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e",
+    "tests/smoke-contracts.json": "04d73f1c7c2fcff11cf9b1badef2f8ce192d4fb6cc39a0b8fbfdfe9940c5f88e",
     "tests/test_api_delivery.py": "feeb60081723559f8e84deabf16f6951f19948e8d99d0ff95548804ab3ee2b90",
     "tests/test_bounded_review_citations.py": "7c05fc6171c3ee44263246c0108cc2e5a7d90e6827ed37f43fcef0b07483706f",
     "tests/test_budget_loop_installed.py": "12f7008bfd1c059a2df8b202441f23c6254122ff551ed0735865133051ac2c96",
@@ -1166,6 +1201,21 @@
       ],
       "summary": "Collect generic budget-governed repair iteration, source-bound verification reuse, project-native host execution, materiality review, separate owner scope decisions, runtime hardlink inventory/recovery and canonical Git helper discovery. Exclude private pilot/operator data. Preserve prior inventories, grants and outcomes.",
       "version": "0.1.0-beta.10"
+    },
+    {
+      "paths": [
+        ".github/workflows/beta-checks.yml",
+        "scripts/run_smoke.py",
+        "tests/smoke-contracts.json",
+        "docs/CI.md",
+        "CONTRIBUTING.md",
+        "README.md",
+        "docs/RELEASING.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/VERIFICATION.md"
+      ],
+      "summary": "Automatic PR/main CI runs 17 selected cases; full 950 Python/47 Node suites require explicit manual opt-in. Manual test runs do not publish Pages. Preserve lightweight package/source/site verification.",
+      "version": "0.1.0-beta.10-ci-selection"
     }
   ],
   "schemaVersion": 2,

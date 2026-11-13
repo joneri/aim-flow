@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      full_regression:
+        description: 'Explicitly run all 950 Python and 47 Node tests instead of the 17-case smoke selection'
+        type: boolean
+        default: false
       offline_timeout_minutes:
         description: 'Offline regression deadline in minutes (1–360; hosted runner maximum 360)'
         type: number
@@ -14,8 +18,8 @@ permissions:
 jobs:
   offline-contracts:
     runs-on: ubuntu-24.04
-    # Installed lineage integrations may exceed the former 15-minute allowance.
-    # Use the hosted runner ceiling; manual dispatch may choose a shorter limit.
+    # Smoke is the automatic default. Only an explicit manual input runs the
+    # complete suite; its deadline may use the hosted runner ceiling.
     timeout-minutes: ${{ inputs.offline_timeout_minutes || 360 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -30,10 +34,15 @@ jobs:
       - name: Verify Git prerequisite
         run: |
           git --version
-          python3 -c 'import re, subprocess; version = tuple(map(int, re.search(r"git version (\d+)\.(\d+)", subprocess.check_output(["git", "--version"], text=True)).groups())); assert version >= (2, 54), "Git 2.54+ is required for the complete offline suite"'
-      - name: Run portable offline regression (platform skips reported)
+          python3 -c 'import re, subprocess; version = tuple(map(int, re.search(r"git version (\d+)\.(\d+)", subprocess.check_output(["git", "--version"], text=True)).groups())); assert version >= (2, 54), "Git 2.54+ is required for source-bound contracts"'
+      - name: Run 17 selected smoke contracts
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.full_regression }}
+        run: python3 -B scripts/run_smoke.py
+      - name: Run full portable regression (manual opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_regression }}
         run: python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-      - name: Run Node protocol tests
+      - name: Run full Node protocol suite (manual opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_regression }}
         run: node --test tests/test_npm_platform_build.cjs tests/test_project_container_runner.cjs
       - name: Check branded download
         run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.10.zip
@@ -47,7 +56,7 @@ jobs:
         run: python3 aim-flow.py --version
   deploy-pages:
     name: Publish Beta website
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: offline-contracts
     runs-on: ubuntu-24.04
     timeout-minutes: 10

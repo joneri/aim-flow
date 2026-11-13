@@ -1,5 +1,11 @@
 # Beta verification
 
+Automatic CI now executes the 17 existing cases documented in [CI.md](CI.md).
+Complete regression is an explicit manual opt-in, never automatic on PR/main.
+The retained full implementation run `43487183081` passed 950 Python cases
+(936 passes, 14 skips), 47 Node cases and packaging/install/site checks.
+
+
 ## Beta.10 local preparation, 13 November 2026
 
 The working-copy pilot corrections are collected into beta.10. Local preparation
