@@ -1,19 +1,19 @@
 {
-  "bootstrapSha256": "c74237ca0e65bcb495f60c82d9b69ad492ae2e95fba2c7f310b792f04604aa41",
+  "bootstrapSha256": "923e58c8699c4becd7cc8fd9fe474412b26daf0b2898695fbc405d363073c35c",
   "channel": "beta",
-  "controllerArchive": "controller/aim-ci-control-0.1.0-beta.9.tar.gz",
-  "controllerArchiveSha256": "6f7305874c69603135ac34b66f621b09f4eca0bf2366235ec10dc1b863f1ad7f",
-  "controllerManifestSha256": "3daca37e331e30429a27786dd98d73b74237c2b8316581ea574bba7f89a96d95",
+  "controllerArchive": "controller/aim-ci-control-0.1.0-beta.10.tar.gz",
+  "controllerArchiveSha256": "05c732667c5f328ccf2fe0b58ea4d476eac041777e674570f3432314eb504cb5",
+  "controllerManifestSha256": "ecf236417f772e66710f807a404279f71cb48a7b75cf3fc106187717e400ecc4",
   "filesSha256": {
-    "BETA-SCOPE.md": "ca329d42eb6725fdb9ab4aa8c1333e3c547bec5df70abffd2abb64f279fab358",
+    "BETA-SCOPE.md": "5b7a2ed602d45d908347e74fc3614d3402d8184a7ee42ff38f39a6f9439c6e9e",
     "LICENSE": "5bac14f1eeb03a07bea99437ace3fd87926d9507483cd49cd552e62753af795d",
-    "README.md": "e0b7aa015a8e4bce529b37f4094c7d9b3c664f76e8d532f1397b56d4ca265ecf",
+    "README.md": "296276d2f2757ccc3ad38dd00f3e73bfdde3f3d7ce36a7ed1db8d8762b832ac5",
     "THIRD-PARTY-NOTICES.md": "e299962d1fbf476b3f3e9f8010c36b94d82665da8d3f66e34d9f9baedbde46b3",
     "aim-ci-size-handling.md": "1a8ad614974d0a4a0aa40f5021c678f161ebf4bebec900f8162bba223dbf2fe5",
     "controller/README.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
-    "controller/aim-ci-bootstrap.pyz": "c74237ca0e65bcb495f60c82d9b69ad492ae2e95fba2c7f310b792f04604aa41",
-    "controller/aim-ci-control-0.1.0-beta.9.tar.gz": "6f7305874c69603135ac34b66f621b09f4eca0bf2366235ec10dc1b863f1ad7f",
-    "controller/release.json": "f2be6317dc44531bf2796260ce544a5813c277e76441864a8b9a4c81399716cd"
+    "controller/aim-ci-bootstrap.pyz": "923e58c8699c4becd7cc8fd9fe474412b26daf0b2898695fbc405d363073c35c",
+    "controller/aim-ci-control-0.1.0-beta.10.tar.gz": "05c732667c5f328ccf2fe0b58ea4d476eac041777e674570f3432314eb504cb5",
+    "controller/release.json": "fc1caea57f891e16cc68ad8e9e8e6973abb53a3959231264221c395559c3251f"
   },
   "license": "MIT",
   "product": "AIM Flow",
@@ -25,5 +25,5 @@
     "e57f493dfdea5e9c747de7b5df5e876698100078"
   ],
   "upstreamCommit": "783cb975f897b3179f3a8492a98b24fcc48dead6",
-  "version": "0.1.0-beta.9"
+  "version": "0.1.0-beta.10"
 }

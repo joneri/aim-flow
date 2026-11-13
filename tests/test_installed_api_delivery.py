@@ -68,7 +68,22 @@ class InstalledApiDeliveryTests(unittest.TestCase):
     def test_old_schema_three_inventory_needs_its_matching_bootstrap(self):
         sys.path.insert(0, str(ROOT / 'lib'))
         from aim_ci.control_archive import FILES, FORMAT, Refused, parse_manifest
-        removed = {'lib/flow_onboarding_delivery.py', 'docs/PROJECT-ONBOARDING.md',
+        removed = {'lib/flow_generation_budget.py', 'lib/flow_repair_loop.py',
+                   'lib/aim_ci/verification_runtime.py', 'lib/aim_ci/project_host.py',
+                   'lib/flow_owner_acceptance.py', 'lib/flow_runtime_recovery.py',
+                   'lib/flow_repair_run.py', 'lib/flow_repair_candidate.py', 'docs/CANDIDATE-REPAIR.md', 'lib/flow_review_execution_context.py', 'lib/flow_command_source_context.py', 'lib/flow_resume_candidate.py', 'lib/flow_execution_refinement.py', 'lib/flow_requirement_intake.py', 'docs/REQUIREMENT-INTAKE.md',
+                   'lib/flow_delivery_chain.py', 'docs/DELIVERY-CHAIN.md',
+                   'lib/flow_release_continuation.py', 'docs/RELEASE-CONTINUATION.md',
+                   'lib/flow_github_publication.py', 'docs/GITHUB-PUBLICATION.md',
+                   'lib/flow_run.py', 'docs/REQUIREMENT-LOCAL-RUN.md', 'docs/requirement-intake-run.md',
+                   'lib/flow_execution_review.py', 'docs/EXECUTION-REVIEW.md',
+                   'lib/flow_workspace_review.py', 'lib/flow_workflow_validation.py', 'docs/WORKFLOW-VALIDATION.md',
+                   'lib/flow_workflow.py', 'docs/REQUIREMENT-WORKFLOW.md',
+                   'lib/flow_candidate_review.py', 'lib/flow_review_dispatch.py',
+                   'docs/CANDIDATE-REVIEW.md', 'lib/aim_ci/project_plan_derivation.py',
+                   'lib/aim_ci/project_command.py', 'docs/PROJECT-COMMAND.md',
+                   'lib/flow_github_delivery.py', 'docs/GITHUB-DELIVERY.md',
+                   'lib/flow_onboarding_delivery.py', 'docs/PROJECT-ONBOARDING.md',
                    'docs/PROJECT-VALIDATION.md', 'lib/aim_ci/project_onboarding.py',
                    'lib/aim_ci/project_validation.py', 'lib/aim_ci/project_execution.py',
                    'lib/aim_ci/project_container.py', 'lib/aim_ci/project_container_runner.cjs'}

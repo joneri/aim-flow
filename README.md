@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.9` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.10` (release candidate; [PR #2](https://github.com/joneri/aim-flow/pull/2)) · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -61,3 +61,29 @@ separately reviewed utility image and an explicitly executable private workspace
 This local aggregate is separate from hosted CI, native Windows, browser
 acceptance and publication of this locally prepared package; see the
 [container scope](docs/PROJECT-VALIDATION.md#linux-container-backend-jobs).
+
+Included in beta.10: [the GitHub delivery adapter](docs/GITHUB-DELIVERY.md)
+binds an explicitly authorized PR merge to exact merged-main push CI and artifact
+metadata. It preserves unknown outcomes and resumes observation read-only. Its
+offline contracts are not live delivery qualification or a full Flow pilot.
+
+Included in beta.10: [exact candidate publication](docs/GITHUB-PUBLICATION.md)
+verifies a retained Flow-produced candidate, uses a create-only branch guard,
+and creates a new draft PR from explicitly declared text. It feeds the separate
+merge/main-push handoff without editing an existing PR. Offline integration is
+separate from live publication and full-pilot qualification.
+
+Included in beta.10: [the accepted-local-work delivery chain](docs/DELIVERY-CHAIN.md)
+reconstructs the actual four-phase local acceptance before creating a new scoped
+GitHub grant. Flow renders the draft body, publishes its exact candidate, waits
+for exact PR checks, merges under guards and retains the exact main-push handoff.
+It does not adopt an old manual PR. The separate release-continuation adapter invokes the project’s existing release tooling under its own scoped authority.
+
+
+Included in beta.10: [budget-governed repair iteration](docs/CANDIDATE-REPAIR.md),
+source-bound incremental verification, a reviewed project-native host adapter,
+separate [owner verification-scope decisions](docs/DELIVERY-CHAIN.md), and
+[runtime inventory recovery](docs/PROJECT-COMMAND.md) without repeating a completed
+package installation. Concrete failed tests remain failures. Unavailable
+nonessential verification methods are recorded honestly rather than silently
+becoming new requirements. See [remaining autonomy gaps](docs/AUTONOMY-GAPS.md).

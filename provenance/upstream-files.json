@@ -1,9 +1,44 @@
 {
-  "controllerFiles": 61,
+  "controllerFiles": 100,
   "controllerPaths": [
     "aim-flow.py",
     "lib/flow_api_delivery.py",
+    "lib/flow_generation_budget.py",
+    "lib/flow_repair_loop.py",
+    "lib/aim_ci/verification_runtime.py",
     "lib/flow_onboarding_delivery.py",
+    "lib/flow_workflow.py",
+    "lib/flow_requirement_intake.py",
+    "docs/REQUIREMENT-INTAKE.md",
+    "lib/flow_run.py",
+    "lib/flow_resume_candidate.py",
+    "lib/flow_repair_candidate.py",
+    "lib/flow_repair_run.py",
+    "docs/CANDIDATE-REPAIR.md",
+    "docs/REQUIREMENT-LOCAL-RUN.md",
+    "docs/requirement-intake-run.md",
+    "lib/flow_workflow_validation.py",
+    "lib/flow_execution_review.py",
+    "docs/EXECUTION-REVIEW.md",
+    "lib/flow_workspace_review.py",
+    "lib/flow_execution_refinement.py",
+    "lib/flow_command_source_context.py",
+    "lib/flow_review_execution_context.py",
+    "docs/WORKFLOW-VALIDATION.md",
+    "docs/REQUIREMENT-WORKFLOW.md",
+    "lib/flow_github_delivery.py",
+    "lib/flow_delivery_chain.py",
+    "lib/flow_owner_acceptance.py",
+    "lib/flow_runtime_recovery.py",
+    "docs/DELIVERY-CHAIN.md",
+    "lib/flow_release_continuation.py",
+    "docs/RELEASE-CONTINUATION.md",
+    "lib/flow_github_publication.py",
+    "docs/GITHUB-PUBLICATION.md",
+    "lib/flow_candidate_review.py",
+    "lib/flow_review_dispatch.py",
+    "docs/CANDIDATE-REVIEW.md",
+    "docs/GITHUB-DELIVERY.md",
     "docs/API-DELIVERY.md",
     "aim-ci.py",
     "aim-ci-control.py",
@@ -55,6 +90,10 @@
     "lib/aim_ci/project_installation.py",
     "lib/aim_ci/project_onboarding.py",
     "lib/aim_ci/project_validation.py",
+    "lib/aim_ci/project_command.py",
+    "lib/aim_ci/project_host.py",
+    "docs/PROJECT-COMMAND.md",
+    "lib/aim_ci/project_plan_derivation.py",
     "lib/aim_ci/project_execution.py",
     "lib/aim_ci/project_container.py",
     "lib/aim_ci/project_container_runner.cjs",
@@ -84,6 +123,42 @@
       "kind": "added",
       "source": "AIM Flow Sol API beta.8 integration"
     },
+    "docs/AUTONOMY-GAPS.md": {
+      "kind": "added",
+      "source": "Source-backed controller audit and actual pilot outcome, 13 November 2026"
+    },
+    "docs/BETA-SCOPE.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "docs/CANDIDATE-REPAIR.md": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "docs/CANDIDATE-REVIEW.md": {
+      "kind": "added",
+      "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "docs/DELIVERY-CHAIN.md": {
+      "kind": "added",
+      "source": "Generic verified-local-acceptance to exact GitHub main-push delivery chain; offline contracts"
+    },
+    "docs/EXECUTION-REVIEW.md": {
+      "kind": "added",
+      "source": "Separate executed Flow acceptance review with explicit prior-obligation disposition; offline contracts"
+    },
+    "docs/GITHUB-DELIVERY.md": {
+      "kind": "added",
+      "source": "Generic Flow GitHub merge and exact main-push adapter, offline contract qualification"
+    },
+    "docs/GITHUB-PUBLICATION.md": {
+      "kind": "added",
+      "source": "Exact Flow candidate publication bridge; offline contracts and explicit integration boundary"
+    },
+    "docs/PROJECT-COMMAND.md": {
+      "kind": "added",
+      "source": "Generic reviewed project-owned command driver"
+    },
     "docs/PROJECT-ONBOARDING.md": {
       "kind": "added",
       "source": "AIM Flow source-bound project onboarding development"
@@ -91,6 +166,42 @@
     "docs/PROJECT-VALIDATION.md": {
       "kind": "added",
       "source": "AIM Flow explicit isolated project container and aggregate validation development"
+    },
+    "docs/PUBLISHING.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "docs/QUICKSTART.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "docs/RELEASE-CONTINUATION.md": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "docs/RELEASE-NOTES.md": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "docs/REQUIREMENT-INTAKE.md": {
+      "kind": "added",
+      "source": "Generic committed requirement context intake; read-only heuristic retrieval"
+    },
+    "docs/REQUIREMENT-LOCAL-RUN.md": {
+      "kind": "added",
+      "source": "One explicit outer requirement-to-local-tests grant and offline orchestration contracts"
+    },
+    "docs/REQUIREMENT-WORKFLOW.md": {
+      "kind": "added",
+      "source": "AIM Flow requirement workflow offline orchestration development"
+    },
+    "docs/VERIFICATION.md": {
+      "kind": "added",
+      "source": "AIM Flow assessment-derived validation planning development"
+    },
+    "docs/WORKFLOW-VALIDATION.md": {
+      "kind": "added",
+      "source": "Explicit Flow review/workspace-policy and typed validation continuation; offline contracts"
     },
     "docs/aim-ci-discover-project.md": {
       "kind": "modified",
@@ -120,6 +231,10 @@
       "kind": "added",
       "upstreamCommit": "6bdd87552dc62e382b45434c30c93328d09acccb",
       "upstreamSha256": "8f9b74ba71a2e186f7a011363fd1160177307512956c05867ae4ae29e202f51e"
+    },
+    "docs/requirement-intake-run.md": {
+      "kind": "added",
+      "upstreamSha256": null
     },
     "fixtures/products/catalog-oracle.py": {
       "kind": "unchanged",
@@ -248,6 +363,10 @@
       "kind": "unchanged",
       "upstreamSha256": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282"
     },
+    "lib/aim_ci/project_command.py": {
+      "kind": "added",
+      "source": "Generic reviewed project-owned command driver"
+    },
     "lib/aim_ci/project_container.py": {
       "kind": "added",
       "source": "AIM Flow explicit isolated project container and aggregate validation development"
@@ -264,6 +383,10 @@
       "kind": "added",
       "source": "AIM Flow explicit project validation execution development"
     },
+    "lib/aim_ci/project_host.py": {
+      "kind": "added",
+      "source": "Project-native host validation adaptation and focused contracts, 13 November 2026"
+    },
     "lib/aim_ci/project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "457a8ce7046a021d4c8c39c3859d17e5a4fbe00d4308f2caf69da586803ce553"
@@ -271,6 +394,10 @@
     "lib/aim_ci/project_onboarding.py": {
       "kind": "added",
       "source": "AIM Flow source-bound project onboarding development"
+    },
+    "lib/aim_ci/project_plan_derivation.py": {
+      "kind": "added",
+      "source": "AIM Flow assessment-derived validation planning development"
     },
     "lib/aim_ci/project_validation.py": {
       "kind": "added",
@@ -288,13 +415,106 @@
       "kind": "modified",
       "upstreamSha256": "bc9f7ee1bdd0f4516fb8957037e7e7327e0df3806fbac6923aa8a67d92dde228"
     },
+    "lib/aim_ci/verification_runtime.py": {
+      "kind": "added",
+      "source": "Generic budget-governed repair and content-bound read-only verification runtime"
+    },
     "lib/flow_api_delivery.py": {
       "kind": "added",
       "source": "AIM Flow Sol API beta.8 integration"
     },
+    "lib/flow_candidate_review.py": {
+      "kind": "added",
+      "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "lib/flow_command_source_context.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "lib/flow_delivery_chain.py": {
+      "kind": "added",
+      "source": "Generic verified-local-acceptance to exact GitHub main-push delivery chain; offline contracts"
+    },
+    "lib/flow_execution_refinement.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "lib/flow_execution_review.py": {
+      "kind": "added",
+      "source": "Separate executed Flow acceptance review with explicit prior-obligation disposition; offline contracts"
+    },
+    "lib/flow_generation_budget.py": {
+      "kind": "added",
+      "source": "Generic budget-governed repair and content-bound read-only verification runtime"
+    },
+    "lib/flow_github_delivery.py": {
+      "kind": "added",
+      "source": "Generic Flow GitHub merge and exact main-push adapter, offline contract qualification"
+    },
+    "lib/flow_github_publication.py": {
+      "kind": "added",
+      "source": "Exact Flow candidate publication bridge; offline contracts and explicit integration boundary"
+    },
     "lib/flow_onboarding_delivery.py": {
       "kind": "added",
       "source": "AIM Flow authorized onboarding assessment dispatch development"
+    },
+    "lib/flow_owner_acceptance.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "lib/flow_release_continuation.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "lib/flow_repair_candidate.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "lib/flow_repair_loop.py": {
+      "kind": "added",
+      "source": "Generic budget-governed repair and content-bound read-only verification runtime"
+    },
+    "lib/flow_repair_run.py": {
+      "kind": "added",
+      "reason": "Bounded Flow-owned repair, fresh review, contained local validation and executed-evidence continuation; offline lifecycle and refusal qualification.",
+      "upstreamSha256": null
+    },
+    "lib/flow_requirement_intake.py": {
+      "kind": "added",
+      "source": "Generic committed requirement context intake; read-only heuristic retrieval"
+    },
+    "lib/flow_resume_candidate.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "lib/flow_review_dispatch.py": {
+      "kind": "added",
+      "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "lib/flow_review_execution_context.py": {
+      "kind": "added",
+      "source": "Pinned pre-review container facts and conservative environment disclosure; offline contracts"
+    },
+    "lib/flow_run.py": {
+      "kind": "added",
+      "source": "One explicit outer requirement-to-local-tests grant and offline orchestration contracts"
+    },
+    "lib/flow_runtime_recovery.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "lib/flow_workflow.py": {
+      "kind": "added",
+      "source": "AIM Flow requirement workflow offline orchestration development"
+    },
+    "lib/flow_workflow_validation.py": {
+      "kind": "added",
+      "source": "Explicit Flow review/workspace-policy and typed validation continuation; offline contracts"
+    },
+    "lib/flow_workspace_review.py": {
+      "kind": "added",
+      "source": "Explicit Flow review/workspace-policy and typed validation continuation; offline contracts"
     },
     "lib/openai_budget.py": {
       "kind": "modified",
@@ -308,6 +528,10 @@
       "kind": "modified",
       "upstreamSha256": "c054a3ef52413e2e520c8e09a2eafeae05b7dbda95138a6764c55b75e305027c"
     },
+    "scripts/package_beta.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
     "tests/production/artifact-probe.mjs": {
       "kind": "modified",
       "upstreamSha256": "0c8229a166d068a5c6b68923aa5a2f830aa3c93450b816fd87268549ead3c0d7"
@@ -320,9 +544,33 @@
       "kind": "added",
       "source": "AIM Flow Sol API beta.8 integration"
     },
+    "tests/test_bounded_review_citations.py": {
+      "kind": "added",
+      "source": "Offline bounded refinement citation protocol regression"
+    },
+    "tests/test_budget_loop_installed.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
     "tests/test_build_preparation.py": {
       "kind": "modified",
       "upstreamSha256": "5d0c1a32d1e2c59c45931b8b4d097536b6ba995a163eb087f81f31c25f36dcf0"
+    },
+    "tests/test_campaign_continuation.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_candidate_review.py": {
+      "kind": "added",
+      "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "tests/test_command_source_context.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_completed_validation_reuse.py": {
+      "kind": "added",
+      "source": "Completed source-bound validation reuse across controller corrections without paid review or project execution replay"
     },
     "tests/test_content_size_contracts.py": {
       "kind": "added",
@@ -332,6 +580,10 @@
     "tests/test_control_package.py": {
       "kind": "modified",
       "upstreamSha256": "8031a6f9f20e19043e2520e34ed260915427c4ef9b26cc8a8cd9e549a3bfb3e4"
+    },
+    "tests/test_delivery_chain.py": {
+      "kind": "added",
+      "source": "Generic verified-local-acceptance to exact GitHub main-push delivery chain; offline contracts"
     },
     "tests/test_docker_engine.py": {
       "kind": "modified",
@@ -345,15 +597,71 @@
       "kind": "unchanged",
       "upstreamSha256": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf"
     },
+    "tests/test_execution_refinement.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_execution_review.py": {
+      "kind": "added",
+      "source": "Separate executed Flow acceptance review with explicit prior-obligation disposition; offline contracts"
+    },
+    "tests/test_external_local_run.py": {
+      "kind": "added",
+      "source": "Pinned original-controller local acceptance transport regression coverage; no external effects"
+    },
+    "tests/test_failed_execution_repair.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_finding_disposition.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_flow_release_continuation.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_flow_run.py": {
+      "kind": "added",
+      "source": "One explicit outer requirement-to-local-tests grant and offline orchestration contracts"
+    },
+    "tests/test_flow_run_executed.py": {
+      "kind": "added",
+      "source": "Optional explicit four-generation outer evidence-review scope; offline retained PNG/JSON contracts"
+    },
+    "tests/test_github_delivery.py": {
+      "kind": "added",
+      "source": "Generic Flow GitHub merge and exact main-push adapter, offline contract qualification"
+    },
+    "tests/test_github_publication.py": {
+      "kind": "added",
+      "source": "Exact Flow candidate publication bridge; offline contracts and explicit integration boundary"
+    },
+    "tests/test_host_workflow_integration.py": {
+      "kind": "added",
+      "source": "Project-native host validation adaptation and focused contracts, 13 November 2026"
+    },
     "tests/test_installed_api_delivery.py": {
       "kind": "added",
       "source": "AIM Flow Sol API beta.8 integration"
+    },
+    "tests/test_installed_github_delivery.py": {
+      "kind": "added",
+      "source": "Generic Flow GitHub merge and exact main-push adapter, offline contract qualification"
+    },
+    "tests/test_installed_github_publication.py": {
+      "kind": "added",
+      "source": "Exact Flow candidate publication bridge; offline contracts and explicit integration boundary"
     },
     "tests/test_intake_profile.py": {
       "kind": "added",
       "note": "Product-only fixtures; usage values and task labels are synthetic.",
       "upstreamCommit": "af7e45f744c6dd58f57cb714a4ed424f7a9077b1",
       "upstreamSha256": "ee64760e4d786d32acb0d2c3f829804ff4b23033a5bfdd20f28240bb28cfb1b1"
+    },
+    "tests/test_intake_run.py": {
+      "kind": "added",
+      "upstreamSha256": null
     },
     "tests/test_model_support.py": {
       "kind": "added"
@@ -383,6 +691,14 @@
       "upstreamCommit": "5d2b63e6b580d1465e7978a23e9c4b45a5a887d1",
       "upstreamSha256": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5"
     },
+    "tests/test_owner_acceptance.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "tests/test_project_command.py": {
+      "kind": "added",
+      "source": "Generic reviewed project-owned command driver"
+    },
     "tests/test_project_container.py": {
       "kind": "added",
       "source": "AIM Flow explicit isolated project container and aggregate validation development"
@@ -400,6 +716,10 @@
       "kind": "added",
       "source": "AIM Flow explicit project validation execution development"
     },
+    "tests/test_project_host.py": {
+      "kind": "added",
+      "source": "Project-native host validation adaptation and focused contracts, 13 November 2026"
+    },
     "tests/test_project_installation.py": {
       "kind": "modified",
       "upstreamSha256": "fd04a40c373ff787801bf49575d6c119fb2e56cce23bf8975c1405b2891c4990"
@@ -412,6 +732,10 @@
       "kind": "added",
       "source": "AIM Flow source-bound project onboarding development"
     },
+    "tests/test_project_plan_derivation.py": {
+      "kind": "added",
+      "source": "AIM Flow assessment-derived validation planning development"
+    },
     "tests/test_project_planning.py": {
       "kind": "modified",
       "upstreamSha256": "6967571de046f9e7049bc2c37a0711d75c398da450469ead6de020d228fcfb15"
@@ -420,9 +744,61 @@
       "kind": "added",
       "source": "AIM Flow project-local validation handoff development"
     },
+    "tests/test_publication_workflow_integration.py": {
+      "kind": "added",
+      "source": "Exact Flow candidate publication bridge; offline contracts and explicit integration boundary"
+    },
     "tests/test_recipe_execution.py": {
       "kind": "unchanged",
       "upstreamSha256": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4"
+    },
+    "tests/test_release_handoff_chain.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_repair_candidate.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_repair_loop.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_repair_run.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_requirement_intake.py": {
+      "kind": "added",
+      "source": "Generic committed requirement context intake; read-only heuristic retrieval"
+    },
+    "tests/test_requirement_workflow.py": {
+      "kind": "added",
+      "source": "AIM Flow requirement workflow offline orchestration development"
+    },
+    "tests/test_resume_candidate.py": {
+      "kind": "added",
+      "upstreamSha256": null
+    },
+    "tests/test_review_evidence_policy.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_review_execution_context.py": {
+      "kind": "added",
+      "source": "Pinned pre-review container facts and conservative environment disclosure; offline contracts"
+    },
+    "tests/test_runtime_hardlinks.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "tests/test_runtime_recovery.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "tests/test_second_repair.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
     },
     "tests/test_source_check.py": {
       "kind": "modified",
@@ -432,6 +808,14 @@
       "kind": "modified",
       "upstreamSha256": "1279934a50b9979e46bc010c3b433dd7952b25aa0654e8c900e8f3a3460c5b57"
     },
+    "tests/test_source_read_modes.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_source_review_reuse.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
     "tests/test_source_subset.py": {
       "kind": "modified",
       "upstreamSha256": "69894eda37b83e793144e3414cab9092362d250a9c2b1872484a9838aa3ca67b"
@@ -439,16 +823,54 @@
     "tests/test_terminal_diagnostics.py": {
       "kind": "added",
       "note": "Portable upstream regressions with distinct synthetic usage figures; no private pilot evidence."
+    },
+    "tests/test_tool_runtime_prefix.py": {
+      "kind": "added",
+      "source": "AIM Flow beta.10 controller and release consolidation"
+    },
+    "tests/test_verification_accounting.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_verification_runtime.py": {
+      "kind": "added",
+      "source": "Generic repair iteration and retained read-only verification regression coverage"
+    },
+    "tests/test_workflow_validation.py": {
+      "kind": "added",
+      "source": "Explicit Flow review/workspace-policy and typed validation continuation; offline contracts"
+    },
+    "tests/test_workspace_review.py": {
+      "kind": "added",
+      "source": "Explicit Flow review/workspace-policy and typed validation continuation; offline contracts"
     }
   },
   "files": {
-    "aim-ci-control.py": "06c864dc48aadd64e4bdd5f9916e97406cb73521c103f2fa02e1949d2f5198d3",
+    "aim-ci-control.py": "b2afb8530f3ad410b9720484350c1ad1ad696a08bd2c1ad18d7c2751bdd1d04b",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
-    "aim-flow.py": "d08d2d93859854192e56dcd94cb56e666b4d2ae819412e3863d9fd22083513f7",
-    "docs/API-DELIVERY.md": "652809b169ca8a944369ad9eadc2890d28859c84aec612fca11ca3b66a228c36",
-    "docs/PROJECT-ONBOARDING.md": "3a230d854517ce9ce73938b29ccaee788141520b271d6fb78e396fdfca822603",
-    "docs/PROJECT-VALIDATION.md": "547c467b1ab7e30ca37013dd02c95dd46c48c945124bb925cee1c4a1e6abd622",
+    "aim-flow.py": "99d000823c3b8cfeddff6608f4f3320d374a7ca3aff8e7970c424d14b76ea17a",
+    "docs/API-DELIVERY.md": "6f78a25b7f3c1146a5f59429ad9808b4e158f70eecd3b6948fab287658b69a5e",
+    "docs/AUTONOMY-GAPS.md": "bcd53f938ec0b36209edbca390ccbdbe7b6b01a52f0280a4860afbbf9ba78ae0",
+    "docs/BETA-SCOPE.md": "5b7a2ed602d45d908347e74fc3614d3402d8184a7ee42ff38f39a6f9439c6e9e",
+    "docs/CANDIDATE-REPAIR.md": "1e5fce9c0ab6986f545390d72ba5562a287e7ee5d6685fc30e7720cff0be99ee",
+    "docs/CANDIDATE-REVIEW.md": "7f3be28fd81608204d5c2d82817b3f52bd3a1692d577c196c56bf0ccc8522e4f",
+    "docs/DELIVERY-CHAIN.md": "51d30afb621042665d39135315b1e9c17fc7cd54afafae95da2f3dbc37ff99e8",
+    "docs/EXECUTION-REVIEW.md": "27cf37e49dd61fe83e500aae3286342d7fef44dc065005cdde0b5ac61da8a4ff",
+    "docs/GITHUB-DELIVERY.md": "7464a23526df8fadb3238d32aa9f0fb3a6c42e1442233bbd702c85163fd0547a",
+    "docs/GITHUB-PUBLICATION.md": "786092195dcb449e5a0b8622654a9925479bb4bf8c534fab44472e4d40eb2d92",
+    "docs/PROJECT-COMMAND.md": "7a32f514535f98cbc936b0f64c6d3bb7cd354d6e3458833c5c6f0512b86f1384",
+    "docs/PROJECT-ONBOARDING.md": "44289fa95f7ad51debed180db8c73eeb6b15025c5bbddb350c7ed36083ea502c",
+    "docs/PROJECT-VALIDATION.md": "27bd7920e557a576879c0666804246f4202cb24e939aaf64a0905e753423a2fd",
+    "docs/PUBLISHING.md": "069de47dc421ffbbe6d4aa550ec61e9d8367b000e1e7c3c9c4097ebf682f9e0b",
+    "docs/QUICKSTART.md": "a69eaf9356584d09bea9ff2d92cc34e487669795c97440e23bf166bef0f0c622",
+    "docs/RELEASE-CONTINUATION.md": "5af15012242b4a52cf01a6cca781b23fed0a57bc564634671252ef57eac9828f",
+    "docs/RELEASE-NOTES.md": "8ec42493ada9a0ae09e0ce1c2e68045b880b3959b979a93eee30330e31df03ea",
+    "docs/REQUIREMENT-INTAKE.md": "4dd100b2dbdde1cd7c14ceb8b10b26d54916dc07e5db0dc0eb1890e25c72a6db",
+    "docs/REQUIREMENT-LOCAL-RUN.md": "196095115289eea0da4d6862796aba49754411a236e01dc59b1e00a7ac2f4278",
+    "docs/REQUIREMENT-WORKFLOW.md": "37baf681103bd5b0708729dce8da3e8ed24782513b3cfabcf909a6347424c6cc",
+    "docs/VERIFICATION.md": "9e326ea2beeda99369d3ea79c19b862ffe30c1857c38af0051fb342e5677474c",
+    "docs/WORKFLOW-VALIDATION.md": "5cd14bf7ce556b51d994912ad4894d8d3620bdecace3d423c3461a3bfd92c0bd",
     "docs/aim-ci-discover-project.md": "89c618858bc21c5ae0c113a984b68b6746da1df9bb70e3714b29bcc9e31dbf28",
     "docs/aim-ci-install.md": "dcbbd3a86e76b32f42bae29a36f54c7b8fa885c964c1b162d2ae56dec7504a1e",
     "docs/aim-ci-onboarding.md": "af6e43dd8d4a11b6878b1b7f469f251bc5b976efca8e283ca1d4c29d1c4453f2",
@@ -456,6 +878,7 @@
     "docs/aim-ci-propose-adaptation.md": "1a42306a5cc8b4396b548316ae17641ba130a56f67091dc6f32a7ab07e427d1c",
     "docs/aim-ci-python-test-matrix.md": "411f79c26793935b0536af8eb4a979504b83da84350d0b6ccc4c9bf3190bc40b",
     "docs/aim-ci-size-handling.md": "1a8ad614974d0a4a0aa40f5021c678f161ebf4bebec900f8162bba223dbf2fe5",
+    "docs/requirement-intake-run.md": "20dd2a6bef09c1a3e342c4a07ff2c875136e4ff8e6594479268fa0cf2edee552",
     "fixtures/products/catalog-oracle.py": "c66350ab4d96eafffa943e559a41936009a56ee781af17390cb778707e2fd45e",
     "fixtures/products/catalog/catalog.py": "8fdf097ef42419ae21ded44bc93d4d0bc1f7e7263532b7a2706c220111ea4c3e",
     "fixtures/products/catalog/fixtures/items.csv": "e2212a8405f0bd5c08b5db14f035650da4678eb5c5acb8734308cc145b79faa0",
@@ -465,11 +888,11 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "e0e0a535f4768c2b6cf3f72882c0d89e4b9b456afbf8ebae9910fe3f86d2b058",
+    "lib/aim_ci/control_archive.py": "84d50a5262ecaec834dccd21da0ecb391f690e80329530926cee26a50df4abc4",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
-    "lib/aim_ci/docker_engine.py": "60439c9101daa706ec4066327093bdc7b852402dad6649c369703afaf2faec88",
+    "lib/aim_ci/docker_engine.py": "400f7839d82a6564974b33c7aedc964e0c87e74ef679ac36fed78732a2f20089",
     "lib/aim_ci/docker_image_evidence.py": "59115c01f2f77309ddb1252d5b1327bac81dbc727437f307a47f5c3bdded9d9a",
     "lib/aim_ci/effects.py": "88c8f10f31dd70fcd8223367afe3047da0366aed9a91ac68f2a58a69a1557749",
     "lib/aim_ci/human_review.py": "df863605d07aba1989715f64c17e98aff0bde3334b00a99c09e6426f4735f858",
@@ -488,53 +911,125 @@
     "lib/aim_ci/platform_build.py": "7e8055bc15b0fe57fe222f225492b91e5f53133114a6352f0af354bc71352c44",
     "lib/aim_ci/products.py": "50008fc9cdaa45ecb32b9e2c39eb763efe74889dd881b943be4430231592dc20",
     "lib/aim_ci/project_adaptation.py": "695a29b2557eb967186a5229c163017ff43c8fea57c4171027a47e6a5e140282",
-    "lib/aim_ci/project_container.py": "72a73eb1cc2290f046975adc0bd2ff1386ac49456f4b356612be1db05aa1fb70",
-    "lib/aim_ci/project_container_runner.cjs": "48ea86ecee0cae01109ca16cdad0375636ca8d54074cd365570f306e742ce8c4",
-    "lib/aim_ci/project_discovery.py": "57db6306a45240e9d0ba1aa0aa837badc3238c7d2be3ff40f3ecc51fa6d9c393",
-    "lib/aim_ci/project_execution.py": "2cf0bbef9fdbae9741c2f6bc9010344c56567792e3887ed816850ade7257ae55",
+    "lib/aim_ci/project_command.py": "d2be4ac1220a8cc6c330a1d3a92f1bbc2534c3235f7afabaa55e608a11362345",
+    "lib/aim_ci/project_container.py": "9d6edfed179f468a601a7094c72a9e56d6c404c21786a72264d9ddc4cbb715a9",
+    "lib/aim_ci/project_container_runner.cjs": "225b08c08baa82af2e08cd5203e9ab5634d33797e46f9ac54f91546dcadd38ed",
+    "lib/aim_ci/project_discovery.py": "7c6ea1fda3e8491025291a91f6bac141e2bff4ac7a299ecbde904b0a829adf41",
+    "lib/aim_ci/project_execution.py": "16874a294386538dcfb930673c55b1eac2d8364d4386242f4b2a09d895142b72",
+    "lib/aim_ci/project_host.py": "cc645b7a99e9d13a2fe1069d2072a5a5fca111f04f20e3b6e32b2cd0e1be0006",
     "lib/aim_ci/project_installation.py": "db9e2a40daf937cb0a303ac0937ddd9a42f98951ea4668bd734602ac0ef0da6f",
     "lib/aim_ci/project_onboarding.py": "6b496cbcac5174e477b764ce875d7064dd1ab2f7aa9466b97692964b160a94f2",
-    "lib/aim_ci/project_validation.py": "0b606eaceb8a03a64eb9103e10f8c2413250fb26e2d583e7d23e8e8b28cf8d57",
+    "lib/aim_ci/project_plan_derivation.py": "a60e23864052964a543dadaa76c058c2e1a91243abe12c1278aaaf727cce6b24",
+    "lib/aim_ci/project_validation.py": "c97d0be7d0e478445f2f8f4ff7c02e12518e79117d29337ad1343f8b1dd393a2",
     "lib/aim_ci/recipe_plan.py": "8382ea80109a8222ebed993c507ffb965daf0ee3f655f3f96aaf76fadc71694c",
     "lib/aim_ci/release.py": "9d30813beb96ef6d81632886df9333e77dc9be2b5eb4e4ae499bf2de4fc55a4d",
     "lib/aim_ci/source_subset.py": "66b7fa712ba3b40315fafc74c8eb35981de60bb928285704112e7a0da8aebc7b",
-    "lib/flow_api_delivery.py": "b81151c876f517f4c6b0299373133f122eeb1a5c533128f27df2992c74a5a39b",
-    "lib/flow_onboarding_delivery.py": "b5ce225b11d0d458a17a95a8108f33ebbab09d80bc06d524392ff89b7bd437d7",
+    "lib/aim_ci/verification_runtime.py": "773f7d095e090e099e84e4853322f11371402edb799e520c63b998e434c388a2",
+    "lib/flow_api_delivery.py": "a74524a1ea0f98459f6f4872cb3a54cf99ddcfa0f73bafb8a3a41160ebe07be7",
+    "lib/flow_candidate_review.py": "08df80706fa7e65ea83517d74cef18df4e50f281b61c6a093a950a6e523af40a",
+    "lib/flow_command_source_context.py": "6abad545bc7d37214437bebb39c121cefa70ca7def320f4504f9ef07159fa2c7",
+    "lib/flow_delivery_chain.py": "33f90a46569b3c907c4b6f6d27ee0bb9a689db7fa0c83c0f0397ae9c211e774d",
+    "lib/flow_execution_refinement.py": "fad8225b5fd7d9b36cde882dc43f8be70640f2f2265aa00703ecccbf78e64078",
+    "lib/flow_execution_review.py": "651d0ff633bce88c4bb07d31849dd465ccb488a62d3fafe45d5e31535983adc6",
+    "lib/flow_generation_budget.py": "7668a0d795048ea07122f4c230b179f5dc941e04af09b723c4c536fcea430f48",
+    "lib/flow_github_delivery.py": "879a3e3cc6b3f6637186cd45b8256072ea8c88651b868496a7efeac811d2cc00",
+    "lib/flow_github_publication.py": "32d38df930c8d01f2cd2565497cb2c8ecfc4d50e9cad0fc058ca945a8d3e65db",
+    "lib/flow_onboarding_delivery.py": "d6464266c7b1c146c3537394629bbf915e5ddc38a8577b3c1f4a54b9657a2108",
+    "lib/flow_owner_acceptance.py": "70fb4134e92eb22549061ab05c4e30c29482c411a9bece588146b3d3ea584335",
+    "lib/flow_release_continuation.py": "eaad59f0cfbae4da13e27572d4ea4cc96df578c10d4524985cda58862029d8fb",
+    "lib/flow_repair_candidate.py": "59bf068299ac4567b39259eeed4567283847c16a090548ba63d481a0bd15c41c",
+    "lib/flow_repair_loop.py": "a397274bc59b005999e2587d2abdc68518c148c31d9f7958c41cfe7911e29d24",
+    "lib/flow_repair_run.py": "70b8be4cceb948cdad610130499b0eea3e1d8288b9cbbee8d57dd056f4941418",
+    "lib/flow_requirement_intake.py": "3e3a54c35681749f7285e00d46e3db52467ba12b07595b1fb718a5f7d5b37144",
+    "lib/flow_resume_candidate.py": "33bd0147982c11b0fdef81dd5d4c88c9f3b55ad3d439eadc2d8ebcf51e2e002c",
+    "lib/flow_review_dispatch.py": "47eb333a2fbc081455b9946d6070498776824f440e65fdc1c41d13c37d7aa664",
+    "lib/flow_review_execution_context.py": "e0429f977a30721e26c138b8c57ea959ccb0499b6d2f76d1057dc7450225276b",
+    "lib/flow_run.py": "3eca1208d3b12c5c7a4d4d15e4844092e0be14d9cd7aef6bc596dc4dbdfa55bb",
+    "lib/flow_runtime_recovery.py": "4caa746369f6af944d0648473248784a79fb7535d0452ad739c390628a60bad3",
+    "lib/flow_workflow.py": "e7023fba5fdcac900b2e387eaded919aa0b7035ad984815db8b42b4abd52d49a",
+    "lib/flow_workflow_validation.py": "12be6f86ea9179badca12151e8ad2603ff460186c0c6b56f1229695265cad134",
+    "lib/flow_workspace_review.py": "a77e7b50af0c12b82be77635d756258f79388c24cb584c7682f129b83c8970a9",
     "lib/openai_budget.py": "943748a36665bb5a165acb6ed5661e5af4e01e4d472b1c9bcb94ce0f9efd6600",
     "lib/review-policy.sh": "973b2a8dbb91ad15bdadaa3fe222a3bdc94d6976f50a1d4297c7151407058e03",
     "profiles/catalog.json": "2bdf129384e05f7aca09dcdddc0c78de6ce2949263895c09fca01141da019dd6",
+    "scripts/package_beta.py": "2653b0b3aa1185fbd74124a7524ba92727f316a0548040222cd4e15c4f3aec6f",
     "tests/production/artifact-probe.mjs": "38d9f95fb2c2a6f867d1a51027f3cef5792a52ddab2c600a09d081b241ffb4b1",
     "tests/production/catalog-verify.mjs": "4b49fc949da93d35fad46a06f9d4cc1affdb39870cc452e75d183c4f38c1c19e",
-    "tests/test_api_delivery.py": "f610829ff4d0657e794df4c8138920a20825e254f544bfa02f565143197835e9",
+    "tests/test_api_delivery.py": "feeb60081723559f8e84deabf16f6951f19948e8d99d0ff95548804ab3ee2b90",
+    "tests/test_bounded_review_citations.py": "7c05fc6171c3ee44263246c0108cc2e5a7d90e6827ed37f43fcef0b07483706f",
+    "tests/test_budget_loop_installed.py": "12f7008bfd1c059a2df8b202441f23c6254122ff551ed0735865133051ac2c96",
     "tests/test_build_preparation.py": "60789968bbb448cf6f6b7f464f650a16aad66eb4a2e8157a15cb294c9277d3b7",
+    "tests/test_campaign_continuation.py": "17fb33b2650028748666f41ac83801c9faa023f5647db4b11893d9ebf7d753cb",
+    "tests/test_candidate_review.py": "2505ef155064708c521098d3251171e7514b143bcf9c5322c4d1476c31ccb536",
+    "tests/test_command_source_context.py": "2b5c408a234010df2adff9cbbea1dbdeb306f4801d97fa1d695183d2166dde15",
+    "tests/test_completed_validation_reuse.py": "88f8d2a65c67ee1a0e0a0c8565370fc02a2d35853f21edfc8ff9164fc7f1c778",
     "tests/test_content_size_contracts.py": "5b5e1e0188ed779f5a7d3447d6e8f53baf093357a1b6780504a58bdae19a104e",
     "tests/test_control_package.py": "ce4c659969a7fa09d37d93b409678f6c59841157ccbd09516813cf0a4279826c",
+    "tests/test_delivery_chain.py": "d288d29e8b65a060d91eb3b1bf548b915c55e16a5804dcc5bf655ccb7348324c",
     "tests/test_docker_engine.py": "0e8a487a5d43bec8a604ad62645d0d40d871190fd86520367dd4dbf85533d2ec",
     "tests/test_docker_image_evidence.py": "5ac9da2854c23bc111d02ab6816f7959d0fa02e126afdbce68751028554383bc",
     "tests/test_docker_recipe.py": "a3c48fc7004b0acf1205aee753528981ce1a8abe0883e4e1e34a0edb30ad9daf",
-    "tests/test_installed_api_delivery.py": "5ed75d445c2b1df2613582d17bf93561a6d6785aed3b49b9cf460ddd44f377c7",
+    "tests/test_execution_refinement.py": "ecde11d8ea986a0596a11deeda45d1b77b5ed35b01a837a8af919ba91acf4151",
+    "tests/test_execution_review.py": "955d018d83037812e5862db1df8b1ca2f65e1164f6a7a7ca7f081729b27d6eaf",
+    "tests/test_external_local_run.py": "974458cd0b8a1972c34cba2d6c6827b46b2e430c1354051b8267f96e278e70bb",
+    "tests/test_failed_execution_repair.py": "6d00ed08517296272635c3b74fddeabef23e6a8e4812492621102f98c8ef8616",
+    "tests/test_finding_disposition.py": "dae329b85e4a07539673dd0367780def421a4e892048ec64bc3d69bf34df9bcd",
+    "tests/test_flow_release_continuation.py": "4e0eb4fb7046b3425cc7a1f5c2f8d4d1f01f63f083133eb370cbff1f4c453044",
+    "tests/test_flow_run.py": "5b043eaac4a33a0ff263a40811e542244536693c3e7d3118f81de9c8c0ba8160",
+    "tests/test_flow_run_executed.py": "386c10a4f6ddc5e21bdf5d931bcb7c737e5d573ec8956bdecb544f84d78b0137",
+    "tests/test_github_delivery.py": "2fd06b08d750843a9661886df18e1e169819cbcf0bce26e63c693bebac3dd0cc",
+    "tests/test_github_publication.py": "149b68328eadcc96e49f17ea97480edbaf259c2ad53f93a32a48b8a41011f1be",
+    "tests/test_host_workflow_integration.py": "fc9e4161b195e966512df079f944396438faefcadac7d19f62241998a7ec38a4",
+    "tests/test_installed_api_delivery.py": "bd68d640581fb888640abc485d799bee5b6e5a0a9af1d448f59173a13374f745",
+    "tests/test_installed_github_delivery.py": "8f10e466a71ad18c1317eb8c85c91a2a35fb2fe0dd071aa83c1631d7d819a15c",
+    "tests/test_installed_github_publication.py": "1160110155599573906374f8ed580eb7e21d3cc2d9b90c5a456f68fb034e131f",
     "tests/test_intake_profile.py": "89c497232c1582225be05fda4cd916dced617322bb31ac0130e4031d39372a81",
+    "tests/test_intake_run.py": "2cfce02d2baa09889a9f86bbcab527eeeefee87deb43575828e2a0024592f4bb",
     "tests/test_model_support.py": "3f539ffcf304656ad95e2dfdd4bc4f28bd4816444a131b2381702032809093e4",
     "tests/test_npm_acquisition.py": "dacf1848cbdc566c38eff7dfb6cc4c28e9ae409d36dd58ce5b199e6eb5b13cff",
     "tests/test_npm_platform.py": "8ca3b3fdac8328ba4b808cb76074ba0012df79a61cccc412d2157143fc0c1bd7",
     "tests/test_npm_platform_build.cjs": "6bc7b9e45e8894090e2fd287748901e5a1fb3728e0a89f4afdbb9af1d420b01e",
-    "tests/test_onboarding_api_delivery.py": "7553f37fc1136a2ce29f3d6581b230f9ffcc040409fa351077065711cb0f7a29",
+    "tests/test_onboarding_api_delivery.py": "748c31981ba211ae7fdb6d3959574bca01a72df7a6da53473ca6df2d01284f42",
     "tests/test_operator_build.py": "0863db0447c26493d8bfa360699a4f5a0d7ad66bcd68b7c977d15994df28f68f",
     "tests/test_output_allowance.py": "65e0b7e896f0c5680d8a9645bf7f850dd9b52e9d05e5da21d16df5cf1fec39e5",
-    "tests/test_project_container.py": "cd92640c70c4daca911fdf898547be8fb196c1ab0a766b902d946833d637c749",
-    "tests/test_project_container_runner.cjs": "adc621ced2876fa9a9b059d6823d1301a7f44a373b887847cc9ce99513a772ea",
-    "tests/test_project_discovery_sizes.py": "fe47130dd69c70ed57f95b791ec7e25881b38e969675a040e84c87b54deb92d0",
+    "tests/test_owner_acceptance.py": "6d4bd4e2455bb904ca970f92456fcfc36cd154be614c02c389b8c0284a9ffb62",
+    "tests/test_project_command.py": "294a541f7d787a445e329914a308f534d5c2d40db094ad2d8ac2d2c45fcb0a31",
+    "tests/test_project_container.py": "bd3b38be9b3cf8d9ec286588f11cb9163791cd4229066f2f01a29152c92e7228",
+    "tests/test_project_container_runner.cjs": "0ee181dc72c4498803e56e386ce6d415e80eb7cd4b33bbf65eb6ee70099488cc",
+    "tests/test_project_discovery_sizes.py": "e642795fb9ea7f3b70a5a45642df863dec67a640bff168479e6cda25ec367b72",
     "tests/test_project_execution.py": "8690b1ee9da29a3434d277c636085379493f28366844b48157bba6d969112b82",
+    "tests/test_project_host.py": "87c7ee217403f779acfa6a01268560641c40decab664894a52033760e7758f11",
     "tests/test_project_installation.py": "f6b11b76ebfd6ff81ba2da1ccb02517940bfd4ea139d3e341908b20b1185e16c",
     "tests/test_project_intake_grant.py": "acfaec92aac438556ab6806c7c551b539d192e70e48b055b12c435433c9ede8b",
     "tests/test_project_onboarding.py": "c46fc2ba142f0e811ee75bc0647089f6356906e957afffca0a01e6b1a0c0f2b9",
+    "tests/test_project_plan_derivation.py": "1f8ff4280e8c9feb2e0c2d33353c8d4d3ea170688bb167061e1d583635ea6722",
     "tests/test_project_planning.py": "b4e2cb5b3c898bdcb62631465458cf15fbf3216a6861b6e0e41cbf781f1ab35a",
-    "tests/test_project_validation.py": "2979de61d29d76d66668998496bb9c6e84993cd6bbedead938bb2bd346e4f2bb",
+    "tests/test_project_validation.py": "991c8d5f9bb14faa6e5246fc1a267f003da72a1c0cbc09d50219e7eb15b18e77",
+    "tests/test_publication_workflow_integration.py": "c2484810ea8f7bb218159cd2c60806629f2281c326a60e7ba03b9ca057550140",
     "tests/test_recipe_execution.py": "06135c443f9cf15fb6d774fa9acbd84f3a930b7a1f003093a5daae6b2f76c9f4",
+    "tests/test_release_handoff_chain.py": "9c9df5cd958e72588cbf669ec999f9b4f990e46440d34485ba39bd1fa3214d72",
+    "tests/test_repair_candidate.py": "94d22948d297bccb678e48017305e71e0364c07a3c749b99a9243373b1effc10",
+    "tests/test_repair_loop.py": "ac595f288814623bfb9d712b51489989c76a1ad72e9ee4a6f2c1b3987606fc80",
+    "tests/test_repair_run.py": "9862983c41c63c3e28ad977bc4782b23a3662501b37fb66dfb5298f1a43169ee",
+    "tests/test_requirement_intake.py": "a5a7a2a00e33bac0ed4b5b9bf20a19c887a6d34d20f2835fdff74ff2a2653cbb",
+    "tests/test_requirement_workflow.py": "de36c666c43ab08e524021f3756fc677b9df88184ac3b1a82389deee3643f139",
+    "tests/test_resume_candidate.py": "9a6630acc25ce22290b89bb2d93891d9f03b6fac0fa1e61733691970b7102a4f",
+    "tests/test_review_evidence_policy.py": "e4acec9230c9215673d43be88adfdd5c25802360ff0f9f4b08bffe61997e8d09",
+    "tests/test_review_execution_context.py": "98b4c650725e43bf671f0a564f071f45441091600b7d6d97a1a62a95d6f1ed45",
+    "tests/test_runtime_hardlinks.py": "fc481cf0cda5f918402f121d1387bfa34a6f9a0c3f2e8f310bc92542d7f4e267",
+    "tests/test_runtime_recovery.py": "71df46f84d5c3eeebe93e72a99e063c91241ff0ef7e4bbfa47f9034142e3f928",
+    "tests/test_second_repair.py": "541d0d7c455b167295297eb48901e23a4529bd3f0660a8384db5a6e008ef0bf9",
     "tests/test_source_check.py": "d01e71f3cca32d3338bf941328a6b68f88091c9d1ac44137d703d26907d96cc3",
     "tests/test_source_free_release.py": "4113d5fa7515f68d7b9d557c7ba6a5dfcff894c70c04a93de979b21898e4d68c",
+    "tests/test_source_read_modes.py": "0f062532a6feb8462d3f3a84a6df7fda88d8dc69f2e035c26b5fbc932c5821fb",
+    "tests/test_source_review_reuse.py": "0e87d8f979067f026ce00b762a577eeb604ad358a0f8c2a82a5a7df56b8728dc",
     "tests/test_source_subset.py": "f0b8031cbe71aae6de6362f960d097fab44c662a1008cfff35f5097b73d21631",
-    "tests/test_terminal_diagnostics.py": "011e9d53cc3aba8abe7888658cc193aae65a54e099e229220a33c7b7c6afab58"
+    "tests/test_terminal_diagnostics.py": "011e9d53cc3aba8abe7888658cc193aae65a54e099e229220a33c7b7c6afab58",
+    "tests/test_tool_runtime_prefix.py": "9395b4d9eb6b7a0e2285d4d93fd726a1c9e19ea57049d745a8298aa7687c7d4f",
+    "tests/test_verification_accounting.py": "b557583293bacea7daac4256a63a494bc60c5b670428cd473ce91e6e7c7c185e",
+    "tests/test_verification_runtime.py": "b140ac68c772ff6bdd4b4a17e5840e926e25afe0c6151f8f540fc56e049c2757",
+    "tests/test_workflow_validation.py": "4057ed50dec0e4fde57cfe66dced39de50035f10da3210f9fae947489fd6ded8",
+    "tests/test_workspace_review.py": "4a3d30f536fab1edaaf2941993a7b3c775069fc99892af9d76efb300e5bc5161"
   },
   "localChanges": [
     {
@@ -575,7 +1070,103 @@
       "summary": "Dispatch an exactly authorized Sol project assessment with an operation ceiling and existing shared campaign. Validate source citations and retain a project-only instance without executing its proposed plan. Offline tested; live qualification pending.",
       "version": "unreleased-onboarding-dispatch"
     },
-    "Add explicitly granted project-local Node 24 container validation, private loopback isolation and retained source-bound execution evidence; preserve existing macOS and legacy recipe contracts."
+    "Add explicitly granted project-local Node 24 container validation, private loopback isolation and retained source-bound execution evidence; preserve existing macOS and legacy recipe contracts.",
+    "A new exact bounded repair-and-validate grant composes existing repaired producer and resumed local evidence modules; persistent dispatch/completion markers, immutable old grants, original accounting continuity and read-only verification. No publication integration or live-effect qualification.",
+    "Repair hardening binds canonical original intake/run evidence and recognized intake implementation, preserves raw uncomposed plan gaps and pinned citation protocols, reparses original and repair proposals from completed paid responses, and enforces optional implementation operation ceilings before reservation.",
+    "Protect the entire original intake outer state from repair output overlap and preserve safe rejection of non-object API configurations.",
+    "Derive repaired-candidate assessment reuse from all original source evidence across the complete original baseline diff, and independently verify the reuse field before validation.",
+    "Project repair diagnostic resource candidates through the existing public-capability whitelist for provider disclosure, retaining the complete unresolved local plan and all source-backed uncertainties.",
+    "Opt-in review evidence policy preserves substantive Markdown criteria and source-bound unchanged credential-literal projections, enforces covered citations in the wire schema, and preserves legacy grants and rejected outcomes. Offline regression tested; live continuation requires a fresh exact grant.",
+    "Bound further explicitly authorized funding increases through pinned acyclic campaign ancestry, preserve all prior full allocations and replay identities, and enforce schema-2 per-continuation paid-generation limits including unknown attempts. Qualified by nine continuation and 31 legacy API offline contracts.",
+    "Allow a fresh explicit resumed validation grant to reuse only a fully reconstructed identical completed paid source/workspace review; retain old bytes and accounting, forward its provenance through execution acceptance and delivery, and bound the new grant to one generation. Separate 180-second staging snapshot deadline from five-second Docker metadata and unchanged project test deadlines; no implicit unknown-effect retry.",
+    "Report the exact source identity mismatch metadata without file contents; retain strict fail-closed checks. A separate explicit source-review reuse opt-in recognizes only the exact qualified diagnostics-only runner patch by whole-file byte comparison and preserves both runner identities and all unchanged review-visible contract and request bytes.",
+    "Explicit sourceReadModePolicy restores only lost group/other read bits of byte-identical non-executable0644 private inputs observed as0600/0604/0640. Rehash after fchmod, record per-stage adapter actions, keep every other discrepancy blocking, disclose the distinct contract to a fresh source review and preserve action evidence through acceptance. Legacy defaults and all old grants remain strict.",
+    "New explicitly ordinal-bound fourth repair; retained failed container diagnostics are independently receipt/candidate/runner/source-reference checked, bounded stack locations and new source context remain untrusted. Preserve all old grants and charges; reconcile diagnostic review payment against its own descendant budget while the new repair uses an existing ancestor allocation. Publication checks four Git links; no arbitrary repair loop.",
+    "Explicit ordinal4 parent-repair metadata deadline may use the existing1800sec repaired-verifier ceiling; original non-repair producer forwarding remains capped900, and provider/project deadlines stay unchanged. Qualified after a real pre-effect900sec metadata timeout; no old effect replay.",
+    "For explicitly failed-execution repair only, disclose context sources for the derived repair scope and original editable feature paths, preserving every kept text/hash and complete editableSources. Reparse the complete historical review locally without changing it. Omitted diagnostic citations remain unknown. This admits required imported header CSS/component context within the existing repair allocation; legacy requests and fresh later reviews remain unchanged.",
+    "Opt-in reviewMaxSourceBytes up to2MiB is preserved in resumed/validation grants, workspace context and complete source packet. Default1MiB, per-file256KiB, unchanged-source deduplication, all source/secret checks and full criteria remain unchanged. This admits the actual imported255944byte header stylesheet without silently truncating independent review; per-operation token/cost caps remain mandatory.",
+    {
+      "paths": [
+        "docs/API-DELIVERY.md",
+        "docs/AUTONOMY-GAPS.md",
+        "docs/BETA-SCOPE.md",
+        "docs/CANDIDATE-REPAIR.md",
+        "docs/DELIVERY-CHAIN.md",
+        "docs/EXECUTION-REVIEW.md",
+        "docs/GITHUB-PUBLICATION.md",
+        "docs/PROJECT-COMMAND.md",
+        "docs/PROJECT-ONBOARDING.md",
+        "docs/PUBLISHING.md",
+        "docs/QUICKSTART.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/VERIFICATION.md",
+        "docs/WORKFLOW-VALIDATION.md",
+        "lib/aim_ci/control_archive.py",
+        "lib/aim_ci/docker_engine.py",
+        "lib/aim_ci/project_command.py",
+        "lib/aim_ci/project_container.py",
+        "lib/aim_ci/project_container_runner.cjs",
+        "lib/aim_ci/project_discovery.py",
+        "lib/aim_ci/project_execution.py",
+        "lib/aim_ci/project_host.py",
+        "lib/aim_ci/project_validation.py",
+        "lib/aim_ci/verification_runtime.py",
+        "lib/flow_api_delivery.py",
+        "lib/flow_candidate_review.py",
+        "lib/flow_command_source_context.py",
+        "lib/flow_delivery_chain.py",
+        "lib/flow_execution_refinement.py",
+        "lib/flow_execution_review.py",
+        "lib/flow_generation_budget.py",
+        "lib/flow_github_publication.py",
+        "lib/flow_onboarding_delivery.py",
+        "lib/flow_owner_acceptance.py",
+        "lib/flow_repair_candidate.py",
+        "lib/flow_repair_loop.py",
+        "lib/flow_repair_run.py",
+        "lib/flow_resume_candidate.py",
+        "lib/flow_review_execution_context.py",
+        "lib/flow_run.py",
+        "lib/flow_runtime_recovery.py",
+        "lib/flow_workflow.py",
+        "lib/flow_workflow_validation.py",
+        "lib/flow_workspace_review.py",
+        "scripts/package_beta.py",
+        "tests/test_budget_loop_installed.py",
+        "tests/test_campaign_continuation.py",
+        "tests/test_candidate_review.py",
+        "tests/test_completed_validation_reuse.py",
+        "tests/test_execution_review.py",
+        "tests/test_external_local_run.py",
+        "tests/test_failed_execution_repair.py",
+        "tests/test_finding_disposition.py",
+        "tests/test_flow_run_executed.py",
+        "tests/test_host_workflow_integration.py",
+        "tests/test_installed_api_delivery.py",
+        "tests/test_owner_acceptance.py",
+        "tests/test_project_command.py",
+        "tests/test_project_container.py",
+        "tests/test_project_container_runner.cjs",
+        "tests/test_project_host.py",
+        "tests/test_project_validation.py",
+        "tests/test_repair_candidate.py",
+        "tests/test_repair_loop.py",
+        "tests/test_repair_run.py",
+        "tests/test_resume_candidate.py",
+        "tests/test_review_evidence_policy.py",
+        "tests/test_runtime_hardlinks.py",
+        "tests/test_runtime_recovery.py",
+        "tests/test_second_repair.py",
+        "tests/test_source_read_modes.py",
+        "tests/test_source_review_reuse.py",
+        "tests/test_tool_runtime_prefix.py",
+        "tests/test_verification_accounting.py",
+        "tests/test_verification_runtime.py",
+        "tests/test_workspace_review.py"
+      ],
+      "summary": "Collect generic budget-governed repair iteration, source-bound verification reuse, project-native host execution, materiality review, separate owner scope decisions, runtime hardlink inventory/recovery and canonical Git helper discovery. Exclude private pilot/operator data. Preserve prior inventories, grants and outcomes.",
+      "version": "0.1.0-beta.10"
+    }
   ],
   "schemaVersion": 2,
   "scope": "Product-only controller; unrelated legacy integrations are excluded.",

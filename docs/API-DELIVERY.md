@@ -1,6 +1,6 @@
 # Sol API proposal delivery
 
-`aim-flow.py deliver-api` is included in the beta.9 download as a separate, proposal-only route for `gpt-6.1-sol` with `xhigh` reasoning. It does not apply edits, run project code, accept a product, deploy, or retry. `run-local-intake` retains its existing pinned mini model and historical budget rules. The local Codex adapter remains separate.
+`aim-flow.py deliver-api` is included in the beta.10 controller as a separate, proposal-only route for `gpt-6.1-sol` with `xhigh` reasoning. It does not apply edits, run project code, accept a product, deploy, or retry. `run-local-intake` retains its existing pinned mini model and historical budget rules. The local Codex adapter remains separate.
 
 ## Contract
 
@@ -63,10 +63,39 @@ Use Python 3.11+. Review `proposal.json`, retained response and accounting befor
 
 ## Install and upgrade
 
-Verify and install the beta.9 controller with its matching bootstrap and independent pins. Its archive uses schema 3 with an exact 61-file payload, including `aim-flow.py`, this guide and the Sol adapter. Older installations and their original matching bootstraps remain intact; install to a new directory rather than overwriting one. The matching bootstrap intentionally refuses older schema 2 and beta.8 schema 3 inventories. Beta.8 has 53 payload files; this release has 61. Schema equality alone does not imply archive compatibility.
+Verify and install the beta.10 controller with its matching bootstrap and independent pins. Its schema-3 archive contains exactly 100 files. Beta.9 has 61 and beta.8 has 53; each needs its original matching bootstrap. Install to a new directory and preserve old instances, grants, budgets and attempts. Equal schema numbers do not imply compatible inventories.
 
 Run `/absolute/path/to/new-private-controller/aim-flow.py deliver-api` with the arguments above. The installed command uses only its packaged modules; no source checkout, Git or Codex CLI is required. Preview requires an existing established budget history, selected source and request files, but no API key or network. This advanced route does not initialize a fresh campaign budget or replace the simpler mini intake.
 
 Keep the original campaign and authority files when upgrading. A new installation changes implementation pins, so preview the next operation again and authorize its new exact intent. Never edit an old receipt or reset an attempt to make it match a new version. Use the original installation to inspect an older retained operation.
+
+An explicitly authorized budget increase uses a separate continuation campaign.
+Its pinned schema-1 declaration has format `aim-flow-campaign-continuation`, new
+`campaignDirectory`, combined `limitNanoUsd`, `priorCampaign` containing the exact
+old campaign directory and historical budget, and a `priorBudgetSnapshot` file
+pin. The old journal, identities and verifiers remain unchanged. A single durable
+authority claim prevents creating multiple top-ups of the same old campaign.
+The new journal reserves the old campaign's entire original ceiling, then admits
+new requests only within the difference. Thus an original USD20 allocation plus
+a new total USD30 ceiling allows at most USD10 in the continuation even if an
+old controller later spends its remaining allowance. Previous reservations are
+never refunded, and duplicate old request hashes are refused in the new journal.
+
+A further explicit increase uses a schema-2 declaration. Its `priorCampaign`
+also pins the previous `campaignContinuation`, and `maximumPaidGenerations`
+(1..5) bounds new reservations, including failed or uncertain attempts. The
+combined ceiling must strictly increase; all earlier full allocations stay
+reserved. Up to four disjoint, acyclic increases are supported. Every ancestor's
+request identities and hashes are protected against replay. For USD20 -> USD30
+-> USD40, the last journal can reserve at most USD10; the preceding journals
+remain valid and unchanged. Set its generation bound to the unused authorized
+allowance after conservatively accounting for any still-active earlier grant.
+
+`resume-candidate` accepts this declaration as `campaignContinuation:{path,sha256}`
+in a fresh exact grant. It first verifies the original producer against its
+original accounting, then forwards the new funding through source review and
+executed-evidence review. This does not replay an old attempt or regenerate its
+completed candidate. Report recorded usage separately from reserved liability;
+neither is an independently retrieved billing invoice.
 
 `deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation. Local Codex and Codex Cloud delivery are not included in this download.

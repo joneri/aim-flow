@@ -15,7 +15,16 @@ from .project_discovery import CommitReader, unique_json
 
 FORMAT = 'aim-flow-project-validation-handoff'
 DECLARATION = 'aim-flow-project-validation-declaration'
-VERIFIER_TIMEOUT = 120
+VERIFIER_TIMEOUT = None
+REPAIRED_VERIFIER_TIMEOUT = None
+
+
+def producer_timeout(config):
+    """Local metadata has no default clock. Operators may select a positive limit."""
+    value = config.get('producerVerificationTimeoutSeconds', VERIFIER_TIMEOUT)
+    if value is not None and (type(value) is not int or value <= 0):
+        raise Refused('Invalid producer verification deadline')
+    return value
 
 
 def pinned(path, pin):
@@ -65,20 +74,20 @@ def prior_controller(directory, pin):
     return raw
 
 
-def verification_process(command, root, environment):
-    """Bound metadata capture and the complete trusted-verifier process group."""
+def _verification_process(command, root, environment, *, metadata_limit=64_000, timeout_seconds=None):
+    """Bound output memory; use a wall clock only when explicitly configured."""
     process = subprocess.Popen(command, cwd=root, env=environment, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, start_new_session=True)
     buffers = {'stdout': bytearray(), 'stderr': bytearray()}
-    deadline = time.monotonic() + VERIFIER_TIMEOUT
+    deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
     completed = False
     try:
         with selectors.DefaultSelector() as selector:
             selector.register(process.stdout, selectors.EVENT_READ, 'stdout')
             selector.register(process.stderr, selectors.EVENT_READ, 'stderr')
             while selector.get_map():
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0:
                     raise Refused('Predecessor verification exceeded its metadata deadline')
                 for key, _ in selector.select(remaining):
                     chunk = os.read(key.fileobj.fileno(), 8192)
@@ -86,21 +95,29 @@ def verification_process(command, root, environment):
                         selector.unregister(key.fileobj)
                         continue
                     buffers[key.data].extend(chunk)
-                    if sum(map(len, buffers.values())) > 64_000:
+                    if sum(map(len, buffers.values())) > metadata_limit:
                         raise Refused('Predecessor verification exceeded its metadata output bound')
-            process.wait(timeout=max(0.001, deadline - time.monotonic()))
+            process.wait(timeout=None if deadline is None else max(0.001, deadline - time.monotonic()))
         completed = True
         return SimpleNamespace(returncode=process.returncode, **{key: bytes(value) for key, value in buffers.items()})
     except subprocess.TimeoutExpired:
         raise Refused('Predecessor verification exceeded its metadata deadline') from None
     finally:
-        if not completed or process.poll() is None:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait()
+        # This transport owns the bootstrap group, including nested verifiers.
+        # Reap descendants even when the group leader has already completed.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
         process.stdout.close(); process.stderr.close()
+
+
+def verification_process(command, root, environment, *, metadata_limit=64_000, timeout_seconds=None, expected_terminal_failure=None):
+    from .verification_runtime import evaluate
+    return evaluate(command, root, environment, _verification_process,
+                    metadata_limit=metadata_limit, timeout_seconds=timeout_seconds,
+                    expected_terminal_failure=expected_terminal_failure)
 
 
 def verified_instance(root, args):
@@ -151,15 +168,76 @@ def identifier(value):
         raise Refused('Validation identifiers require lowercase letters, numbers and hyphens')
 
 
+def candidate_binding(root, instance, declaration):
+    """Bind a reviewed descendant without rewriting the original assessment."""
+    target, base = declaration['target'], instance['target']
+    onboarding._keys(target, ('checkout', 'commit', 'tree'), 'candidate target')
+    for name, value in target.items():
+        onboarding._text(value, 'candidate ' + name)
+    review = declaration['candidateReview']
+    onboarding._keys(review, ('reference', 'qualifications', 'changedPaths'), 'candidate review')
+    onboarding._text(review['reference'], 'candidate review reference')
+    for name in ('qualifications', 'changedPaths'):
+        onboarding._texts(review[name], 'candidate ' + name)
+        if not review[name]:
+            raise Refused('Candidate review requires qualifications and the complete changed path list')
+    if len(set(review['changedPaths'])) != len(review['changedPaths']):
+        raise Refused('Candidate review paths must be distinct')
+    for name in review['changedPaths']:
+        onboarding._source_path(name)
+    git = instance['packet']['git']
+    checkout = Path(target['checkout'])
+    if not checkout.is_absolute() or checkout.resolve() != checkout:
+        raise Refused('Candidate checkout must be canonical and absolute')
+    base_checkout = Path(base['checkout'])
+    if checkout.is_relative_to(base_checkout) or base_checkout.is_relative_to(checkout):
+        raise Refused('Candidate and original checkouts must be separate and nonoverlapping')
+    reader = CommitReader(root, checkout, Path(git['path']), git['sha256'], target['commit'])
+    if reader.tree != target['tree'] or target['commit'] == base['commit']:
+        raise Refused('Candidate must bind a distinct committed target and its exact tree')
+    base_tree = reader.read('rev-parse', base['commit'] + '^{tree}').decode().strip()
+    if (base_tree != base['tree'] or
+            reader.read('merge-base', '--is-ancestor', base['commit'], reader.commit, missing_ok=True) is None):
+        raise Refused('Candidate must descend from the original assessed commit and tree')
+    before = {name: (mode, kind, oid) for name, mode, kind, oid in
+              reader.entries(base['commit'], recursive=True)}
+    after = {name: (mode, kind, oid) for name, mode, kind, oid in
+             reader.entries(reader.commit, recursive=True)}
+    changed = sorted(name for name in before.keys() | after.keys() if before.get(name) != after.get(name))
+    if set(changed) != set(review['changedPaths']):
+        raise Refused('Candidate review must name the complete committed diff, including additions, deletions and modes')
+    protected = set(declaration['sourcePaths']) | {source['path'] for source in instance['packet']['sources']}
+    if protected.intersection(changed):
+        raise Refused('Candidate changes assessed or validation definitions; a new reviewed assessment is required')
+
+    def identity(entry):
+        if entry is None:
+            return None
+        mode, kind, oid = entry
+        if kind != 'blob' or mode not in ('100644', '100755'):
+            raise Refused('Candidate changes must be regular committed files, not links or submodules')
+        raw = reader.blob(oid)
+        return {'gitObject': oid, 'mode': mode, 'sha256': control_package.sha256(raw), 'bytes': len(raw)}
+
+    changes = {name: {'before': identity(before.get(name)), 'after': identity(after.get(name))}
+               for name in changed}
+    return reader, {'baseTarget': base, 'target': target, 'review': review, 'changes': changes,
+        'preservedEvidencePaths': sorted(protected),
+        'assessmentReuse': 'Original cited evidence is unchanged; the model did not assess this candidate.',
+        'coverage': 'Complete committed diff is bound; review text is not proof of safety, test coverage or acceptance.'}
+
+
 def _derive(root, args):
     control_package.verify_installation(root, args.manifest_sha256)
     instance = verified_instance(root, args)
     _, declaration = pinned(args.declaration, args.declaration_sha256)
+    version = declaration.get('schemaVersion') if isinstance(declaration, dict) else None
     onboarding._keys(declaration, ('format', 'schemaVersion', 'instanceSha256', 'target', 'review',
-        'sourcePaths', 'packageRoots', 'runtimes', 'jobs', 'excludedCoverage'), 'validation declaration')
+        'sourcePaths', 'packageRoots', 'runtimes', 'jobs', 'excludedCoverage',
+        *(('candidateReview',) if version == 2 else ())), 'validation declaration')
     if (declaration['format'] != DECLARATION or type(declaration['schemaVersion']) is not int
-            or declaration['schemaVersion'] != 1 or declaration['instanceSha256'] != args.instance_sha256
-            or declaration['target'] != instance['target']):
+            or version not in (1, 2) or declaration['instanceSha256'] != args.instance_sha256
+            or (version == 1 and declaration['target'] != instance['target'])):
         raise Refused('Validation declaration does not bind the selected project instance')
     review = declaration['review']
     onboarding._keys(review, ('reference', 'qualifications', 'openItems'), 'separate planning review')
@@ -175,8 +253,12 @@ def _derive(root, args):
         raise Refused('Select distinct committed validation source files')
     for name in selected:
         onboarding._source_path(name)
-    target, git = instance['target'], instance['packet']['git']
-    reader = CommitReader(root, Path(target['checkout']), Path(git['path']), git['sha256'], target['commit'])
+    target, git = declaration['target'], instance['packet']['git']
+    candidate = None
+    if version == 2:
+        reader, candidate = candidate_binding(root, instance, declaration)
+    else:
+        reader = CommitReader(root, Path(target['checkout']), Path(git['path']), git['sha256'], target['commit'])
     entries = {name: (mode, kind, oid) for name, mode, kind, oid in reader.entries(reader.commit, *selected)}
     sources = {}
     for name in selected:
@@ -297,13 +379,14 @@ def _derive(root, args):
     control_package.verify_installation(root, args.manifest_sha256)
     verified_instance(root, args)
     pinned(args.declaration, args.declaration_sha256)
-    return {'format': FORMAT, 'schemaVersion': 1, 'status': 'project-validation-handoff',
+    return {'format': FORMAT, 'schemaVersion': version, 'status': 'project-validation-handoff',
         'ready': False, 'executionAuthorized': False, 'target': target,
         'controllerManifestSha256': args.manifest_sha256,
         'lineage': {'instance': {'path': str(args.instance), 'sha256': args.instance_sha256},
                     'controller': {'path': str(args.instance_controller), 'manifestSha256': args.instance_controller_manifest_sha256},
                     'verification': 'predecessor-source-bound-instance-verified-without-rewriting',
                     'python': {'path': str(args.python), 'sha256': args.python_sha256}},
+        **({'candidate': candidate} if candidate is not None else {}),
         'declaration': {'path': str(args.declaration), 'sha256': args.declaration_sha256},
         'review': review, 'agentUnknowns': instance['assessment']['unknowns'],
         'sources': sources, 'packageRoots': roots, 'runtimes': runtimes, 'jobs': jobs,
@@ -328,6 +411,8 @@ def validation(root, args):
     checkout = Path(value['target']['checkout'])
     if args.action == 'plan-project-validation':
         onboarding._outside(args.output, args.instance_controller, checkout)
+        if 'candidate' in value:
+            onboarding._outside(args.output, root, Path(value['candidate']['baseTarget']['checkout']))
         return onboarding._write(args.output, value, root, checkout)
     actual = onboarding._read(args.handoff, args.handoff_sha256, root, checkout, 'Project validation handoff')
     if actual != value:

@@ -11,3 +11,10 @@
 9. Verify the expected remote commit, required CI and actual HTTPS page after publication. Until these checks pass, call it prepared, not live.
 
 Do not migrate the upstream live automation, repository protections, budgets, API credentials or deployment profiles merely because a new repository exists.
+
+
+The complete installed-lineage suite may exceed the former 15-minute CI limit.
+The offline job uses the hosted runner's 360-minute maximum by default; a manual
+workflow dispatch can select a shorter `offline_timeout_minutes`. This is an
+execution deadline, not permission for live API calls or customer deployments.
+See [GitHub workflow timeout syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idtimeout-minutes).

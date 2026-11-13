@@ -41,6 +41,43 @@ A `component-only` job can select the real `test:release-process` script without
 
 All handoffs remain `ready: false` and `executionAuthorized: false`. Each stage is `not-run`; hosted jobs are `reference-only`. Per-job scope and prerequisites remain visible even when a separate operator has observed one component. A passing component must not upgrade other jobs or erase unresolved model questions.
 
+## Reviewed candidate commits (development after beta.9)
+
+Declaration schema 2 adds `candidateReview` and lets `target` name a separate,
+canonical checkout at a reviewed descendant commit. `candidateReview` has exactly
+`reference`, nonempty `qualifications` and the complete distinct `changedPaths`
+list. Keep the original instance, its controller and original checkout at their
+old commit. The original verifier still checks those unchanged bindings. No
+model call, proposal application or Git mutation happens in this bridge.
+
+The planner verifies the candidate's exact commit/tree and ancestry, compares
+the complete recursive base/candidate trees, and binds each changed path's
+before/after object, content hash, mode and byte count. Additions, deletions and
+executable-mode changes count. Touched links and submodules are refused. Every
+original onboarding source and every validation-definition source must retain
+its original object and mode. If those definitions change, prepare a new reviewed
+assessment instead of quietly transferring its conclusions. Schema 1 remains
+unchanged and cannot retarget its original instance.
+
+The candidate review must inspect the whole diff and any new configuration,
+imports, lifecycle effects or dependencies. Unchanged selected evidence is not
+proof that all behavior is unchanged. The original model did not assess this
+candidate. Review qualifications and unresolved questions remain visible; a
+review-reference string is not proof of independent review or user permission.
+
+Both existing execution adapters use this derived candidate target and include
+the candidate binding in the exact preview/intent. Their source selection must
+include every changed file still present in the candidate. This prevents a
+baseline-only or partial-source run from claiming to validate the whole diff.
+Deleted files are bound as absent. Dirty and untracked files remain excluded.
+State/output must stay outside both checkouts, and the original instance is never
+rewritten. Existing runtime qualification, containment, exact authorization,
+single-attempt journals and receipt verification still apply.
+
+This connects a separately reviewed candidate to project-local named npm jobs.
+It does not apply an API proposal, start hosted CI, merge a PR, retain generated
+container artifacts, run an undeclared browser check or authorize deployment.
+
 ## Explicit offline execution
 
 `run-project-validation` now has a separate execution boundary. Supply the same pinned instance/controller/declaration/Python arguments as the planner, plus `--execution-spec`, `--execution-spec-sha256` and a new canonical private `--state` outside the controllers and checkout. `--preview` returns the complete intent and digest without executing project code. Only after independently reviewing and authorizing that concrete operation, use `--authorize-intent DIGEST` with unchanged inputs. A digest is an exact-change check, not evidence that a person granted permission.
@@ -167,3 +204,120 @@ Use this release's matching bootstrap and all independent pins for its exact
 bootstrap. Preserve older installations and retained instances; the separate
 pinned predecessor-controller verifier validates their own onboarding protocol.
 An upgrade never turns an earlier preview into execution authorization.
+
+## Derive a plan from onboarding (development)
+
+`derive-project-validation` removes the need to author every named npm stage by
+hand. It takes the same pinned instance, predecessor controller and Python
+arguments as planning, plus `--resource-catalog`, `--resource-catalog-sha256` and
+a new private `--output`. No declaration argument is required. It verifies the
+old assessment, rereads its actual committed evidence and emits a derived
+schema-1 declaration, resource needs, unchanged model unknowns and unsupported
+steps. The original assessment and checkout are not modified.
+
+Only complete literal `npm ci` / `npm run NAME` commands, optionally joined by
+exact spaced ` && `, in installation/tests areas are accepted. Every named
+script must exist in the working directory's committed package.json and a real
+npm lock must exist. Normal lifecycle effects remain visible to the existing
+handoff planner. Known `node/npm/git --version`, `zip -v` and literal `command -v TOOL ...`
+probes become explicit resource needs, never shell dispatch. Other flags, shell
+fragments or non-npm commands are not silently dropped. An unsupported predecessor remains a concrete unresolved need,
+not an implicitly satisfied dependency. Flow neither invents installation stages
+nor substitutes an aggregate for independent assessment steps. Unsupported
+production/hosted/browser commands require separate adapters and authorization.
+
+The catalog is `aim-flow-resource-catalog`, integer schemaVersion 1, with a
+`resources` array. Entries have `id`, `kind` (`node-runtime`, `npm-cache` or
+`browser-runtime`), `identity`, `requirements` (strings) and `qualification`.
+Optional `qualificationState` is `unknown`, `prepared` or `qualified`. A matching
+prepared resource is reported as `catalog-candidate-qualification-required`,
+not missing or already qualified. Even qualified claims still require review
+and current execution-time checks. An optional `executionSpec` is null or `{backend: "container" | "local", path,
+sha256}` with a canonical absolute path and an exact digest. These references
+are retained as proposed resource bindings; derivation does not read/execute the
+spec, provision anything, or claim the resource is currently available.
+
+Optional typed `capabilities` carries `nodeVersion`, `npmVersion`, `platform`,
+`architecture`, `lockSha256`, `gitVersion`, `utilities` (tool/identity mapping),
+and/or `browserPackages` (package/version mapping).
+Node candidates require measured three-part versions, platform and architecture.
+Matching uses a fail-closed engine-range subset: numeric versions, comparisons,
+space-separated conjunctions, caret and tilde. Unsupported unions, prereleases
+and other syntax remain unresolved. Thus 24.22.2 satisfies `>=24 <25` without
+catalog prose edits. Platform compatibility still requires separate qualification.
+Cache matching requires the exact lock SHA-256. Browser package matching does not
+prove browser binaries/revisions or sandbox behavior are qualified. Selected nested manifests
+also expose their engine constraints, and declared Playwright/Puppeteer
+packages expose browser needs. These conservative project-wide observations do
+not prove transitive reachability. Script bodies, implicit hooks, utility needs,
+network, writable scopes and nested behavior still require effect review.
+Missing/unsupported resources stop automatic progression; catalog matches are
+candidates for independently qualified binding, not proof of readiness.
+
+The returned `declaration` can be persisted and passed to the existing planner
+for exact quoted sources and full declared lifecycle handoffs. Its generated
+review marker is explicitly unreviewed. An independently authorized Flow review
+stage or operator can supply review evidence; no human-only policy is imposed
+by this derivation. Neither model text nor a citation supplies execution consent.
+The existing execution adapter still requires its own pinned specification,
+source/effect/runtime review and exact intent authorization. A catalog spec's
+job selection must be bound to the derived job ID; changed candidate sources
+must use the existing reviewed-descendant bridge and complete changed-file
+coverage. Never substitute a new commit into old source or authorization pins.
+
+This increment derives a usable bounded command plan; it does not resolve every
+assessment command, infer a complete shell execution graph or automatically
+provision runtime resources. Missing qualification is deliberately not success.
+
+### Optional retained test outputs
+
+Schema 1 and 2 container specs optionally accept `artifactCapture`. Its exact
+value is pinned by the execution-spec hash and intent authorization, then copied
+into the helper job. Omission preserves previous intent/job/report shapes.
+Higher-level planning must choose outputs from a source-cited test/generator
+plan; the backend does not guess paths or promote model text to execution consent.
+
+```
+"artifactCapture": {
+  "schemaVersion": 1,
+  "files": [{"path": "test-results/check.json", "mediaType": "application/json"}],
+  "maxFiles": 8,
+  "maxFileBytes": 4194304,
+  "maxTotalBytes": 8388608
+}
+```
+
+All exact project-relative files are required. No directories, globs, workspace
+export or source overlap is supported. Limits are 32 selected files, 4 MiB per
+file and 8 MiB total; each declaration may lower them. Base64 worst-case size
+plus 16 KiB metadata allowance must fit half of `outputBytes`, leaving explicit
+headroom for logs and inventory. A larger inventory can still exceed the final
+report limit: that produces `report-output-limit` failure, never a passing
+report with quietly omitted artifacts. For the example maximum, use an output
+budget of at least 22402392 bytes (within the existing 32000000 cap).
+
+After process cleanup, source restoration and output inventory, the helper
+captures regular single-link files with bounded reads before tmpfs disappears.
+It refuses symlink paths, hardlinks, missing outputs and mismatched inventory.
+Each ordered `report.artifacts` row contains `path`, `mediaType`, `bytes`,
+`sha256`, and canonical `base64`. The bytes remain inside the private local
+report and receipt, not exported to the source checkout, published, or sent to
+any API. Failed commands can retain outputs if post-stage checks complete;
+missing files include their exact path in the failure diagnostic.
+
+The installed verifier rechecks count, selection, bounds, base64, content hash,
+media type and output-inventory agreement, including present artifacts on failed
+runs. Supported media types are strict UTF-8 JSON (duplicate keys and non-JSON
+constants rejected) and PNG (signature, IHDR prefix and IEND trailer checked).
+PNG checks establish format markers, not decoding, visual correctness or
+acceptance. Independent acceptance review must inspect the actual retained
+bytes and the original requirement separately. `ready:false`, acceptance and
+deployment boundaries remain unchanged. Old attempts retain their old verifier
+and unknown execution outcomes remain non-retryable.
+
+Offline verification for this increment: 17 Python container tests passed,
+including an actual Node-to-Python retained-bytes round trip; 26 Node helper
+tests passed. The four artifact verifier tests were repeated after tightening
+null-artifact rejection. Provenance and whitespace checks passed. Fixtures do
+not start Docker, execute a customer project, call a provider or qualify an
+actual browser runtime; no full suite or live acceptance is claimed here.

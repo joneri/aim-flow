@@ -1,3 +1,82 @@
+# AIM Flow 0.1.0-beta.10 — release candidate
+
+Collect the pilot's controller corrections while preserving immutable prior
+reviews, attempts, budget history and existing downloads. Local preparation precedes an explicitly owner-authorized public branch/PR. No
+release tag or Pages publication is implied by a source push.
+
+## Changes
+
+- Iterate genuine candidate repairs within shared spending and paid-generation
+  authority, without hardcoded repair depth. Reuse source-bound read-only evidence
+  through authenticated flat input closures; invalidate changed inputs and retain
+  unknown outcomes without replay.
+- Derive diagnostics from the actual reused source-review state. Preserve complete
+  source contexts, repair provenance, prior findings and original authority.
+- Add reviewed project-native host execution and runtime preparation. Support
+  complete internal dependency hardlink groups, keep external/private aliases
+  refused, and reconcile the known completed-install inventory failure read-only.
+- Verify historical and minimal producers without inventing a dependency on
+  project validation. Bind the optional module’s absence/presence into the input
+  closure, retain tracing, and reject genuinely required missing/broken imports.
+- Bind canonical Git helper discovery behind private executable aliases. Keep old
+  intent semantics and bind helper hashes for new automatic qualifications.
+- Make finding severity/impact meaningful. Preserve concrete failures; distinguish
+  original outcomes from suggested nonessential verification methods. Separate
+  explicit owner scope acceptance from unchanged model review and delivery rights.
+- Include exact-candidate GitHub delivery and project release continuation. These
+  adapters still require project-specific reviewed declarations and actual owner
+  authority; the product is not unattended delivery for arbitrary repositories.
+- Run the full offline suite with a configurable hosted deadline; the default
+  uses the runner’s 360-minute maximum rather than the old 15-minute stop.
+- Package a source-bound 100-file schema-3 controller. Earlier schema-3 archives
+  require their original matching bootstrap. Preserve prior downloads unchanged.
+- Exclude private pilot sources, operator paths, decisions, API payloads, budgets,
+  credentials, journals and screenshots from the collected release and bundle.
+
+## Verification and remaining limits
+
+Local verification completed so far:
+
+- All 47 Node protocol/capture tests passed; no skips or failures.
+- Source provenance verified: 184 files, including the exact 100-file controller.
+- Nine wrapper payload hashes, trusted-source bootstrap verification, fresh
+  installation and expected unconfigured readiness exit 3 passed.
+- Static site: 18 local links/assets passed. Prior beta.8/beta.9 ZIP bytes are
+  unchanged. Source and nested-package privacy review found no private operator
+  paths, pilot journals, customer sources or real credentials. Literal dummy
+  tokens/header markers in refusal tests remain intentional synthetic fixtures.
+- The initial broad 947-case Python process ended without a summary. Its partial
+  log is retained; no complete pass is claimed. It exposed a bootstrap dependency
+  assumption and stale artifact/deadline test expectations, corrected here.
+- All 45 focused verifier/diagnostic/publication tests passed, including a
+  source-free installation running 20 publication contracts.
+- All 29 project-command, runtime recovery, hardlink and Git-prefix tests passed.
+- The corrected four-phase artifact integration passed (87.143 seconds).
+- The complete continuation-fixture class ran 60 tests: 59 passed, one existing
+  two-fixture-package skip. A broad-only continuation error did not reproduce
+  either alone or in class order; the retained partial result is not waived.
+- Hosted run `43481275915` completed all 950 cases in 1656.540 seconds:
+  931 passed, five failed and 14 platform/fixture cases were skipped. The five
+  remaining failures were stale expectations for removed metadata deadlines,
+  host/container runtime naming and resource-derived artifact bounds. All five
+  corrected contracts passed in a targeted run (146.759 seconds). Controller
+  payload/ZIP bytes are unchanged by these test-only corrections. A fresh
+  exact-commit CI result remains required before merge; no old failure is edited.
+
+
+Package pins:
+
+- ZIP SHA-256: `c7b2460edef834afc2ddf7cf0b73da22ec0144ea9c01ddd78e1aff7702e1cda3`.
+- Controller archive SHA-256: `05c732667c5f328ccf2fe0b58ea4d476eac041777e674570f3432314eb504cb5`.
+- Installed manifest SHA-256: `ecf236417f772e66710f807a404279f71cb48a7b75cf3fc106187717e400ecc4`.
+
+No new paid model call or live deployment is part of these checks. These checks
+qualify controller contracts and packaging only. They do not
+establish production frontend/backend acceptance or native assistive-technology
+interoperability. Private pilot operations and outcomes are excluded from this
+public release record. See [verification](VERIFICATION.md) and
+[remaining autonomy gaps](AUTONOMY-GAPS.md).
+
 # AIM Flow 0.1.0-beta.9
 
 Prepare a project-specific assessment, then separately review and run its real

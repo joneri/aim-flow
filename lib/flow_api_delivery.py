@@ -183,6 +183,18 @@ def implementation_pins():
 
 
 def authority(config):
+    if 'campaignContinuation' in config:
+        spec, prior = continuation(config)
+        # One durable claim per old campaign, regardless of proposed new directory.
+        path = Path(prior['identity']['campaignDirectory']).parent / (
+            'sol-api-continuation-authority-' + digest(encoded(prior['identity'])) + '.json')
+        identity = {'schemaVersion': 2, 'campaignDirectory': spec['campaignDirectory'],
+            'historicalBudget': config['historicalBudget'], 'limitNanoUsd': spec['limitNanoUsd'],
+            'model': MODEL, 'pricing': PRICING, 'campaignContinuation': config['campaignContinuation'],
+            'allocatedPriorCampaignNanoUsd': prior['identity']['limitNanoUsd']}
+        if path.exists() and json.loads(file_bytes(path)) != identity:
+            raise Refused('Campaign continuation authority changed; never reset')
+        return path, identity
     history = config['historicalBudget']
     key = digest(encoded({'directory': history['directory'], 'legacy': history['legacy']['path']}))
     path = Path(history['directory']).parent / ('sol-api-authority-' + key + '.json')
@@ -193,11 +205,105 @@ def authority(config):
     return path, identity
 
 
+def continuation_declarations(config):
+    """Validate the acyclic pinned graph before recursively reading any ledger."""
+    result, roots = [], set()
+    history = config['historicalBudget']
+    current = config
+    while 'campaignContinuation' in current:
+        root = canonical_path(current['campaignDirectory'])
+        if any(root == prior or root in prior.parents or prior in root.parents for prior in roots):
+            raise Refused('Campaign continuation chain is cyclic or overlaps')
+        roots.add(root)
+        spec = json.loads(pinned(current['campaignContinuation']))
+        fields = {'format', 'schemaVersion', 'campaignDirectory', 'limitNanoUsd',
+                  'priorCampaign', 'priorBudgetSnapshot'}
+        version = spec.get('schemaVersion') if isinstance(spec, dict) else None
+        if version == 2:
+            fields.add('maximumPaidGenerations')
+        if (not isinstance(spec, dict) or set(spec) != fields or type(version) is not int
+                or version not in (1, 2) or spec['format'] != 'aim-flow-campaign-continuation'
+                or spec['campaignDirectory'] != str(root)
+                or type(spec['limitNanoUsd']) is not int or spec['limitNanoUsd'] <= LIMIT):
+            raise Refused('Invalid explicit campaign continuation')
+        if version == 2 and (type(spec['maximumPaidGenerations']) is not int
+                or spec['maximumPaidGenerations'] <= 0):
+            raise Refused('Explicit continuation generation bound must be a positive integer')
+        prior = spec['priorCampaign']
+        expected = {'campaignDirectory', 'historicalBudget'}
+        if isinstance(prior, dict) and 'campaignContinuation' in prior and version == 2:
+            expected.add('campaignContinuation')
+        if not isinstance(prior, dict) or set(prior) != expected or prior['historicalBudget'] != history:
+            raise Refused('Continuation requires unchanged original historical authority')
+        if result and result[-1]['limitNanoUsd'] <= spec['limitNanoUsd']:
+            raise Refused('Campaign continuation must strictly increase the combined ceiling')
+        result.append(spec)
+        current = prior
+    root = canonical_path(current['campaignDirectory'])
+    if any(root == prior or root in prior.parents or prior in root.parents for prior in roots):
+        raise Refused('Campaign continuation chain is cyclic or overlaps')
+    return result
+
+
+def continuation(config):
+    """Pin a new combined ceiling while preserving every prior full allocation."""
+    spec = continuation_declarations(config)[0]
+    prior_config = spec['priorCampaign']
+    prior = read_existing_campaign(prior_config)
+    snapshot = json.loads(pinned(spec['priorBudgetSnapshot']))
+    if (not isinstance(snapshot, dict) or snapshot.get('identity') != prior['identity'] or not isinstance(snapshot.get('requests'), list)
+            or prior['requests'][:len(snapshot['requests'])] != snapshot['requests']
+            or any(row.get('status') == 'reserved' for row in snapshot['requests'])):
+        raise Refused('Prior continuation snapshot changed or has unsettled effects')
+    if prior['identity']['limitNanoUsd'] >= spec['limitNanoUsd']:
+        raise Refused('Campaign continuation must strictly increase the combined ceiling')
+    return spec, prior
+
+
+def prior_campaign_requests(config):
+    declarations = continuation_declarations(config)
+    return [row for spec in declarations for row in read_existing_campaign(spec['priorCampaign'])['requests']]
+
+
+def funded_config(config, pin=None):
+    """Apply after verifying producer provenance against the original config."""
+    if pin is None:
+        return config
+    spec = json.loads(pinned(pin))
+    result = {**config, 'campaignDirectory': spec.get('campaignDirectory'), 'campaignContinuation': pin}
+    continuation(result)
+    return result
+
+
+def campaign_limit(config):
+    return continuation(config)[0]['limitNanoUsd'] if 'campaignContinuation' in config else LIMIT
+
+
+def prior_campaign_roots(config):
+    return ([canonical_path(spec['priorCampaign']['campaignDirectory']) for spec in continuation_declarations(config)]
+            if 'campaignContinuation' in config else [])
+
+
+def campaign_account(campaign, config, identity):
+    campaign.directory = canonical_path(config['campaignDirectory'])
+    campaign.history = config['historicalBudget']
+    campaign.identity = identity
+    campaign.limit = identity['limitNanoUsd']
+    campaign.allocated_prior = identity.get('allocatedPriorCampaignNanoUsd', campaign.history['liabilityNanoUsd'])
+    campaign.continuation_config = config if 'campaignContinuation' in config else None
+
+
 def prepare(config_path, config_sha, state):
     raw = pinned({'path': str(config_path), 'sha256': config_sha})
     config = json.loads(raw)
     required = {'schemaVersion', 'method', 'model', 'reasoning', 'candidateDirectory',
                 'sourceFiles', 'inputFiles', 'request', 'campaignDirectory', 'historicalBudget', 'timeoutSeconds'}
+    if isinstance(config, dict) and 'campaignContinuation' in config:
+        required.add('campaignContinuation')
+    if isinstance(config, dict) and 'maxOperationNanoUsd' in config:
+        required.add('maxOperationNanoUsd')
+        if type(config['maxOperationNanoUsd']) is not int or not 1 <= config['maxOperationNanoUsd'] <= LIMIT:
+            raise Refused('Invalid implementation operation ceiling')
     if (not isinstance(config, dict) or set(config) != required or type(config['schemaVersion']) is not int
             or config['schemaVersion'] != 1 or config['method'] != 'responses-api'
             or config['model'] != MODEL or config['reasoning'] != 'xhigh'
@@ -209,7 +315,8 @@ def prepare(config_path, config_sha, state):
     historical = canonical_path(config['historicalBudget']['directory'])
     legacy_root = canonical_path(config['historicalBudget']['legacy']['path']).parent
     # Neither retained state nor campaign writes may overlap source, one another or historical roots.
-    protected = [candidate, historical, legacy_root, Path(__file__).resolve().parents[1]]
+    protected = [candidate, historical, legacy_root, Path(__file__).resolve().parents[1],
+                 *prior_campaign_roots(config)]
     for root in (state, campaign):
         for other in [*protected, campaign if root == state else state]:
             if root == other or root in other.parents or other in root.parents:
@@ -237,9 +344,11 @@ def prepare(config_path, config_sha, state):
               'historicalBudget': config['historicalBudget'], 'state': str(state),
               'authorityPath': str(authority_path),
               'modelRequested': MODEL, 'reasoningRequested': 'xhigh', 'serviceTier': 'default',
-              'timeoutSeconds': config['timeoutSeconds'], 'limitNanoUsd': LIMIT, 'pricing': PRICING,
+              'timeoutSeconds': config['timeoutSeconds'], 'limitNanoUsd': campaign_limit(config), 'pricing': PRICING,
               'maxOutputTokens': payload['max_output_tokens'], 'inputTokenHeadroom': INPUT_HEADROOM,
               'maxAttempts': 1, 'sourceApplied': False, 'productAccepted': False}
+    if 'maxOperationNanoUsd' in config:
+        intent['maxOperationNanoUsd'] = config['maxOperationNanoUsd']
     return config, raw, request_raw, payload, sources, intent
 
 
@@ -260,9 +369,7 @@ class Campaign:
                 if not authority_path.exists() or json.loads(file_bytes(authority_path)) != identity:
                     raise
         authority(config)
-        self.identity = {'schemaVersion': 1, 'campaignDirectory': str(self.directory),
-                         'model': MODEL, 'limitNanoUsd': LIMIT, 'pricing': PRICING,
-                         'historicalBudget': self.history}
+        campaign_account(self, config, identity)
         if not self.directory.exists():
             if not created_authority:
                 raise Refused('Established campaign directory is missing; never recreate')
@@ -281,6 +388,8 @@ class Campaign:
             yield
 
     def read(self):
+        if getattr(self, 'continuation_config', None) is not None:
+            continuation(self.continuation_config)
         marker = json.loads(file_bytes(self.directory / 'campaign.json'))
         data = json.loads(file_bytes(self.directory / 'budget.json'))
         if marker != self.identity or data.get('identity') != self.identity or set(data) != {'identity', 'requests'}:
@@ -289,6 +398,10 @@ class Campaign:
         if not isinstance(entries, list):
             raise Refused('Invalid Sol campaign history')
         ids, hashes = set(), set()
+        if getattr(self, 'continuation_config', None) is not None:
+            previous = prior_campaign_requests(self.continuation_config)
+            ids = {row['id'] for row in previous}
+            hashes = {row['requestSha256'] for row in previous}
         for entry in entries:
             if (not isinstance(entry, dict) or not isinstance(entry.get('id'), str) or entry['id'] in ids
                     or not isinstance(entry.get('requestSha256'), str) or entry['requestSha256'] in hashes
@@ -297,8 +410,14 @@ class Campaign:
                     or entry['reservedNanoUsd'] != reservation(entry.get('inputTokens'), entry.get('maxOutputTokens'))):
                 raise Refused('Invalid Sol reservation history')
             ids.add(entry['id']); hashes.add(entry['requestSha256'])
-        if self.history['liabilityNanoUsd'] + sum(e['reservedNanoUsd'] for e in entries) > LIMIT:
-            raise Refused('Combined historical and Sol budget exceeds USD20')
+        prior = getattr(self, 'allocated_prior', self.history['liabilityNanoUsd'])
+        limit = getattr(self, 'limit', LIMIT)
+        if prior + sum(e['reservedNanoUsd'] for e in entries) > limit:
+            raise Refused('Combined historical and Sol budget exceeds approved campaign ceiling')
+        if getattr(self, 'continuation_config', None) is not None:
+            maximum = continuation(self.continuation_config)[0].get('maximumPaidGenerations')
+            if maximum is not None and len(entries) > maximum:
+                raise Refused('Explicit continuation generation bound exceeded')
         return data
 
     def reserve(self, intent_sha, request_sha, tokens, output, state):
@@ -306,11 +425,18 @@ class Campaign:
         with self.lock():
             historical_snapshot(self.history)
             data = self.read()
-            if any(e['id'] == intent_sha or e['requestSha256'] == request_sha for e in data['requests']):
+            previous = prior_campaign_requests(self.continuation_config) if self.continuation_config else []
+            if any(e['id'] == intent_sha or e['requestSha256'] == request_sha for e in data['requests'] + previous):
                 raise Refused('Attempt or identical request already reserved; never replay')
-            total = self.history['liabilityNanoUsd'] + sum(e['reservedNanoUsd'] for e in data['requests']) + amount
-            if total > LIMIT:
-                raise Refused('Reservation would exceed combined historical and Sol USD20 ceiling')
+            if self.continuation_config is not None:
+                maximum = continuation(self.continuation_config)[0].get('maximumPaidGenerations')
+                if maximum is not None and len(data['requests']) >= maximum:
+                    raise Refused('Explicit continuation generation bound exhausted')
+            total = self.allocated_prior + sum(e['reservedNanoUsd'] for e in data['requests']) + amount
+            if total > self.limit:
+                raise Refused('Reservation would exceed combined historical and Sol approved ceiling')
+            from flow_generation_budget import check
+            check(self, data, state, amount)
             entry = {'id': intent_sha, 'requestSha256': request_sha, 'state': str(state),
                      'inputTokens': tokens, 'maxOutputTokens': output, 'reservedNanoUsd': amount,
                      'status': 'reserved', 'modelRequested': MODEL}
@@ -397,6 +523,55 @@ def status(state):
         return failure
 
 
+def read_existing_campaign(config):
+    """Inspect established accounting without creating markers or locks."""
+    path, identity = authority(config)
+    if json.loads(file_bytes(path)) != identity:
+        raise Refused('Existing campaign authority differs')
+    campaign = object.__new__(Campaign)
+    campaign_account(campaign, config, identity)
+    return campaign.read()
+
+
+def verified_proposal(state, sources, ledger):
+    """Reparse exact paid output, never trust a proposal plus editable self-hashes.
+
+    No implementation-code migration or dispatch occurs here. The caller must
+    independently bind the attempt/config/request to its current source intent.
+    """
+    state = canonical_path(state)
+    result = status(state)
+    if result.get('status') != 'proposal-ready-for-independent-review':
+        raise Refused('A completed retained proposal is required')
+    if not {'response.json', 'proposal.json', 'reservation.json', 'token-count.json'} <= set(result['evidenceSha256']):
+        raise Refused('Completed proposal lacks exact provider/accounting evidence')
+    attempt = json.loads(file_bytes(state / 'attempt.json'))
+    response = json.loads(file_bytes(state / 'response.json'))
+    reserved = json.loads(file_bytes(state / 'reservation.json'))
+    entry = result.get('reservation', {})
+    if (entry not in ledger['requests'] or entry.get('status') != 'completed'
+            or entry.get('id') != attempt.get('intentSha256')
+            or attempt.get('intentSha256') != digest(encoded(attempt.get('intent')))
+            or entry.get('state') != str(state)
+            or entry.get('requestSha256') != digest(file_bytes(state / 'request.json'))
+            or response.get('status') != 'completed' or response.get('model') != MODEL
+            or response.get('service_tier', 'default') != 'default'
+            or entry.get('responseId') != response.get('id')
+            or entry.get('responseStatus') != response.get('status')
+            or entry.get('modelReturned') != response.get('model')
+            or entry.get('usage') != response.get('usage')
+            or result.get('responseStatus') != response.get('status')
+            or result.get('modelReturned') != response.get('model')
+            or result.get('usage') != response.get('usage')
+            or reserved.get('status') != 'reserved'
+            or any(entry.get(k) != v for k, v in reserved.items() if k != 'status')):
+        raise Refused('Proposal response does not match exact paid completed accounting')
+    parsed = proposal(response, sources)
+    if parsed is None or parsed != json.loads(file_bytes(state / 'proposal.json')):
+        raise Refused('Proposal differs from exact retained provider response')
+    return parsed
+
+
 def run(config_path, config_sha, state, authorization=None, *, key_file=None, transport=None):
     state = canonical_path(state)
     if state.exists():
@@ -441,6 +616,8 @@ def run(config_path, config_sha, state, authorization=None, *, key_file=None, tr
                 raise Refused('Token count model differs')
             tokens = count.get('input_tokens')
             token_bounds(tokens, payload['max_output_tokens'])
+            if 'maxOperationNanoUsd' in c and reservation(tokens, payload['max_output_tokens']) > c['maxOperationNanoUsd']:
+                raise Refused('Implementation reservation exceeds operation approval')
             if prepare(config_path, config_sha, state)[-1] != intent:
                 raise Refused('Pinned inputs changed during preflight')
             entry = campaign.reserve(intent_sha, digest(encoded(payload)), tokens, payload['max_output_tokens'], state)

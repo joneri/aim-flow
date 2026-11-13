@@ -89,6 +89,41 @@ class ApiDeliveryTests(unittest.TestCase):
         for path, raw in self.original_history.items(): self.assertEqual(Path(path).read_bytes(), raw)
         for path in self.state.iterdir(): self.assertEqual(path.stat().st_mode & 0o077, 0)
 
+    def test_optional_operation_ceiling_preserves_legacy_intent_and_blocks_before_reservation(self):
+        self.assertNotIn('maxOperationNanoUsd', self.preview()['intent'])
+        self.c['maxOperationNanoUsd'] = 1; self.save()
+        self.assertEqual(self.preview()['intent']['maxOperationNanoUsd'], 1)
+        result = self.execute()
+        self.assertEqual(result['status'], 'preflight-refused')
+        self.assertEqual(self.calls, ['responses/input_tokens'])
+        self.assertIsNone(result['reservation'])
+        self.assertEqual(a.read_existing_campaign(self.c)['requests'], [])
+        self.assertFalse((self.state / 'reservation.json').exists())
+
+    def test_verified_proposal_reparses_response_and_preserves_paid_evidence(self):
+        self.execute()
+        sources = {'app.js': self.source.read_text()}
+        ledger = a.read_existing_campaign(self.c)
+        expected = json.loads((self.state / 'proposal.json').read_bytes())
+        self.assertEqual(a.verified_proposal(self.state, sources, ledger), expected)
+        response = (self.state / 'response.json').read_bytes()
+        expected['edits'][0]['new'] = 'manual-forgery'
+        path = self.state / 'proposal.json'; path.write_bytes(a.encoded(expected))
+        result_path = self.state / 'result.json'; result = json.loads(result_path.read_bytes())
+        result['evidenceSha256']['proposal.json'] = a.digest(path.read_bytes()); result_path.write_bytes(a.encoded(result))
+        with self.assertRaisesRegex(a.Refused, 'exact retained provider response'):
+            a.verified_proposal(self.state, sources, ledger)
+        self.assertEqual(response, (self.state / 'response.json').read_bytes())
+
+    def test_verified_proposal_matches_response_metadata_to_ledger(self):
+        self.execute()
+        response_path = self.state / 'response.json'; response = json.loads(response_path.read_bytes())
+        response['id'] = 'forged-id'; response_path.write_bytes(a.encoded(response))
+        result_path = self.state / 'result.json'; result = json.loads(result_path.read_bytes())
+        result['evidenceSha256']['response.json'] = a.digest(response_path.read_bytes()); result_path.write_bytes(a.encoded(result))
+        with self.assertRaisesRegex(a.Refused, 'paid completed accounting'):
+            a.verified_proposal(self.state, {'app.js': self.source.read_text()}, a.read_existing_campaign(self.c))
+
     def test_wrong_model_tier_tool_and_effort_refused_before_dispatch(self):
         for key, value in [('model', 'gpt-5-mini'), ('reasoning', {'effort': 'high'}),
                            ('service_tier', 'priority'), ('tools', []), ('stream', False), ('store', True)]:

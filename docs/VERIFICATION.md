@@ -1,5 +1,32 @@
 # Beta verification
 
+## Beta.10 local preparation, 13 November 2026
+
+The working-copy pilot corrections are collected into beta.10. Local preparation
+is not publication; no new live provider, push or deployment is authorized here.
+The previous beta downloads and installed pilot controllers remain unchanged.
+
+Corrections cover a budget-governed repair loop, source-bound incremental
+verification, optional explicit metadata deadlines, owned descendant cleanup,
+source-review/completed-validation reuse and the project-native host adapter.
+Review uses severity and material impact, preserves genuine failures and records
+unavailable nonessential methods without claiming they were performed. Separate
+owner scope receipts leave original model reviews intact. Runtime preparation,
+internal dependency hardlink inventory, read-only inventory recovery and canonical
+Git helper discovery avoid repeating known completed operations.
+
+Retained focused qualification includes verification-runtime mutation/tamper and
+nested-reuse cases, real installed source-review reuse, repair-loop routing,
+runtime preparation/recovery and owner scope refusal tests. A real-receipt delivery
+integration uses synthetic external effects; it is not a live deployment test.
+These earlier groups overlap and are not a new full-suite pass count.
+
+Private application operations, production outcomes, exact logs, candidates,
+screenshots, owner decisions and budget journals are excluded from this public
+release record. Local regression, packaging and privacy results for the collected
+version are recorded in [release notes](RELEASE-NOTES.md). No hosted or live
+beta.10 publication is claimed by local checks.
+
 ## Prior real runtime qualification (earlier controller revision)
 
 On 9 November 2026, controller source `783cb975f897b3179f3a8492a98b24fcc48dead6` completed the maintained installed schema 3 `npm-source-check` path against a reviewed synthetic fixture.

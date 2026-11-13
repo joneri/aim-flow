@@ -4,6 +4,8 @@ The image baseline and original checkout are protected. The private working
 copy is mutable during a stage; restoration is checked, not assumed atomic.
 """
 import io
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -26,6 +28,66 @@ HELPER = 'lib/aim_ci/project_container_runner.cjs'
 LAYOUT = '/opt/aim-project'
 NODE = '/usr/local/bin/node'
 NPM = '/usr/local/lib/node_modules/npm/bin/npm-cli.js'
+
+
+def artifact_capture(value, sources, output_bytes):
+    """Explicit exact project-relative outputs, never a workspace export."""
+    onboarding._keys(value, ('schemaVersion','files','maxFiles','maxFileBytes','maxTotalBytes'), 'artifact capture')
+    if type(value['schemaVersion']) is not int or value['schemaVersion'] != 1:raise Refused('Unsupported artifact capture')
+    for key, maximum in (('maxFiles',32),('maxFileBytes',4*1024**2),('maxTotalBytes',32*1024**2)):
+        if type(value[key]) is not int or not 1 <= value[key] <= maximum:raise Refused('Invalid artifact bound: '+key)
+    if value['maxFileBytes'] > value['maxTotalBytes'] or 4*((value['maxTotalBytes']+2)//3)+16384 > output_bytes//2:
+        raise Refused('Artifact bounds exceed total/report headroom')
+    files=value['files']
+    if not isinstance(files,list) or not 1 <= len(files) <= value['maxFiles']:raise Refused('Exact artifact files required')
+    seen=set()
+    for row in files:
+        onboarding._keys(row, ('path','mediaType'), 'artifact selection')
+        name=onboarding._source_path(row['path'])
+        if len(name)>512 or any(ord(c)<32 or ord(c)==127 for c in name):raise Refused('Unsafe artifact path')
+        if name in seen or any(name==n or name.startswith(n+'/') or n.startswith(name+'/') for n in sources):
+            raise Refused('Artifact overlaps source or duplicate selection')
+        if row['mediaType'] not in ('image/png','application/json'):raise Refused('Unsupported artifact media type')
+        seen.add(name)
+    return value
+
+
+def validate_artifacts(intent, report, required=False):
+    """Verify retained bytes even for failed runs; absence only allowed on failure."""
+    contract=intent.get('artifactCapture')
+    if contract is None:
+        if isinstance(report,dict) and 'artifacts' in report:raise Refused('Undeclared retained artifacts')
+        return
+    artifact_capture(contract,intent['sources'],intent['outputBytes'])
+    artifacts=report.get('artifacts') if isinstance(report,dict) else None
+    if (not isinstance(report,dict) or 'artifacts' not in report) and not required:return
+    if not isinstance(artifacts,list) or len(artifacts)!=len(contract['files']):raise Refused('Missing declared artifacts')
+    total=0
+    for expected,row in zip(contract['files'],artifacts):
+        onboarding._keys(row, ('path','mediaType','bytes','sha256','base64'), 'retained artifact')
+        if any(row[k]!=expected[k] for k in ('path','mediaType')):raise Refused('Artifact selection differs')
+        if type(row['bytes']) is not int or not 0 <= row['bytes'] <= contract['maxFileBytes']:raise Refused('Artifact size bound')
+        encoded=row['base64']
+        if not isinstance(encoded,str) or len(encoded)!=4*((row['bytes']+2)//3):raise Refused('Artifact encoding bound')
+        try:raw=base64.b64decode(encoded,validate=True)
+        except (ValueError,binascii.Error):raise Refused('Invalid artifact base64')
+        if base64.b64encode(raw).decode()!=encoded or len(raw)!=row['bytes'] or package.sha256(raw)!=row['sha256']:
+            raise Refused('Artifact bytes or digest differ')
+        total+=len(raw)
+        if total>contract['maxTotalBytes']:raise Refused('Artifact total byte bound')
+        if row['mediaType']=='image/png':
+            if not (raw.startswith(b'\x89PNG\r\n\x1a\n') and raw[8:16]==b'\0\0\0\rIHDR' and raw.endswith(b'\0\0\0\0IEND\xaeB`\x82')):
+                raise Refused('Artifact PNG signature differs')
+        else:
+            try:unique_json(raw.decode('utf-8'))
+            except (ValueError,UnicodeError,RecursionError):raise Refused('Artifact JSON content invalid')
+        outputs=report.get('outputs')
+        if not isinstance(outputs,dict):raise Refused('Artifact output inventory missing')
+        observed=outputs.get('project/'+row['path'],{})
+        if not isinstance(observed,dict):raise Refused('Invalid artifact output inventory')
+        if (observed.get('type')!='file' or type(observed.get('bytes')) is not int
+                or any(observed.get(k)!=row[k] for k in ('bytes','sha256'))):
+            raise Refused('Artifact differs from output inventory')
 
 
 def prepared_runtime(value, official):
@@ -62,16 +124,29 @@ def prepared_runtime(value, official):
     return {**value,'record':record}
 
 
+SOURCE_READ_MODE_POLICY = 'restore-byte-identical-read-bits-v1'
+
+
+def source_read_mode_policy(value):
+    if value != SOURCE_READ_MODE_POLICY:
+        raise Refused('Unsupported explicit source read-mode policy')
+    return value
+
+
 def prepare(root, args):
     handoff = planning.derive(root, args)
     _, spec = planning.pinned(args.execution_spec, args.execution_spec_sha256)
     version=spec.get('schemaVersion')
     extra=('workspaceExecution','inventoryBytes','preparedImage') if version==2 else ()
+    if 'artifactCapture' in spec:extra+=('artifactCapture',)
+    if 'sourceReadModePolicy' in spec:extra+=('sourceReadModePolicy',)
     onboarding._keys(spec, ('format', 'schemaVersion', 'job', 'sourcePaths', 'docker', 'image', 'npmCache',
         'runtimeReview', 'sourceReview', 'applicationEnvironment', 'timeoutSeconds', 'outputBytes',
         'memoryBytes', 'processCount', 'workspaceBytes',*extra), 'container execution spec')
     if spec['format'] != SPEC or type(version) is not int or version not in (1,2):
         raise Refused('Unsupported project container spec')
+    if 'sourceReadModePolicy' in spec:
+        source_read_mode_policy(spec['sourceReadModePolicy'])
     jobs = [j for j in handoff['jobs'] if j['id'] == spec['job']]
     if len(jobs) != 1 or jobs[0]['mode'] == 'hosted-reference' or jobs[0]['needs']:
         raise Refused('Select one local npm job without unresolved dependencies')
@@ -128,12 +203,15 @@ def prepare(root, args):
         if not set(required) <= sources.keys(): raise Refused('Stage manifest/lock missing from selected sources')
     state = onboarding._outside(args.state, root, Path(handoff['target']['checkout']))
     onboarding._outside(state, args.instance_controller, Path(handoff['target']['checkout']))
+    if 'candidate' in handoff:
+        onboarding._outside(state, root, Path(handoff['candidate']['baseTarget']['checkout']))
     for path in [args.execution_spec, args.declaration, args.instance, Path(cache['path']), Path(tool['path']),
                  *([Path(prepared['provenance']['path'])] if prepared else [])]:
         if path.is_relative_to(state) or state.is_relative_to(path): raise Refused('Attempt state overlaps pinned inputs')
     intent = {'format': 'aim-flow-project-container-intent', 'schemaVersion': 1,
         'controllerManifestSha256': args.manifest_sha256, 'executionSpecSha256': args.execution_spec_sha256,
         'handoffSha256': local.digest(handoff), 'target': handoff['target'], 'state': str(state),
+        **({'candidate': handoff['candidate']} if 'candidate' in handoff else {}),
         'job': jobs[0], 'sources': sources, 'cache': cache, 'docker': {**tool, 'endpoint': endpoint}, 'image': image,
         'helperSha256': package.sha256(read_owned_content(root, HELPER)),
         **{key: spec[key] for key in (*bounds, 'applicationEnvironment', 'runtimeReview', 'sourceReview')},
@@ -143,6 +221,8 @@ def prepare(root, args):
         'excludedCoverage': handoff['excludedCoverage'], 'review': handoff['review'], 'agentUnknowns': handoff['agentUnknowns']}
     if version==2:intent.update(schemaVersion=2,workspaceExecution=spec['workspaceExecution'],
         inventoryBytes=spec['inventoryBytes'],preparedImage=prepared)
+    if 'artifactCapture' in spec:intent['artifactCapture']=artifact_capture(spec['artifactCapture'],sources,spec['outputBytes'])
+    if 'sourceReadModePolicy' in spec:intent['sourceReadModePolicy']=spec['sourceReadModePolicy']
     return intent, reader
 
 
@@ -156,6 +236,8 @@ def job_document(intent):
     if intent['schemaVersion']==2:result.update(schemaVersion=2,workspaceExecution=intent['workspaceExecution'],
         inventoryBytes=intent['inventoryBytes'],runtimeTools=(intent['preparedImage'] or {}).get('runtimeTools',{}),
         runtimeFingerprints=intent['preparedImage']['record']['baseRuntime'] if intent['preparedImage'] else None)
+    if 'artifactCapture' in intent:result['artifactCapture']=intent['artifactCapture']
+    if 'sourceReadModePolicy' in intent:result['sourceReadModePolicy']=intent['sourceReadModePolicy']
     return result
 
 
@@ -303,7 +385,10 @@ def execute(root,state,intent,reader):
     observed=inspect_container(engine,staged_id,stage_name,staged)
     if observed['state']['Status']!='created':raise Refused('Staging unexpectedly started')
     route='/commit?'+urlencode({'container':staged_id,'pause':'false'})
-    derived=effect('stage:commit',{'containerId':staged_id,'archive':archive},lambda:engine._call('POST',route,(201,)))
+    # A sizeable staged dependency cache needs a bounded filesystem snapshot,
+    # rather than the ordinary five-second metadata deadline. Unknown outcomes
+    # remain consumed; this does not retry a commit or widen project execution.
+    derived=effect('stage:commit',{'containerId':staged_id,'archive':archive},lambda:engine._call('POST',route,(201,),timeout_seconds=180))
     image=derived.get('Id')
     if not isinstance(image,str) or not re.fullmatch('sha256:[a-f0-9]{64}',image):raise Refused('Invalid derived image identity')
     derived_meta=engine._call('GET','/images/'+image+'/json',(200,))
@@ -341,6 +426,7 @@ def execute(root,state,intent,reader):
             'Container helper evidence is not independent product acceptance. No hosted CI, native Windows, browser or deployment qualification.',
             'Selected project code is reviewed, not treated as hostile. Same-UID project/helper execution is not an adversarial evidence trust boundary; inspector activation is disabled.',
             'Private tmpfs outputs cease at exit; only bounded report inventories/logs are retained. Derived image remains local for review.']}
+    if 'artifactCapture' in intent:result['limitations'][-1]='Only explicitly declared bounded artifacts are retained as base64 in the local report; other tmpfs outputs cease at exit. No publication or acceptance is implied.'
     result['limitations'].append('Workspace mode: '+intent.get('workspaceExecution','noexec')+'. Only that exact private mount mode is qualified; no persistent OS security setting is changed.')
     if intent.get('preparedImage'):result['limitations'].append('Prepared runtime ancestry and pinned operator provenance are checked. Ancestry alone does not prove overlay safety; Node/npm/tool byte qualification and reviewed preparation remain required.')
     if read_owned_content(state,'container.stderr') or len(read_owned_content(state,'container.stdout'))>intent['outputBytes']:
@@ -358,6 +444,9 @@ def execute(root,state,intent,reader):
 def passing_report(intent,result):
     # The runner's detailed evidence is retained even for a failed qualification.
     report=result.get('report')
+    if not valid_source_read_mode_restorations(intent, report):return False
+    try:validate_artifacts(intent,report,required=True)
+    except (Refused,ValueError,TypeError):return False
     expected_sources={n:{'sha256':r['sha256'],'mode':int(r['mode'],8)&0o777,'bytes':r['bytes']} for n,r in intent['sources'].items()}
     runtime=report.get('runtime',{}) if isinstance(report,dict) else {}
     if not isinstance(runtime,dict):return False
@@ -402,9 +491,34 @@ def passing_report(intent,result):
         and result.get('diagnostic') is None)
 
 
+def valid_source_read_mode_restorations(intent, report):
+    if not isinstance(report, dict):return False
+    if 'sourceReadModePolicy' not in intent:
+        return 'sourceReadModePolicy' not in report and not report.get('sourceReadModeRestorations')
+    if (intent['sourceReadModePolicy'] != SOURCE_READ_MODE_POLICY
+            or report.get('sourceReadModePolicy') != SOURCE_READ_MODE_POLICY):return False
+    rows = report.get('sourceReadModeRestorations')
+    if not isinstance(rows, list) or len(rows) > len(intent['sources']) * len(intent['job']['stages']):return False
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {'path', 'stageIndex', 'sha256', 'bytes', 'fromMode', 'toMode'}:return False
+        if not isinstance(row['path'], str):return False
+        source = intent['sources'].get(row['path'])
+        if (not source or source['mode'] != '100644' or row['sha256'] != source['sha256']
+                or type(row['bytes']) is not int or row['bytes'] != source['bytes']
+                or type(row['fromMode']) is not int or row['fromMode'] not in (0o600, 0o604, 0o640)
+                or type(row['toMode']) is not int or row['toMode'] != 0o644
+                or type(row['stageIndex']) is not int or not 0 <= row['stageIndex'] < len(intent['job']['stages'])):return False
+        key = row['path'], row['stageIndex']
+        if key in seen:return False
+        seen.add(key)
+    return True
+
+
 def verify(state,intent,pin):
     raw=read_owned_content(state,'result.json');package.check_digest(raw,pin,'Container result')
     result=unique_json(raw)
+    validate_artifacts(intent,result.get('report'),required=result.get('status')=='passed')
     if unique_json(read_owned_content(state,'intent.json'))!=intent or result.get('intentSha256')!=local.digest(intent):raise Refused('Container intent changed')
     if result.get('status')!=('passed' if passing_report(intent,result) else 'failed'):raise Refused('Container status disagrees with evidence')
     for name,digest in result['controlFiles'].items():

@@ -4,12 +4,19 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      offline_timeout_minutes:
+        description: 'Offline regression deadline in minutes (1–360; hosted runner maximum 360)'
+        type: number
+        default: 360
 permissions:
   contents: read
 jobs:
   offline-contracts:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Installed lineage integrations may exceed the former 15-minute allowance.
+    # Use the hosted runner ceiling; manual dispatch may choose a shorter limit.
+    timeout-minutes: ${{ inputs.offline_timeout_minutes || 360 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -29,11 +36,11 @@ jobs:
       - name: Run Node protocol tests
         run: node --test tests/test_npm_platform_build.cjs tests/test_project_container_runner.cjs
       - name: Check branded download
-        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.9.zip
+        run: python3 scripts/check_bundle.py site/downloads/aim-flow-0.1.0-beta.10.zip
       - name: Build and verify branded package
         run: |
           python3 scripts/package_beta.py --output "$RUNNER_TEMP/aim-flow-beta"
-          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.9.zip"
+          python3 scripts/check_bundle.py "$RUNNER_TEMP/aim-flow-beta/aim-flow-0.1.0-beta.10.zip"
       - name: Check static website
         run: python3 scripts/check_site.py
       - name: Show beta version

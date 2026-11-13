@@ -57,6 +57,81 @@ test('output inventory hashes bytes, records links without following and enforce
   assert.equal(result.link.type, 'link'); assert.equal(result.link.target, '/outside-not-read'); assert.equal(result['package.json'].type, 'file');
   assert.throws(() => runner.inventory(root + '/source', Date.now() - 1));
 });
+test('source failure identifies byte or mode drift without exposing file content or restoring it', t => {
+  const { root, data, manifest } = fixture(t); const deadline = Date.now() + 5000;
+  runner.copyTree(root + '/source', root + '/project', manifest, true, deadline);
+  const file = root + '/project/package.json';
+  fs.chmodSync(file, 0o600);
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline), error => {
+    const row = JSON.parse(error.message.slice('Copied source not restored: '.length));
+    assert.equal(row.path, 'package.json'); assert.equal(row.expected.mode, 0o644);
+    assert.equal(row.actual.mode, 0o600); assert.equal(row.actual.sha256, row.expected.sha256);
+    assert.equal(fs.statSync(file).mode & 0o777, 0o600); return true;
+  });
+  fs.chmodSync(file, 0o644); fs.appendFileSync(file, 'private-diagnostic-sentinel');
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline), error => {
+    const row = JSON.parse(error.message.slice('Copied source not restored: '.length));
+    assert.notEqual(row.actual.sha256, row.expected.sha256);
+    assert.equal(row.expected.bytes, data.length); assert.equal(row.actual.bytes, fs.statSync(file).size);
+    assert(!error.message.includes('private-diagnostic-sentinel')); return true;
+  });
+});
+test('explicit policy restores only lost read bits on byte-identical non-executable source', t => {
+  const { root, data, manifest } = fixture(t); const deadline = Date.now() + 5000;
+  runner.copyTree(root + '/source', root + '/project', manifest, true, deadline);
+  const file = root + '/project/package.json'; const actions = [];
+  for (const mode of [0o600, 0o604, 0o640]) {
+    fs.chmodSync(file, mode);
+    const result = runner.copiedSources(root + '/project', manifest, deadline,
+      { policy: 'restore-byte-identical-read-bits-v1', actions, stageIndex: 2 });
+    assert.equal(result['package.json'].mode, 0o644);
+    assert.deepEqual(fs.readFileSync(file), data); assert.equal(fs.statSync(file).mode & 0o7777, 0o644);
+    assert.deepEqual(actions.at(-1), { path: 'package.json', stageIndex: 2,
+      sha256: runner.sha(data), bytes: data.length, fromMode: mode, toMode: 0o644 });
+  }
+  const j = job(); j.sourceReadModePolicy = 'restore-byte-identical-read-bits-v1'; runner.validateJob(j);
+  for (const value of [true, null, 'ignore-source-changes']) {
+    j.sourceReadModePolicy = value; assert.throws(() => runner.validateJob(j));
+  }
+});
+test('read-mode policy never repairs content, ownership bits, writes, executes or special modes', t => {
+  const { root, data, manifest } = fixture(t); const deadline = Date.now() + 5000;
+  runner.copyTree(root + '/source', root + '/project', manifest, true, deadline);
+  const file = root + '/project/package.json'; const actions = [];
+  const options = { policy: 'restore-byte-identical-read-bits-v1', actions, stageIndex: 0 };
+  fs.chmodSync(file, 0o600); fs.appendFileSync(file, 'different content');
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, options));
+  assert.equal(fs.statSync(file).mode & 0o7777, 0o600); assert.equal(actions.length, 0);
+  fs.writeFileSync(file, data);
+  for (const mode of [0o400, 0o660, 0o666, 0o755, 0o1644, 0o4644]) {
+    fs.chmodSync(file, mode);
+    // Some host filesystems strip special bits; they cannot exercise that case.
+    if ((fs.statSync(file).mode & 0o7777) !== mode) {
+      assert.equal(fs.statSync(file).mode & 0o7777, 0o644); continue;
+    }
+    assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, options),
+      `forbidden mode ${mode.toString(8)}, observed ${(fs.statSync(file).mode & 0o7777).toString(8)}`);
+    assert.equal(fs.statSync(file).mode & 0o7777, mode); assert.equal(actions.length, 0);
+  }
+  fs.chmodSync(file, 0o700); manifest['package.json'].mode = '100755';
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, options));
+  assert.equal(actions.length, 0);
+});
+test('read-mode restoration still rejects linked source and requires an exact explicit policy', t => {
+  const { root, manifest } = fixture(t); const deadline = Date.now() + 5000;
+  runner.copyTree(root + '/source', root + '/project', manifest, true, deadline);
+  const file = root + '/project/package.json'; fs.chmodSync(file, 0o600);
+  const options = { policy: 'restore-byte-identical-read-bits-v1', actions: [], stageIndex: 0 };
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline));
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, { ...options, policy: 'arbitrary' }));
+  assert.equal(fs.statSync(file).mode & 0o7777, 0o600);
+  fs.linkSync(file, root + '/alias');
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, options));
+  assert.equal(options.actions.length, 0); fs.unlinkSync(root + '/alias');
+  fs.renameSync(file, root + '/original'); fs.symlinkSync(root + '/original', file);
+  assert.throws(() => runner.copiedSources(root + '/project', manifest, deadline, options));
+  assert.equal(options.actions.length, 0);
+});
 test('sanitized environment is built without ambient credentials or Node options', () => {
   const saved = process.env.NODE_OPTIONS; process.env.NODE_OPTIONS = '--require fake';
   try {
@@ -216,4 +291,72 @@ test('v2 info logs do not alter lifecycle flags and v1 logging stays unchanged',
   assert.equal(old.npm_config_loglevel,undefined);assert.equal(modern.npm_config_loglevel,'info');
   for(const key of ['npm_config_ignore_scripts','npm_config_foreground_scripts','npm_config_allow_scripts']) assert.equal(modern[key],undefined);
   delete modern.npm_config_loglevel;assert.deepEqual(modern,old);
+});
+
+function artifactContract() {
+  return { schemaVersion: 1, files: [{ path: 'results/check.json', mediaType: 'application/json' }], maxFiles: 2, maxFileBytes: 1024, maxTotalBytes: 2048 };
+}
+test('explicit artifacts retain bounded actual bytes; old jobs stay unchanged', t => {
+  const { root } = fixture(t); fs.mkdirSync(root + '/project/results', { recursive: true });
+  const raw = Buffer.from('{"passed":true}\n'); fs.writeFileSync(root + '/project/results/check.json', raw);
+  const c = artifactContract(), deadline = Date.now() + 5000;
+  const outputs = runner.inventory(root, deadline);
+  const rows = runner.captureArtifacts(root + '/project', c, {}, 100000, outputs, deadline);
+  assert.equal(rows[0].base64, raw.toString('base64')); assert.equal(rows[0].sha256, runner.sha(raw));
+  const j = job(); assert.equal(Object.hasOwn(runner.validateJob(j), 'artifactCapture'), false);
+  j.artifactCapture = c; assert.equal(runner.validateJob(j).artifactCapture, c);
+  delete outputs['project/results/check.json'];
+  assert.throws(() => runner.captureArtifacts(root + '/project', c, {}, 100000, outputs, deadline));
+});
+test('artifact contract rejects unsafe sources, selections and budgets', () => {
+  for (const change of [c => c.maxFiles = true, c => c.maxFileBytes = 4194305, c => c.maxTotalBytes = 33554433,
+    c => c.files.push(c.files[0]), c => c.files[0].path = '.', c => c.files[0].path = '../x',
+    c => c.files[0].path = 'package.json', c => c.files[0].mediaType = 'text/html', c => c.directory = 'results']) {
+    const j = job(); j.artifactCapture = artifactContract(); change(j.artifactCapture); assert.throws(() => runner.validateJob(j));
+  }
+  const j = job(); j.artifactCapture = artifactContract(); j.outputBytes = 4096; assert.throws(() => runner.validateJob(j));
+});
+test('artifact capture refuses missing, linked, hardlinked, malformed and oversized outputs', t => {
+  const { root } = fixture(t); fs.mkdirSync(root + '/project/results', { recursive: true });
+  const file = root + '/project/results/check.json', c = artifactContract(), deadline = Date.now() + 5000;
+  const capture = () => runner.captureArtifacts(root + '/project', c, {}, 100000, runner.inventory(root, deadline), deadline);
+  assert.throws(capture, /results\/check.json/);
+  for (const data of ['x', '{"a":1,"a":2}', ' '.repeat(1025), Buffer.from([0xff])]) { fs.writeFileSync(file, data); assert.throws(capture); }
+  fs.unlinkSync(file); fs.symlinkSync(root + '/source/package.json', file); assert.throws(capture); fs.unlinkSync(file);
+  fs.linkSync(root + '/source/package.json', file); assert.throws(capture); fs.unlinkSync(file);
+  fs.rmdirSync(root + '/project/results'); fs.symlinkSync(root + '/source', root + '/project/results'); assert.throws(capture);
+});
+test('PNG signature retained and report overflow is explicit failure, never quiet omission', t => {
+  const { root } = fixture(t); fs.mkdirSync(root + '/project');
+  const raw = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64');
+  fs.writeFileSync(root + '/project/pixel.png', raw);
+  const c = artifactContract(); c.files = [{ path: 'pixel.png', mediaType: 'image/png' }];
+  const deadline = Date.now() + 5000;
+  assert.equal(runner.captureArtifacts(root + '/project', c, {}, 100000, runner.inventory(root, deadline), deadline)[0].bytes, raw.length);
+  fs.writeFileSync(root + '/project/pixel.png', '{}');
+  assert.throws(() => runner.captureArtifacts(root + '/project', c, {}, 100000, runner.inventory(root, deadline), deadline));
+  const report = JSON.parse(runner.encodeReport({ status: 'passed', artifacts: ['x'.repeat(100000)], stages: [], unrunStages: [] }, 4096));
+  assert.equal(report.status, 'failed'); assert.equal(report.failure, 'report-output-limit');
+});
+test('combined artifact bytes enforce total even when each file fits', t => {
+  const { root } = fixture(t); fs.mkdirSync(root + '/project/results', { recursive: true });
+  const c = artifactContract(); c.maxTotalBytes = 1100;
+  c.files.push({ path: 'results/second.json', mediaType: 'application/json' });
+  for (const row of c.files) fs.writeFileSync(root + '/project/' + row.path, JSON.stringify('x'.repeat(600)));
+  const deadline = Date.now() + 5000;
+  assert.throws(() => runner.captureArtifacts(root + '/project', c, {}, 100000, runner.inventory(root, deadline), deadline), /Artifact total byte bound/);
+  c.maxFiles = 1; assert.throws(() => runner.validateArtifactCapture(c, {}, 100000));
+});
+
+test('reviewed screenshot-sized collection above eight MiB fits explicit report budget', t => {
+  const { root } = fixture(t); fs.mkdirSync(root + '/project/results', { recursive: true });
+  const c = { schemaVersion: 1, files: [], maxFiles: 3, maxFileBytes: 4 * 1024 ** 2, maxTotalBytes: 10 * 1024 ** 2 };
+  for (let n = 0; n < 3; n++) {
+    const name = 'results/' + n + '.json'; c.files.push({path: name, mediaType: 'application/json'});
+    fs.writeFileSync(root + '/project/' + name, JSON.stringify('x'.repeat(3 * 1024 ** 2)));
+  }
+  const deadline = Date.now() + 10000;
+  const rows = runner.captureArtifacts(root + '/project', c, {}, 32000000, runner.inventory(root, deadline), deadline);
+  assert.equal(rows.length, 3); assert.ok(rows.reduce((sum, row) => sum + row.bytes, 0) > 8 * 1024 ** 2);
+  assert.throws(() => runner.validateArtifactCapture(c, {}, 16000000), /headroom/);
 });
