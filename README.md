@@ -8,7 +8,7 @@ AIM Flow helps you understand a software project, choose the next step and check
 
 **Version:** `0.1.0-beta.10` (release candidate; [PR #2](https://github.com/joneri/aim-flow/pull/2)) · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
-[Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md)
+[Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md) · [CI: 17-case default](docs/CI.md)
 
 ## What you can explore now
 

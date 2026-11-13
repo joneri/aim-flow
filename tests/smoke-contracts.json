@@ -1,0 +1,33 @@
+{
+  "format": "aim-flow-ci-smoke-selection",
+  "python": [
+    "test_api_delivery.ApiDeliveryTests.test_exact_authorization_required",
+    "test_api_delivery.ApiDeliveryTests.test_combined_campaign_ceiling_and_full_reservations",
+    "test_api_delivery.ApiDeliveryTests.test_no_replay_same_state_or_same_payload_new_state",
+    "test_verification_runtime.VerificationRuntimeTests.test_real_process_cache_hit_and_changed_or_deleted_descriptor_relative_source",
+    "test_verification_runtime.VerificationRuntimeTests.test_cached_output_tamper_is_refused",
+    "test_verification_runtime.VerificationRuntimeTests.test_minimal_pinned_producer_without_validation_package_is_source_bound",
+    "test_repair_loop.RepairLoopTests.test_six_repairs_are_budget_driven_and_verification_never_repeats_paid_phases",
+    "test_repair_loop.RepairLoopTests.test_unknown_accounting_outcome_and_changed_prefix_refuse_more_work",
+    "test_owner_acceptance.OwnerScopeTests.test_concrete_defect_failed_execution_or_missing_evidence_cannot_be_accepted",
+    "test_finding_disposition.FindingDispositionTests.test_low_follow_up_is_retained_without_blocking",
+    "test_finding_disposition.FindingDispositionTests.test_real_impact_blocks_even_at_low_severity",
+    "test_runtime_hardlinks.RuntimeHardlinkTests.test_alias_outside_runtime_remains_refused",
+    "test_runtime_hardlinks.RuntimeHardlinkTests.test_internal_npm_style_aliases_are_hashed_and_topology_recorded",
+    "test_tool_runtime_prefix.ToolPrefixTests.test_existing_legacy_intent_does_not_gain_new_runtime_authority"
+  ],
+  "node": [
+    {
+      "file": "tests/test_project_container_runner.cjs",
+      "name": "strict JSON refuses duplicate keys and trailing/nested malformed data"
+    },
+    {
+      "file": "tests/test_project_container_runner.cjs",
+      "name": "sanitized environment is built without ambient credentials or Node options"
+    },
+    {
+      "file": "tests/test_project_container_runner.cjs",
+      "name": "artifact capture refuses missing, linked, hardlinked, malformed and oversized outputs"
+    }
+  ]
+}

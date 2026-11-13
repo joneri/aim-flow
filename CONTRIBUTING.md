@@ -4,6 +4,6 @@ Start with a small issue that describes the project shape, expected behavior and
 
 Changes to an execution path need a bounded contract, refusal tests, permission/recovery semantics and truthful evidence boundaries. Preserve unknown outcomes and budget continuity. Do not equate a passing source check with a build, deployment or acceptance.
 
-The product-only extraction records unchanged upstream files separately from reviewed modifications. Proposed engine changes must update their provenance and tests deliberately. Use the tests listed in `docs/VERIFICATION.md`.
+The product-only extraction records unchanged upstream files separately from reviewed modifications. Proposed engine changes must update their provenance and tests deliberately. Run the small selection in [CI.md](docs/CI.md) by default. The complete Python/Node suites run only when explicitly requested through manual `full_regression` dispatch; do not start them automatically for a PR, main push or routine change. Retained full-suite evidence is not authority to rerun it.
 
 No contribution agreement or additional rights grant is implied by this document. Follow the repository's chosen distribution terms.

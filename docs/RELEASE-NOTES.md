@@ -26,14 +26,22 @@ release tag or Pages publication is implied by a source push.
 - Include exact-candidate GitHub delivery and project release continuation. These
   adapters still require project-specific reviewed declarations and actual owner
   authority; the product is not unattended delivery for arbitrary repositories.
-- Run the full offline suite with a configurable hosted deadline; the default
-  uses the runner’s 360-minute maximum rather than the old 15-minute stop.
+- Run 17 selected cases automatically on PR/main. Full 950-case Python and
+  47-case Node regression requires explicit manual `full_regression` opt-in; it
+  never runs automatically. Retain inexpensive integrity/install/site checks.
 - Package a source-bound 100-file schema-3 controller. Earlier schema-3 archives
   require their original matching bootstrap. Preserve prior downloads unchanged.
 - Exclude private pilot sources, operator paths, decisions, API payloads, budgets,
   credentials, journals and screenshots from the collected release and bundle.
 
 ## Verification and remaining limits
+
+Final implementation CI `43487183081` passed all 950 Python cases (936 passed,
+14 skipped), all 47 Node cases and the package/install/site checks. That completed
+full-run evidence is retained; it is not repeated by default. The owner's revised
+CI policy replaces automatic full runs with the auditable 17-case selection and
+makes complete regression manual-only. The automatic main full run triggered by
+the preceding merge was cancelled when this policy was requested. See [CI.md](CI.md).
 
 Local verification completed so far:
 
