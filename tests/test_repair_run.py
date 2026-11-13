@@ -289,7 +289,7 @@ class BoundedRepairRunTests(fixtures.RepairTests):
         preview = self.bounded()
         self.assertEqual(preview['intent']['combinedHistoricalAndCampaignLimitNanoUsd'], 30_000_000_000)
         self.assertEqual(preview['intent']['derivedResumeConfig']['campaignContinuation'], self.pin(funding))
-        self.assertEqual(preview['intent']['derivedResumeConfig']['producerVerificationTimeoutSeconds'], 1800)
+        self.assertIsNone(preview['intent']['derivedResumeConfig']['producerVerificationTimeoutSeconds'])
         result = self.finish()
         self.assertEqual(result['status'], 'local-feature-evidence-reviewed', result)
         self.assertTrue(result['localFeatureAccepted'])

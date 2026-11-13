@@ -185,9 +185,10 @@ class ContinuationTests(fixtures.RequirementWorkflowTests):
         self.assertEqual(len(self.wcalls), 6)  # Only the newly granted independent review.
         self.assertEqual(originals, {name: (self.ws / name).read_bytes() for name in originals})
 
-    def test_producer_timeout_is_bounded_explicit_and_grant_bound(self):
+    def test_producer_deadline_is_configurable_explicit_and_grant_bound(self):
         self.grant(); self.select_new_controller()
         first = self.phase()
+        self.assertIsNone(first['intent']['producerVerificationTimeoutSeconds'])
         self.pc['producerVerificationTimeoutSeconds'] = 900; self.save_phase_config()
         with patch.object(phase.validation, 'verification_process',
                           wraps=phase.validation.verification_process) as verifier:
@@ -195,9 +196,13 @@ class ContinuationTests(fixtures.RequirementWorkflowTests):
         self.assertEqual(verifier.call_args.kwargs['timeout_seconds'], 900)
         self.assertEqual(second['intent']['producerVerificationTimeoutSeconds'], 900)
         self.assertNotEqual(first['intentSha256'], second['intentSha256'])
-        for timeout in (0, 901, True, 1.5):
+        self.pc['producerVerificationTimeoutSeconds'] = 7200; self.save_phase_config()
+        third = self.phase()
+        self.assertEqual(third['intent']['producerVerificationTimeoutSeconds'], 7200)
+        self.assertNotEqual(second['intentSha256'], third['intentSha256'])
+        for timeout in (0, -1, True, 1.5):
             self.pc['producerVerificationTimeoutSeconds'] = timeout; self.save_phase_config()
-            with self.assertRaisesRegex(Refused, 'timeout'):
+            with self.assertRaisesRegex(Refused, 'deadline'):
                 self.phase()
 
     def test_other_controller_requires_explicit_pin_and_rejects_tampering(self):
@@ -284,7 +289,8 @@ class ContinuationTests(fixtures.RequirementWorkflowTests):
             spec = json.loads(api.pinned({'path': str(args.execution_spec), 'sha256': args.execution_spec_sha256}))
             self.assertEqual(spec['artifactCapture'], {'schemaVersion': 1,
                 'files': [{'path': 'web/evidence/state.json', 'mediaType': 'application/json'}],
-                **phase.review.CAPTURE_LIMITS})
+                'maxFiles': 8, 'maxFileBytes': 362712, 'maxTotalBytes': 362712})
+            self.assertEqual(spec['outputBytes'], 1_000_000)
             raise Refused('Synthetic stop before backend preview')
         with patch.object(container, 'execution', side_effect=preview_only):
             with self.assertRaisesRegex(Refused, 'Synthetic stop'):

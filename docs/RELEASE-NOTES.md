@@ -55,8 +55,13 @@ Local verification completed so far:
 - The complete continuation-fixture class ran 60 tests: 59 passed, one existing
   two-fixture-package skip. A broad-only continuation error did not reproduce
   either alone or in class order; the retained partial result is not waived.
-- The frozen final source collects 950 cases. Full hosted CI must qualify that
-  exact source independently; focused groups are not a full-suite result.
+- Hosted run `43481275915` completed all 950 cases in 1656.540 seconds:
+  931 passed, five failed and 14 platform/fixture cases were skipped. The five
+  remaining failures were stale expectations for removed metadata deadlines,
+  host/container runtime naming and resource-derived artifact bounds. All five
+  corrected contracts passed in a targeted run (146.759 seconds). Controller
+  payload/ZIP bytes are unchanged by these test-only corrections. A fresh
+  exact-commit CI result remains required before merge; no old failure is edited.
 
 
 Package pins:

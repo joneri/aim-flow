@@ -167,7 +167,7 @@ class ContextContinuationTests(fixtures.ContinuationTests):
         self.wpath.write_bytes(api.encoded(self.wc)); self.wsha = self.pin(self.wpath)['sha256']
         self.pc['workflowConfig'] = self.pin(self.wpath); self.save_phase_config()
         self.grant()
-        with self.assertRaisesRegex(Refused, 'compatible container'): self.phase()
+        with self.assertRaisesRegex(Refused, 'compatible project runtime/spec'): self.phase()
         self.assertEqual(len(self.wcalls), 4)
         self.assertEqual(self.container_calls, [])
 

@@ -32,7 +32,7 @@ class CompleteDiscoveryTests(unittest.TestCase):
             self.assertEqual(reader.read('ls-tree', reader.commit), data)
             with self.assertRaisesRegex(Refused, 'Local Git could not read'):
                 reader.read('cat-file', 'blob', reader.commit, maximum=len(data) - 1)
-        self.assertEqual(run.call_args.kwargs['timeout'], 20)
+        self.assertIsNone(run.call_args.kwargs['timeout'])
         self.assertEqual(run.call_args.kwargs['env']['GIT_ALLOW_PROTOCOL'], '')
         self.assertEqual(run.call_args.kwargs['env']['GIT_NO_REPLACE_OBJECTS'], '1')
 
