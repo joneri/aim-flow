@@ -63,7 +63,7 @@ Use Python 3.11+. Review `proposal.json`, retained response and accounting befor
 
 ## Install and upgrade
 
-Verify and install the beta.10 controller with its matching bootstrap and independent pins. Its schema-3 archive contains exactly 100 files. Beta.9 has 61 and beta.8 has 53; each needs its original matching bootstrap. Install to a new directory and preserve old instances, grants, budgets and attempts. Equal schema numbers do not imply compatible inventories.
+Verify and install the beta.12 controller with its matching bootstrap and independent pins. Its schema-3 archive contains exactly 100 files. Beta.9 has 61 and beta.8 has 53; each needs its original matching bootstrap. Install to a new directory and preserve old instances, grants, budgets and attempts. Equal schema numbers do not imply compatible inventories.
 
 Run `/absolute/path/to/new-private-controller/aim-flow.py deliver-api` with the arguments above. The installed command uses only its packaged modules; no source checkout, Git or Codex CLI is required. Preview requires an existing established budget history, selected source and request files, but no API key or network. This advanced route does not initialize a fresh campaign budget or replace the simpler mini intake.
 
@@ -83,13 +83,30 @@ never refunded, and duplicate old request hashes are refused in the new journal.
 
 A further explicit increase uses a schema-2 declaration. Its `priorCampaign`
 also pins the previous `campaignContinuation`, and `maximumPaidGenerations`
-(1..5) bounds new reservations, including failed or uncertain attempts. The
+(an explicitly authorized positive integer) bounds new reservations, including
+failed or uncertain attempts. The
 combined ceiling must strictly increase; all earlier full allocations stay
-reserved. Up to four disjoint, acyclic increases are supported. Every ancestor's
+reserved. Continuations must be disjoint and acyclic; there is no fixed ancestry
+depth cap. Every ancestor's
 request identities and hashes are protected against replay. For USD20 -> USD30
 -> USD40, the last journal can reserve at most USD10; the preceding journals
 remain valid and unchanged. Set its generation bound to the unused authorized
 allowance after conservatively accounting for any still-active earlier grant.
+
+The initial workflow and `run` / combined intake start path also accept the
+optional pinned `campaignContinuation:{path,sha256}`. The exact pin is retained
+in outer/workflow/onboarding grants and forwarded to implementation and validation.
+Displayed campaign limits use the verified continuation ceiling. No field means
+the historical schema-1 grant shape and default ceiling remain unchanged.
+
+All new workflow, onboarding, outer-run and combined-intake state must be disjoint
+from every ancestor campaign directory. The intake bridge refuses such overlap
+before deriving intake or writing any retained inputs. Continued funding does not
+reset old costs, delete journals, permit duplicate requests or authorize new paid
+steps by itself. The added allowance is the difference between the new combined
+ceiling and the prior fully allocated ceiling; prior measured usage is not a
+refund. A project may present that new allowance separately without discarding
+its original cumulative accounting.
 
 `resume-candidate` accepts this declaration as `campaignContinuation:{path,sha256}`
 in a fresh exact grant. It first verifies the original producer against its

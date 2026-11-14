@@ -71,6 +71,58 @@ class RequirementWorkflowTests(unittest.TestCase):
         preview = self.workflow()
         return self.workflow(preview['intentSha256'], transport or self.workflow_post)
 
+    def setup_workflow_funding(self, maximum=2):
+        prior = {key: self.wc[key] for key in ('campaignDirectory', 'historicalBudget')}
+        old = api.Campaign(prior)
+        old.reserve('ancestor-operation', 'ancestor-request', 100, 8192, self.case / 'ancestor-attempt')
+        old.finish('ancestor-operation', self.answer)
+        self.prior_campaign = Path(prior['campaignDirectory'])
+        self.prior_budget_bytes = (self.prior_campaign / 'budget.json').read_bytes()
+        snapshot = self.case / 'workflow-prior-budget.json'; snapshot.write_bytes(self.prior_budget_bytes)
+        declaration = {'format': 'aim-flow-campaign-continuation', 'schemaVersion': 2,
+            'campaignDirectory': str(self.case / 'continued-workflow-campaign'),
+            'limitNanoUsd': 30_000_000_000, 'maximumPaidGenerations': maximum,
+            'priorCampaign': prior, 'priorBudgetSnapshot': self.pin(snapshot)}
+        self.funding_path = self.case / 'workflow-funding.json'; self.funding_path.write_bytes(api.encoded(declaration))
+        self.wc = api.funded_config(self.wc, self.pin(self.funding_path))
+        self.wpath.write_bytes(api.encoded(self.wc)); self.wsha = api.digest(self.wpath.read_bytes())
+
+    def test_initial_workflow_continuation_funds_both_phases_and_retains_prior_history(self):
+        self.setup_workflow_funding()
+        preview = self.workflow()
+        self.assertEqual(preview['intent']['combinedHistoricalAndCampaignLimitNanoUsd'], 30_000_000_000)
+        self.assertEqual(preview['intent']['campaignContinuation'], self.pin(self.funding_path))
+        result = self.grant()
+        self.assertEqual(result['status'], 'candidate-prepared')
+        for phase in ('onboarding', 'implementation'):
+            config = json.loads((self.ws / (phase + '-config.json')).read_bytes())
+            self.assertEqual(config['campaignContinuation'], self.pin(self.funding_path))
+            self.assertEqual(config['campaignDirectory'], self.wc['campaignDirectory'])
+        onboarding_intent = json.loads((self.ws / 'onboarding-attempt/attempt.json').read_bytes())['intent']
+        self.assertEqual(onboarding_intent['campaignLimitNanoUsd'], 30_000_000_000)
+        ledger = api.read_existing_campaign(self.wc)
+        self.assertEqual(ledger['identity']['allocatedPriorCampaignNanoUsd'], 20_000_000_000)
+        self.assertEqual(len(ledger['requests']), 2)
+        self.assertEqual((self.prior_campaign / 'budget.json').read_bytes(), self.prior_budget_bytes)
+        self.assertEqual(work.verify(self.wpath, self.wsha, self.ws), result)
+        self.assertEqual(len(self.wcalls), 4, 'Verification must not call the provider again')
+        campaign = api.Campaign(self.wc)
+        with self.assertRaisesRegex(Refused, 'never replay'):
+            campaign.reserve('new-operation', 'ancestor-request', 100, 8192, self.case / 'duplicate')
+        with self.assertRaisesRegex(Refused, 'generation bound exhausted'):
+            campaign.reserve('third-operation', 'third-request', 100, 8192, self.case / 'third')
+
+    def test_initial_workflow_funding_rejects_prior_overlap_and_tampered_pin_before_dispatch(self):
+        self.setup_workflow_funding()
+        original = self.ws; self.ws = self.prior_campaign / 'nested-output'
+        with self.assertRaisesRegex(Refused, 'disjoint'):
+            self.workflow()
+        self.assertFalse(self.ws.exists()); self.ws = original
+        self.funding_path.write_bytes(self.funding_path.read_bytes() + b' ')
+        with self.assertRaisesRegex(Refused, 'Pinned input changed'):
+            self.workflow()
+        self.assertFalse(self.ws.exists()); self.assertFalse(self.wcalls)
+
     def test_workflow_single_grant_reaches_real_clean_descendant_without_touching_dirty_source(self):
         original = (self.checkout / 'pyproject.toml').read_bytes()
         (self.checkout / 'untracked.txt').write_text('Do not copy me')
@@ -111,6 +163,8 @@ class RequirementWorkflowTests(unittest.TestCase):
         with patch.object(api, 'transport_from_key_file', side_effect=AssertionError('credential')):
             result = self.workflow()
         self.assertEqual(result['status'], 'awaiting-authorization')
+        self.assertNotIn('campaignContinuation', result['intent'])
+        self.assertEqual(result['intent']['combinedHistoricalAndCampaignLimitNanoUsd'], 20_000_000_000)
         self.assertFalse(self.ws.exists()); self.assertFalse(self.wcalls)
         with self.assertRaises(Refused):
             self.workflow('0' * 64, self.workflow_post)

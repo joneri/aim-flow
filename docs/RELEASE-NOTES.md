@@ -1,3 +1,28 @@
+# AIM Flow 0.1.0-beta.12
+
+Integrate the existing initial-workflow funding fix into the upstream controller
+and versioned download. It is general continuation handling, not a project-local
+budget override.
+
+- Accept the optional pinned `campaignContinuation` in workflow/onboarding input
+  and retain it in generated onboarding, implementation, outer-run and validation
+  configurations and grants.
+- Show `campaign_limit(config)` instead of the original default in continued
+  startup previews. Unfunded schema-1 grant shapes and defaults stay unchanged.
+- Protect every ancestor budget directory before workflow/onboarding/outer writes;
+  combined intake refuses overlap before any input derivation or retained output.
+- Preserve existing allocated ceilings, journals, request identity/replay guards
+  and explicit paid-generation bounds. Added allocation remains separate from
+  prior recorded usage and reservations.
+
+Retained focused checks are reused for the identical changed funding functions,
+matching budget/intake helper modules and exact regression files. The published
+source keeps the newer onboarding test-strategy instructions. Synthetic provider
+and container observations are not live API or project execution qualification.
+Package/source matching, fresh installation and the 17-case CI selection verify
+this release; full regression is not requested. Earlier downloads and private
+installed controllers are preserved without migration.
+
 # AIM Flow 0.1.0-beta.11
 
 Package the source improvements from merged PR #4 in a new versioned download.

@@ -25,3 +25,19 @@ The fourth generation independently reviews the original criteria, exact candida
 `--execution-review-output-tokens` and `--execution-review-max-operation-nano-usd` set the fourth phase limits. They default to the combined workspace-review limits and are valid only with `--review-executed`. Mode, Python and all limits remain pinned on resume and `--verify`; supply the same options. Missing credentials pause under the granted scope. Unknown/rejected/consumed review attempts never retry. Terminal verification regenerates the exact request and verifies its retained response and all upstream receipts without creating or repairing files.
 
 The result preserves the independent adapter's `localFeatureAccepted`, `productAccepted`, `pendingDeliveryObligations` and detailed criterion/prior-obligation dispositions. It always reports `deliveryReady: false` and no publication/deployment authority. Local model-reviewed acceptance can coexist with outstanding CI/release obligations; it is not human review or completion of delivery. A failed local run never triggers the fourth model call. Missing/defective evidence produces `executed-evidence-review-blocked` rather than promoting test exit zero to acceptance.
+
+
+## Continued funding at initial startup (beta.12)
+
+The workflow config may include a pinned `campaignContinuation:{path,sha256}`.
+Flow validates existing continuation authority, keeps original historical budget
+pins and propagates the same declaration through onboarding, implementation and
+local validation. Outer and child previews show the actual combined ceiling.
+Omitting the field preserves the existing schema-1 shape and default allocation.
+
+All new state, including the combined intake bridge, must be outside every prior
+campaign root. This check occurs before intake derivation or writes. New grants
+are still exact and paid-generation limits remain binding. The continuation's
+newly available allocation stays separate from old reservations and measured
+usage; nothing in this path resets or migrates historical accounting. See
+[funding and accounting semantics](API-DELIVERY.md).

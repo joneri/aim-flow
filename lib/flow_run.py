@@ -35,7 +35,8 @@ def prepare(config_path, config_sha, state, python=None, review_tokens=None, rev
     c, packet, context, requirement, resources, identity = work.inputs(config_path, config_sha, state / 'initial')
     control_package.verify_installation(ROOT, c['manifestSha256'])
     for path in (ROOT, Path(c['source']['checkout']), Path(c['campaignDirectory']),
-                 Path(c['historicalBudget']['directory']), Path(c['historicalBudget']['legacy']['path']).parent):
+                 Path(c['historicalBudget']['directory']), Path(c['historicalBudget']['legacy']['path']).parent,
+                 *api.prior_campaign_roots(c)):
         if path == state or path in state.parents or state in path.parents:
             raise Refused('Outer state must be disjoint from source/controller/budget roots')
     if config_path.is_relative_to(state):
@@ -67,13 +68,16 @@ def prepare(config_path, config_sha, state, python=None, review_tokens=None, rev
         'workspacePolicyScope': 'Source-cited unchanged generated archives may be excluded from immutable staged inputs only under the typed policy; final regular output hashes/sizes required.',
         'resourceConfiguration': 'Catalog/runtime/application settings are supplied configuration, not independently discovered or provisioned by Flow.',
         'campaignDirectory': c['campaignDirectory'], 'historicalBudget': c['historicalBudget'],
-        'combinedHistoricalAndCampaignLimitNanoUsd': api.LIMIT,
+        'combinedHistoricalAndCampaignLimitNanoUsd': api.campaign_limit(c),
+        **({'campaignContinuation': c['campaignContinuation']} if 'campaignContinuation' in c else {}),
         'credentialReuse': 'Same approved provider credential within these granted model phases; never retained.',
         'projectCommandsAuthorized': True,
         'publicationAuthorized': False, 'deploymentAuthorized': False, 'productAcceptanceAuthorized': False}
     phase_config = {'schemaVersion': 1, 'manifestSha256': c['manifestSha256'],
         'workflowConfig': intent['config'], 'workflowState': str(state / 'initial'), 'python': python_pin,
         'reviewMaxOutputTokens': tokens, 'reviewMaxOperationNanoUsd': limit}
+    if 'campaignContinuation' in c:
+        phase_config['campaignContinuation'] = c['campaignContinuation']
     if finding_policy is not None:
         intent['findingDispositionPolicy'] = finding_policy
         phase_config['findingDispositionPolicy'] = finding_policy
@@ -313,7 +317,8 @@ def run_requirement(config_path, config_sha, state, allowed_directories, authori
     base_pin = {'path': str(config_path), 'sha256': config_sha}
     base = unique_json(api.pinned(base_pin))
     for path in (ROOT, Path(base['source']['checkout']), Path(base['campaignDirectory']),
-                 Path(base['historicalBudget']['directory']), Path(base['historicalBudget']['legacy']['path']).parent):
+                 Path(base['historicalBudget']['directory']), Path(base['historicalBudget']['legacy']['path']).parent,
+                 *api.prior_campaign_roots(base)):
         if path == state or path in state.parents or state in path.parents:
             raise Refused('Intake state must be disjoint from source/controller/budget roots')
     for path in (config_path, Path(base['requirement']['path']), Path(base['resourceCatalog']['path'])):
