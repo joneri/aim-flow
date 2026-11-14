@@ -10,6 +10,10 @@ AIM Flow helps you understand a software project, choose the next step and check
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md) · [CI: 17-case default](docs/CI.md)
 
+Development source adds a separate local Codex-account proposal route and explicit
+backend/agent-host selection. It is not part of the published beta.12 download or
+the API workflow. See [delivery backends and current cloud blockers](docs/DELIVERY-BACKENDS.md).
+
 ## What you can explore now
 
 - **Project discovery:** inspect committed project metadata, scripts, CI and container definitions without running project code.

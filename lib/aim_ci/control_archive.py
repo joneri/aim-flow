@@ -25,6 +25,7 @@ SCHEMA_VERSION = 3
 FILES = (
     'aim-flow.py',
     'lib/flow_api_delivery.py', 'lib/flow_generation_budget.py', 'lib/flow_repair_loop.py',
+    'lib/flow_delivery_backend.py', 'lib/flow_codex_delivery.py', 'docs/DELIVERY-BACKENDS.md',
     'lib/aim_ci/verification_runtime.py',
     'lib/flow_onboarding_delivery.py',
     'lib/flow_workflow.py',

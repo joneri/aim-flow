@@ -1,10 +1,13 @@
 {
-  "controllerFiles": 100,
+  "controllerFiles": 103,
   "controllerPaths": [
     "aim-flow.py",
     "lib/flow_api_delivery.py",
     "lib/flow_generation_budget.py",
     "lib/flow_repair_loop.py",
+    "lib/flow_delivery_backend.py",
+    "lib/flow_codex_delivery.py",
+    "docs/DELIVERY-BACKENDS.md",
     "lib/aim_ci/verification_runtime.py",
     "lib/flow_onboarding_delivery.py",
     "lib/flow_workflow.py",
@@ -154,6 +157,10 @@
     "docs/CI.md": {
       "kind": "added",
       "source": "AIM Flow beta.10 explicit small-default/manual-full CI policy"
+    },
+    "docs/DELIVERY-BACKENDS.md": {
+      "kind": "added",
+      "source": "Separate Codex-account proposal backend and explicit agent host; source-bound discovery and non-replay receipts"
     },
     "docs/DELIVERY-CHAIN.md": {
       "kind": "added",
@@ -447,9 +454,17 @@
       "kind": "added",
       "source": "Generic source-bound candidate review and shared Sol dispatch"
     },
+    "lib/flow_codex_delivery.py": {
+      "kind": "added",
+      "source": "Separate Codex-account proposal backend and explicit agent host; source-bound discovery and non-replay receipts"
+    },
     "lib/flow_command_source_context.py": {
       "kind": "added",
       "upstreamSha256": null
+    },
+    "lib/flow_delivery_backend.py": {
+      "kind": "added",
+      "source": "Separate Codex-account proposal backend and explicit agent host; source-bound discovery and non-replay receipts"
     },
     "lib/flow_delivery_chain.py": {
       "kind": "added",
@@ -591,6 +606,10 @@
     "tests/test_candidate_review.py": {
       "kind": "added",
       "source": "Generic source-bound candidate review and shared Sol dispatch"
+    },
+    "tests/test_codex_delivery.py": {
+      "kind": "added",
+      "source": "Separate Codex-account proposal backend and explicit agent host; source-bound discovery and non-replay receipts"
     },
     "tests/test_command_source_context.py": {
       "kind": "added",
@@ -876,17 +895,18 @@
   "files": {
     ".github/workflows/beta-checks.yml": "d761f846e7daabe1fd5361bfa8b612546a7e6dab29751507d6d55759d9c43483",
     "CONTRIBUTING.md": "77e817380018ceb6bb8442b78f39398c614806b62c5add510376a5226c5e7d84",
-    "README.md": "a81aa20d06af9013cb372727015c7b343b22ce07b4a211bde7ae403872736ac7",
+    "README.md": "f30418c51fe6d13a47763dc34f511fdecd8607b35e55f064d9ded87d92fd05aa",
     "aim-ci-control.py": "b2afb8530f3ad410b9720484350c1ad1ad696a08bd2c1ad18d7c2751bdd1d04b",
     "aim-ci-release.py": "0b79eec716d1c8d79b096039c335f905b150d5fb42e13030c468190acce22a7e",
     "aim-ci.py": "bd7b252738c32a4984494f1bf17c74d8de4a6c55c718cdc16ce064ff8039fdf9",
-    "aim-flow.py": "99d000823c3b8cfeddff6608f4f3320d374a7ca3aff8e7970c424d14b76ea17a",
-    "docs/API-DELIVERY.md": "24250a48480add01969196544ba2aacc0a21224bb2f799264b242bbc7a5591dc",
+    "aim-flow.py": "5755db7916bb1e7cd541c4bba47a7fc64538842e8dcc520a528cf2cbb14ca477",
+    "docs/API-DELIVERY.md": "1c50e537d32849cbb5e9bf0e42895923f71c5467e25f43e3a18a3e99e7c71761",
     "docs/AUTONOMY-GAPS.md": "bcd53f938ec0b36209edbca390ccbdbe7b6b01a52f0280a4860afbbf9ba78ae0",
     "docs/BETA-SCOPE.md": "5b7a2ed602d45d908347e74fc3614d3402d8184a7ee42ff38f39a6f9439c6e9e",
     "docs/CANDIDATE-REPAIR.md": "1e5fce9c0ab6986f545390d72ba5562a287e7ee5d6685fc30e7720cff0be99ee",
     "docs/CANDIDATE-REVIEW.md": "7f3be28fd81608204d5c2d82817b3f52bd3a1692d577c196c56bf0ccc8522e4f",
     "docs/CI.md": "8a1ea0f72fb902da0c5381ceee6d8642010d741e0821601f8021acbfdedb4b7e",
+    "docs/DELIVERY-BACKENDS.md": "d0a6c336171e733794da398bc7843b602e20ea4b02925147a81ac5f83e5e58eb",
     "docs/DELIVERY-CHAIN.md": "51d30afb621042665d39135315b1e9c17fc7cd54afafae95da2f3dbc37ff99e8",
     "docs/EXECUTION-REVIEW.md": "27cf37e49dd61fe83e500aae3286342d7fef44dc065005cdde0b5ac61da8a4ff",
     "docs/GITHUB-DELIVERY.md": "7464a23526df8fadb3238d32aa9f0fb3a6c42e1442233bbd702c85163fd0547a",
@@ -899,7 +919,7 @@
     "docs/RELEASE-CONTINUATION.md": "5af15012242b4a52cf01a6cca781b23fed0a57bc564634671252ef57eac9828f",
     "docs/RELEASE-NOTES.md": "1e65181be66220bc978e81720d235179f8b3100424b8a63d91d60fc5acc6d25e",
     "docs/RELEASING.md": "8be117b97a06339ece774c94bc1d0ad73a39fbe6e2d000fa46d9cdc6918b655d",
-    "docs/REQUIREMENT-INTAKE.md": "4dd100b2dbdde1cd7c14ceb8b10b26d54916dc07e5db0dc0eb1890e25c72a6db",
+    "docs/REQUIREMENT-INTAKE.md": "8d0992c3ede05abe812cf98718ac0fde8b1988e2bc8470f63822c0d0290d52aa",
     "docs/REQUIREMENT-LOCAL-RUN.md": "9ddf9f41932e78d3db170dea5133b0851ab3e376f977b5d4fceb8417b92af72c",
     "docs/REQUIREMENT-WORKFLOW.md": "37baf681103bd5b0708729dce8da3e8ed24782513b3cfabcf909a6347424c6cc",
     "docs/VERIFICATION.md": "276f9e2aa0a34550234f8e9195a4a4e9362d54ecd6e0528c131461ba3e467405",
@@ -921,7 +941,7 @@
     "lib/aim_ci/budget.py": "3fdd2baeba97bb2e6ac40eb76178575d9dfef4d79ec0f1480814db96d529dc25",
     "lib/aim_ci/build_preparation.py": "06c95142dd6856523d15db2e1f9380259045ae2d93caf61e42a61c0532430070",
     "lib/aim_ci/contracts.py": "29f53fad247d17cc8478bc74f0f9220f4da100e024e0d7a79b4e71867472f825",
-    "lib/aim_ci/control_archive.py": "84d50a5262ecaec834dccd21da0ecb391f690e80329530926cee26a50df4abc4",
+    "lib/aim_ci/control_archive.py": "e4e98cccd2e3ab711013e144af395c198bedd46757c4122cb7777f25c0f087b1",
     "lib/aim_ci/control_package.py": "5e1a7d55bf42949dd60ac9869c9c218dfceb7920c63471a392ecf1722103ffec",
     "lib/aim_ci/controller.py": "d88964b6544ab2c45a4bb38cf8ed75d341cbbd3a742d81c8fc4520f157c21290",
     "lib/aim_ci/diagnostics.py": "876ad959649e02382a745d7eb62a16c39612de99fb39280189e71d28568da9fd",
@@ -960,7 +980,9 @@
     "lib/aim_ci/verification_runtime.py": "773f7d095e090e099e84e4853322f11371402edb799e520c63b998e434c388a2",
     "lib/flow_api_delivery.py": "a74524a1ea0f98459f6f4872cb3a54cf99ddcfa0f73bafb8a3a41160ebe07be7",
     "lib/flow_candidate_review.py": "08df80706fa7e65ea83517d74cef18df4e50f281b61c6a093a950a6e523af40a",
+    "lib/flow_codex_delivery.py": "dcfa166afb2601393a3675de40496c3d1ab2da2ff03ff4d48e07a2cd9ab3d83a",
     "lib/flow_command_source_context.py": "6abad545bc7d37214437bebb39c121cefa70ca7def320f4504f9ef07159fa2c7",
+    "lib/flow_delivery_backend.py": "47a3b7b4a17230447aec8579692a5ad99cd498e9af573c0b5b5f1d1a55b0d2a1",
     "lib/flow_delivery_chain.py": "33f90a46569b3c907c4b6f6d27ee0bb9a689db7fa0c83c0f0397ae9c211e774d",
     "lib/flow_execution_refinement.py": "b9346db74ef7eb785b849df14f55ebc1ead8eb902304d3da968b83fbcad5c65f",
     "lib/flow_execution_review.py": "651d0ff633bce88c4bb07d31849dd465ccb488a62d3fafe45d5e31535983adc6",
@@ -973,7 +995,7 @@
     "lib/flow_repair_candidate.py": "59bf068299ac4567b39259eeed4567283847c16a090548ba63d481a0bd15c41c",
     "lib/flow_repair_loop.py": "a397274bc59b005999e2587d2abdc68518c148c31d9f7958c41cfe7911e29d24",
     "lib/flow_repair_run.py": "70b8be4cceb948cdad610130499b0eea3e1d8288b9cbbee8d57dd056f4941418",
-    "lib/flow_requirement_intake.py": "3e3a54c35681749f7285e00d46e3db52467ba12b07595b1fb718a5f7d5b37144",
+    "lib/flow_requirement_intake.py": "d843dbfece37f3e023acbbdf9fd046c677e5c449e8222e9e85756011916be001",
     "lib/flow_resume_candidate.py": "33bd0147982c11b0fdef81dd5d4c88c9f3b55ad3d439eadc2d8ebcf51e2e002c",
     "lib/flow_review_dispatch.py": "47eb333a2fbc081455b9946d6070498776824f440e65fdc1c41d13c37d7aa664",
     "lib/flow_review_execution_context.py": "e0429f977a30721e26c138b8c57ea959ccb0499b6d2f76d1057dc7450225276b",
@@ -996,6 +1018,7 @@
     "tests/test_build_preparation.py": "60789968bbb448cf6f6b7f464f650a16aad66eb4a2e8157a15cb294c9277d3b7",
     "tests/test_campaign_continuation.py": "17fb33b2650028748666f41ac83801c9faa023f5647db4b11893d9ebf7d753cb",
     "tests/test_candidate_review.py": "2505ef155064708c521098d3251171e7514b143bcf9c5322c4d1476c31ccb536",
+    "tests/test_codex_delivery.py": "f98128b866c1570291ae63eca3cfed1ee9618a17fcc666943f015974a6a34caa",
     "tests/test_command_source_context.py": "2b5c408a234010df2adff9cbbea1dbdeb306f4801d97fa1d695183d2166dde15",
     "tests/test_completed_validation_reuse.py": "88f8d2a65c67ee1a0e0a0c8565370fc02a2d35853f21edfc8ff9164fc7f1c778",
     "tests/test_content_size_contracts.py": "5b5e1e0188ed779f5a7d3447d6e8f53baf093357a1b6780504a58bdae19a104e",
@@ -1046,7 +1069,7 @@
     "tests/test_repair_candidate.py": "94d22948d297bccb678e48017305e71e0364c07a3c749b99a9243373b1effc10",
     "tests/test_repair_loop.py": "ac595f288814623bfb9d712b51489989c76a1ad72e9ee4a6f2c1b3987606fc80",
     "tests/test_repair_run.py": "9862983c41c63c3e28ad977bc4782b23a3662501b37fb66dfb5298f1a43169ee",
-    "tests/test_requirement_intake.py": "a5a7a2a00e33bac0ed4b5b9bf20a19c887a6d34d20f2835fdff74ff2a2653cbb",
+    "tests/test_requirement_intake.py": "0025652cc3e23492311060388385221fc720e81d6fb0f3e33230909e14e65231",
     "tests/test_requirement_workflow.py": "c8f0ab11baeeb4ce551443f7797561a8cf8dce1693724a3db697cd8cbc9c2320",
     "tests/test_resume_candidate.py": "9a6630acc25ce22290b89bb2d93891d9f03b6fac0fa1e61733691970b7102a4f",
     "tests/test_review_evidence_policy.py": "e4acec9230c9215673d43be88adfdd5c25802360ff0f9f4b08bffe61997e8d09",

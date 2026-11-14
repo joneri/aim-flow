@@ -45,16 +45,27 @@ secrets are excluded with reasons. JSON data files outside process definitions
 are explicitly outside this code-retrieval policy. This is conservative filtering,
 not a guarantee that arbitrary source contains no confidential information.
 
-Requirement terms are case-folded and camel-case split, stop words removed, then
+Requirement terms preserve Unicode words (including Scandinavian letters), are
+case-folded and camel-case split, with English/Swedish stop words removed, then
 weighted by requirement repetition and inverse document frequency. Path matches
 get an eight-fold weight. Scores are divided by sqrt(1 + UTF-8 bytes / 8000)
-to prevent long shared assets from dominating by incidental term overlap; scores at least 45% of the maximum (minimum eight) are
+to prevent long shared assets from dominating by incidental term overlap; scores at least 45% of the maximum feature-code score (minimum eight) are
 selected. Test/spec paths use 75% of that threshold to retain test evidence. Exact weights, threshold, matched terms and score are recorded. Literal
-relative imports add dependency evidence to a fixed point. One reverse-reference
-pass adds code files mentioning selected code filenames; this is a lexical
+relative imports add one hop of dependency evidence from ranked files. One reverse-reference
+pass adds code files mentioning ranked code filenames; this is a lexical
 relation, not proof of a runtime import. It deliberately excludes prose references
 from that expansion. This may overselect unrelated code. Missing dynamically
 resolved imports and excluded files may still contain relevant evidence.
+
+Documentation and tests cannot raise the threshold that excludes production
+code. If there is no feature code, ranking falls back to all feature files. The
+algorithm version is `unicode-term-df-code-threshold-v2`. This fixes prose
+outliers suppressing actual components; it does not prove semantic coverage or
+waive incomplete-source bounds. Existing reports/requests remain immutable.
+Imports/references of shared dependencies are not recursively expanded. This
+prevents a common layout from pulling every page and stylesheet into a small
+feature request. Further unexpanded imports remain in `omittedDependencies`;
+request a new source selection if they matter. Intake is not an execution closure.
 
 Process manifests/locks, CI, recognized build/deploy/release/generator definitions,
 process documents and literal package script paths outside edit authority are

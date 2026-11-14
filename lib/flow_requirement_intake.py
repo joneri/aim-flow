@@ -8,6 +8,7 @@ import os
 import posixpath
 from pathlib import Path, PurePosixPath
 import re
+import unicodedata
 
 import flow_api_delivery as api
 from aim_ci.owned_paths import Refused
@@ -17,6 +18,9 @@ from aim_ci.project_onboarding import _source_path, _outside
 FORMAT = 'aim-flow-requirement-intake'
 DEFAULT_LIMITS = {'fileBytes': 262_144, 'scanBytes': 24_000_000, 'contextBytes': 1_000_000, 'contextFiles': 80, 'reviewBytes': 440_000}
 STOP = set('the and that this with from for are not must should existing without into can all when its using use have has was were will than then while user story want able need so as be to of a an in on or is it by at'.split())
+# Keep Scandinavian words whole; ASCII fragments of e.g. "ändring" must not
+# acquire rare-term weight. Prose grammar is not a feature identifier.
+STOP.update('och att det den detta de dem som med från för på av till en ett är var har ska skall kan inte men om när där här hur vad vi ni jag man sig sin sina vår våra alla varje även eller utan under över bara helt finns vara bli blir vill önskad ändring klart borde skulle istället'.split())
 SECRET_PATH = re.compile(r'(^|/)(?:\.env(?:\..*)?|\.npmrc|\.pypirc|credentials?[^/]*|secrets?[^/]*|id_rsa|id_ed25519)(?:/|$)|\.(?:pem|key|p12|pfx|keystore)$', re.I)
 SECRET_TEXT = re.compile(r'-----BEGIN (?:[A-Z ]*PRIVATE KEY)|\b(?:sk-proj-|ghp_|github_pat_)[A-Za-z0-9_-]{12,}|(?im:^[ \t]*["\']?(?:password|api[_-]?key|client[_-]?secret|access[_-]?token)["\']?\s*[:=]\s*["\']?[^\s"\'${}]{8,})')
 PROCESS = re.compile(r'(^|[/_.-])(?:deploy|release|publish|generator|generate|build|package|cutover)(?=[/_.-]|$)', re.I)
@@ -24,8 +28,14 @@ DOC_PROCESS = re.compile(r'(^|[/_.-])(?:readme|agents|contributing|installation|
 TEXT_SUFFIXES = {'.js','.mjs','.cjs','.ts','.tsx','.jsx','.astro','.vue','.svelte','.css','.scss','.html','.md','.mdx','.json','.toml','.yaml','.yml','.py','.sh','.txt'}
 
 def terms(text):
+    text = unicodedata.normalize('NFC', text)
     text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
-    return {t for t in re.findall(r'[a-z][a-z0-9]{2,}', text.lower()) if t not in STOP}
+    return {t for t in re.findall(r'[^\W\d_][^\W_]*', text.casefold()) if len(t) >= 3 and t not in STOP}
+
+
+def is_feature_code(path):
+    return (PurePosixPath(path).suffix.lower() not in ('.md', '.mdx', '.txt')
+            and not re.search(r'(^|[/_.-])(?:test|tests|spec)(?=[/_.-]|$)', path))
 
 
 def derive(root, source, requirement, allowed_directories, limits=None):
@@ -111,7 +121,7 @@ def derive(root, source, requirement, allowed_directories, limits=None):
     # Transparent document-frequency weighting, never a confidence estimate.
     query = terms(requirement_text)
     token_sets = {p: terms(p + '\n' + t) for p, t in texts.items()}
-    frequency = {t: len(re.findall(r'\b' + re.escape(t) + r'\b', requirement_text.lower())) for t in query}
+    frequency = {t: len(re.findall(r'\b' + re.escape(t) + r'\b', requirement_text.casefold())) for t in query}
     weights = {t: (1 + math.log(1 + frequency[t])) * math.log(1 + len(texts) / (1 + sum(t in s for s in token_sets.values()))) for t in query}
     scores = {}
     for p, tokens in token_sets.items():
@@ -121,23 +131,25 @@ def derive(root, source, requirement, allowed_directories, limits=None):
         records[p].update(matchedTerms=matched, score=round(score, 6))
         if p not in processes and records[p]['allowedDirectory']:
             scores[p] = score
-    threshold = max(8.0, max(scores.values(), default=0) * 0.45)
+    # Documentation and test outliers must not set the code inclusion threshold.
+    code_scores = {p: n for p, n in scores.items() if is_feature_code(p)}
+    threshold = max(8.0, max((code_scores or scores).values(), default=0) * 0.45)
     selected = {p for p, score in scores.items() if score >= threshold *
                 (0.75 if re.search(r'(^|[/_.-])(?:test|tests|spec)(?=[/_.-]|$)', p) else 1)}
     reasons = {p: 'requirement-term-ranking' for p in selected}
-    # Include literal relative imports only, to a fixed point; no dynamic resolution.
-    changed = True
-    while changed:
-        changed = False
-        for p in sorted(selected):
-            for ref in re.findall(r'(?:from\s*|import\s*\(?|require\s*\()\s*["\'](\.[^"\']+)["\']', texts[p]):
-                base = posixpath.normpath(str(PurePosixPath(p).parent / ref))
-                candidates = [base, *(base + s for s in ('.ts','.tsx','.js','.jsx','.mjs','.astro','.css')), base + '/index.ts', base + '/index.js']
-                found = next((c for c in candidates if c in texts), None)
-                if found and found not in processes and found not in selected:
-                    selected.add(found); reasons[found] = 'literal-relative-import:' + p; changed = True
+    # Retrieval is adjacent context, not an execution closure. Expanding a shared
+    # layout recursively, then reversing all its references, used to pull most of
+    # a site into a small label change. Unexpanded imports stay explicit below.
+    seeds = set(selected)
+    for p in sorted(seeds):
+        for ref in re.findall(r'(?:from\s*|import\s*\(?|require\s*\()\s*["\'](\.[^"\']+)["\']', texts[p]):
+            base = posixpath.normpath(str(PurePosixPath(p).parent / ref))
+            candidates = [base, *(base + s for s in ('.ts','.tsx','.js','.jsx','.mjs','.astro','.css')), base + '/index.ts', base + '/index.js']
+            found = next((c for c in candidates if c in texts), None)
+            if found and found not in processes and found not in selected:
+                selected.add(found); reasons[found] = 'literal-relative-import:' + p
     for p, text in texts.items():
-        if p not in processes and p not in selected and PurePosixPath(p).suffix != '.md' and any(PurePosixPath(q).name in text for q in selected if PurePosixPath(q).suffix != '.md'):
+        if p not in processes and p not in selected and PurePosixPath(p).suffix != '.md' and any(PurePosixPath(q).name in text for q in seeds if PurePosixPath(q).suffix != '.md'):
             reasons[p] = 'literal-selected-filename-reference'
     selected.update(reasons)
     requested = processes & texts.keys() | selected
@@ -174,7 +186,9 @@ def derive(root, source, requirement, allowed_directories, limits=None):
             'omittedDependencies': omitted_dependencies,
             'reviewBounds': {'baselineFeatureBytes': review_used, 'allProcessAndFeatureBothSidesBytes': used * 2,
                 'maximumBothSidesBytes': 1048576, 'requiresActualDeclarationAndCandidatePreflight': True},
-            'algorithm': {'name': 'literal-term-df-length-v1', 'terms': sorted(query), 'termWeights': {t: round(w, 6) for t, w in sorted(weights.items())},
+            'algorithm': {'name': 'unicode-term-df-code-threshold-v2', 'terms': sorted(query), 'termWeights': {t: round(w, 6) for t, w in sorted(weights.items())},
+                          'thresholdPopulation': 'feature-code, excluding documentation and tests; all features if no code',
+                          'dependencyExpansion': 'one literal import hop and one reverse-reference hop from ranked seeds only',
                           'threshold': round(threshold, 6), 'testThresholdFactor': 0.75, 'lengthNormalizationBytes': 8000},
             'limitations': ['Heuristic retrieval only; exclusions may contain relevant evidence.',
                 'Only committed regular UTF-8 blobs are read; no working-tree content or commands.',

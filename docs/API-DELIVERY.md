@@ -116,3 +116,9 @@ completed candidate. Report recorded usage separately from reserved liability;
 neither is an independently retrieved billing invoice.
 
 `deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation. Local Codex and Codex Cloud delivery are not included in this download.
+
+The development source now has a separate local `deliver-codex` proposal adapter
+and explicit backend/agent-host routing; see [DELIVERY-BACKENDS.md](DELIVERY-BACKENDS.md).
+This does not retrofit the published beta.12 download or change the Responses API
+workflow into a Codex workflow. Cloud dispatch remains unimplemented and refuses
+before usage. API campaign accounting and Codex account usage stay distinct.

@@ -84,6 +84,46 @@ class IntakeTests(unittest.TestCase):
         self.put('new.txt','new');self.run_git('add','.');self.run_git('commit','-qm','changed')
         with self.assertRaises(Refused): self.derive()
 
+    def test_swedish_requirement_preserves_words_and_code_survives_prose_outlier(self):
+        self.put('src/ShowsFeed.astro', '<th>Location</th><a>Tickets</a> Upcoming Past shows')
+        # An unrelated prose hit used to raise the global threshold and suppress
+        # the component containing the literal UI labels.
+        prose = ' '.join('unikord'+str(i) for i in range(100))
+        self.put('src/unrelated.md', prose)
+        self.run_git('add','.'); self.run_git('commit','-qm','multilingual labels')
+        self.source['commit']=self.run_git('rev-parse','HEAD').strip()
+        self.req.write_text('Ändring: Ta bort Location och ändra Tickets till READ MORE i Upcoming och Past shows. '+prose)
+        self.requirement['sha256']=hashlib.sha256(self.req.read_bytes()).hexdigest()
+        report=self.derive()
+        self.assertIn('src/ShowsFeed.astro',report['selection']['editablePaths'])
+        tokens=intake.terms('önskad ändring på åäö ShowsFeed')
+        self.assertIn('åäö',tokens); self.assertNotIn('ndring',tokens)
+        self.assertNotIn('och',intake.terms('och Location'))
+
+    def test_document_score_cannot_set_feature_code_threshold(self):
+        self.put('src/Panel.ts', '// amber violet feature cobalt widget')
+        self.put('src/notes.md', 'amber violet '+ ' '.join('topic'+str(i) for i in range(80)))
+        self.run_git('add','.');self.run_git('commit','-qm','doc threshold outlier')
+        self.source['commit']=self.run_git('rev-parse','HEAD').strip()
+        self.req.write_text('amber violet feature cobalt widget '+' '.join('topic'+str(i) for i in range(80)))
+        self.requirement['sha256']=hashlib.sha256(self.req.read_bytes()).hexdigest()
+        report=self.derive();coverage={r['path']:r for r in report['coverage']}
+        self.assertGreater(coverage['src/notes.md']['score'],coverage['src/Panel.ts']['score'])
+        self.assertIn('src/Panel.ts',report['selection']['editablePaths'])
+
+    def test_shared_dependency_does_not_expand_into_whole_site(self):
+        self.put('src/timer.js', 'import "./shared/layout.js"; // internal scheduling helper')
+        self.put('src/shared/layout.js', 'import "./theme.css"; // common layout')
+        self.put('src/shared/theme.css', '/* shared theme */')
+        self.put('src/Unrelated.ts', 'import "./timer.js"; // unrelated page')
+        self.run_git('add','.');self.run_git('commit','-qm','shared dependency fanout')
+        self.source['commit']=self.run_git('rev-parse','HEAD').strip()
+        report=self.derive();selected=report['selection']['reviewSources']
+        self.assertIn('src/Carousel.ts',selected);self.assertIn('src/timer.js',selected)
+        self.assertNotIn('src/shared/layout.js',selected)
+        self.assertNotIn('src/Unrelated.ts',selected)
+        self.assertTrue(any(d['resolvedPath']=='src/shared/layout.js' for d in report['omittedDependencies']))
+
     def test_unread_recognized_process_paths_cannot_claim_selected_coverage(self):
         for path in ('config/build.mjs', 'scripts/build.rb'):
             self.put(path, 'carousel process definition')
