@@ -26,6 +26,10 @@ if sys.argv[1:]==['login','status']:
 if sys.argv[1:]==['exec','--help']:
  print('--ignore-user-config --output-schema --json --ephemeral');sys.exit(0)
 r=json.load(sys.stdin);p=r['packet'];phase=r['phase'];model=sys.argv[sys.argv.index('--model')+1]
+for record in p.get('contextIndex',[]):
+ import hashlib
+ raw=pathlib.Path(record['fullSource']['path']).read_bytes()
+ assert hashlib.sha256(raw).hexdigest()==record['fullSource']['sha256']
 if model=='fixture-unknown':sys.exit(9)
 if phase=='model-implementation':
  texts=p['editableSources'];path=next(x for x in texts if x.endswith('label.py'))
@@ -116,8 +120,8 @@ print('focused label check passed')
   request=json.loads(request_path.read_bytes());packet=request['packet']
   self.assertFalse(set(packet['contextSources']) & set(packet['editableSources']))
   self.assertEqual(cli.input_summary(request_path.read_bytes()),preview['intent']['firstModelInput'])
-  for path,text in {**packet['contextSources'],**packet['editableSources']}.items():
-   self.assertEqual(text,(self.checkout/path).read_text())
+  for record in packet['contextIndex']:
+   self.assertEqual(api.pinned(record['fullSource']).decode(),(self.checkout/record['path']).read_text())
   self.assertIn("'Tickets'",(self.checkout/'src/label.py').read_text())
   self.assertEqual(len(list((self.case/'codex-dispatch').glob('*.json'))),3)
  def test_large_source_preview_deduplicates_and_refuses_oversize_before_attempt(self):
@@ -146,7 +150,11 @@ print('focused label check passed')
    self.assertEqual(argv[0],str(self.git),'Oversize preview must not run the account CLI')
    return actual(argv,*args,**kwargs)
   with patch.object(subprocess,'run',side_effect=only_git):
-   with self.assertRaisesRegex(Refused,'input_too_large before dispatch'):self.run_native()
+   focused=self.run_native()
+  self.assertLess(focused['intent']['firstModelInput']['characters'],cli.MAX_INPUT_CHARACTERS)
+  policy=focused['intent']['firstModelContext']
+  self.assertGreater(policy['onDemandFiles']+policy['excerptFiles'],0)
+  self.assertLess(policy['displayedSourceCharacters'],policy['fullSourceCharacters'])
   self.assertFalse(self.state.exists());self.assertFalse((self.case/'codex-dispatch').exists())
  def test_real_failed_test_repairs_once_and_delivery_handoff_uses_native_producer(self):
   self.c['model']='fixture-repair';self.save();result=self.start()
@@ -243,6 +251,10 @@ print('focused label check passed')
    chain.verify_local(self.local_spec(),self.release['manifestSha256'])
    self.assertGreater(first,0)
    self.assertEqual(launches.call_count,first,'Unchanged native proof must reuse its verified input closure')
+  expansion=next((final/'model-implementation/context').iterdir());saved_expansion=expansion.read_bytes()
+  expansion.write_text('changed full source')
+  with self.assertRaises(Refused):chain.verify_local(self.local_spec(),self.release['manifestSha256'])
+  expansion.write_bytes(saved_expansion)
   artifact=final/'validation/artifact-0.json';original=artifact.read_bytes();artifact.write_text('{"passed":false}')
   with self.assertRaises(Refused):chain.verify_local(self.local_spec(),self.release['manifestSha256'])
   artifact.write_bytes(original);review_file=final/'source-review.json';review_file.unlink()

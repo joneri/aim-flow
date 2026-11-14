@@ -335,3 +335,48 @@ Install a fresh beta.14 controller for this change. Never rewrite an older
 attempt, its controller, request or dispatch journal, or treat an earlier failed
 CLI start as an unused/refunded turn. Queue owners retain their cumulative
 authority when explicitly creating a new attempt; this fix restarts nothing.
+
+
+## Phase-focused context and read-only expansion (beta.15)
+
+Selected provenance is no longer synonymous with text that must be sent inline.
+The Codex routes retain every selected exact source in private per-turn `context`
+files. `contextIndex` binds each logical path to SHA-256, original line count,
+editable authority, display reason and an exact `fullSource` path/hash. These
+files are made before model dispatch and verified unchanged with the attempt.
+Codex may inspect these supplied files read-only when initial context is
+insufficient; this grants no project execution or additional editable paths.
+
+The inline view uses the original tree-wide intake ranking for primary code,
+not a new ranking of the smaller already-selected subset. Leading related code
+is displayed whole. Literal callers/imports and selectors used by primary
+components receive surrounding line-addressed excerpts. Generic entrypoint
+names such as `index` do not connect unrelated files. Relevant exact test recipe
+definitions and project instructions remain explicit. Original requirements and
+actual runtime evidence are not shortened by this policy.
+
+Locks and unrelated process code are normally hash-bound inventory entries,
+not full implementation prose. A dependency/lockfile requirement displays lock
+content, and every changed source is displayed whole during independent review.
+This is role/relevance selection, not a file-size ban or proof of semantic
+completeness. The complete selected files remain available even when omitted
+from the initial view. Existing committed-source discovery bounds still apply.
+
+Excerpts declare original inclusive line ranges. Omitted lines are never claimed
+to be adjacent; citations are checked against the retained exact full review
+sources. Patch replacements are validated for unique old text against complete
+committed editable files, including a source inspected on demand. A directory
+grant is not expanded by a display choice.
+
+Startup previews expose `firstModelContext` (or proposal `modelContext`) with
+whole/excerpt/on-demand counts and full/displayed source character counts. The
+complete serialized initial request still receives the beta.14 transport check.
+Model raw output and tool activity remain native evidence, not project tests.
+Missing or changed expansion files invalidate verification, including cached
+proof. A fresh controller and new exact grant are required; older attempts are
+not rewritten or automatically retried.
+
+Focused tests exercise private expansion files using a synthetic local CLI and
+real Git/project commands. Read-only previews use retained real inputs. No new
+live inference, production, cloud or billing qualification is claimed for this
+context change.

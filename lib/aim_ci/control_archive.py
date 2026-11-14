@@ -27,6 +27,7 @@ FILES = (
     'lib/flow_api_delivery.py', 'lib/flow_generation_budget.py', 'lib/flow_repair_loop.py',
     'lib/flow_delivery_backend.py', 'lib/flow_codex_delivery.py', 'docs/DELIVERY-BACKENDS.md',
     'lib/flow_codex_stage.py', 'lib/flow_codex_workflow.py',
+    'lib/flow_codex_context.py',
     'lib/aim_ci/verification_runtime.py',
     'lib/flow_onboarding_delivery.py',
     'lib/flow_workflow.py',

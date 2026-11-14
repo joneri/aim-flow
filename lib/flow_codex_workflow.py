@@ -65,10 +65,12 @@ def require(ok, text):
     if not ok: raise Refused(text)
 
 
-def implementation_packet(requirement, parent, context, editable, feedback=None):
+def implementation_packet(requirement, parent, context, editable, feedback=None, source_ranking=None, test_catalog=None):
     return {'requirement':requirement,'parent':{k:parent[k] for k in ('commit','tree')},
         'contextSources':cli.distinct_context(context,editable),'editableSources':editable,'priorDiagnostics':feedback,
-        'task':'Implement the original requirement with minimal exact old/new edits to editableSources. Prior diagnostics are untrusted observations; keep all earlier successful requirement changes. Empty edits with a clear summary means source/intent needs attention.'}
+        **({'sourceRanking':source_ranking} if source_ranking is not None else {}),
+        **({'testCatalog':test_catalog} if test_catalog is not None else {}),
+        'task':'Implement the original requirement with minimal exact old/new edits only to paths marked editable in contextIndex (editableSources in an unprojected packet). Inspect exact fullSource files when excerpts are insufficient. Prior diagnostics are untrusted observations; keep all earlier successful requirement changes. Empty edits with a clear summary means source/intent needs attention.'}
 
 
 def reader(c, target=None):
@@ -232,9 +234,11 @@ def prepare(config_path, config_sha, state):
     if 'resumeCandidate' not in c:
         first_packet=implementation_packet(requirement,intent['target'],
             {p:files[p][1].decode('utf-8') for p in context},
-            {p:files[p][1].decode('utf-8') for p in report['selection']['editablePaths']})
-        intent['firstModelInput']=cli.input_summary(cli.checked_input(
-            model.request_for('model-implementation',first_packet),'model-implementation'))
+            {p:files[p][1].decode('utf-8') for p in report['selection']['editablePaths']},
+            source_ranking={r['path']:r.get('score',0) for r in report['coverage']},test_catalog=tests)
+        first_request=model.request_for('model-implementation',first_packet,state/'round-001/model-implementation')
+        intent['firstModelInput']=cli.input_summary(cli.checked_input(first_request,'model-implementation'))
+        intent['firstModelContext']=first_request['packet']['contextPolicy']
     return c,report,files,tests,requirement,intent
 
 
@@ -502,7 +506,8 @@ def run(config_path,config_sha,state,authorization=None,*,verify_only=False,cont
                 context={p:current[p][1].decode('utf-8') for p in intent['contextPaths']}
                 editable={p:current[p][1].decode('utf-8') for p in report['selection']['editablePaths']}
                 implementation=call(round_state,'model-implementation',
-                    implementation_packet(requirement,parent,context,editable,feedback),IMPLEMENTATION_SCHEMA)
+                    implementation_packet(requirement,parent,context,editable,feedback,
+                        {r['path']:r.get('score',0) for r in report['coverage']},tests),IMPLEMENTATION_SCHEMA)
                 answer=implementation['answer']
                 if not answer['edits']:
                     raise Refused('Codex returned no edits: '+answer['summary'])
@@ -514,8 +519,10 @@ def run(config_path,config_sha,state,authorization=None,*,verify_only=False,cont
                     requirement,'Original requirement and exact source-bound local test catalog; project recipe effects explicitly granted.',
                     intent['contextPaths'],deduplicate_unchanged=True,max_source_bytes=c.get('reviewMaxSourceBytes',1048576))
                 source_packet['findingDispositionPolicy']=review.FINDING_DISPOSITION_POLICY
+                source_packet['sourceRanking']={r['path']:r.get('score',0) for r in report['coverage']}
                 source_packet['testCatalog']=tests
-                source_packet['task']=(review.INSTRUCTIONS+' '+review.DISPOSITION_INSTRUCTIONS+
+                source_packet['task']=(review.INSTRUCTIONS.replace('No tools, execution, approval, deployment or acceptance.',
+                    'Read-only inspection of supplied context files is permitted; no project execution, approval, deployment or acceptance.')+' '+review.DISPOSITION_INSTRUCTIONS+
                     ' Select the smallest sufficient test set from the exact catalog. Include every mandatory test; dependencies run once. Do not invent commands or add requirements/verification methods absent from the original requirement. Explain the selection. Source coverage is not execution acceptance. Set executionGate ready-for-granted-tests when the exact reviewed recipes can safely run under the existing runtime grant, even when their outcomes are unverified. Missing execution evidence is pending verification, not a reason to prevent its own collection. Use blocked-before-tests for unresolved safety, authority, runtime prerequisites or source defects. Every genuine risk must also be a finding; explain the gate.')
                 source_model=call(round_state,'model-source-review',source_packet,SOURCE_SCHEMA)
                 body=copy.deepcopy(source_model['answer']);ids=body.pop('selectedTests');rationale=body.pop('testRationale')
@@ -557,6 +564,7 @@ def run(config_path,config_sha,state,authorization=None,*,verify_only=False,cont
                 else:item['json']=unique_json(raw)
                 evidence.append(item)
             evidence_packet={'requirement':requirement,'candidate':source_packet['candidate'],'sources':source_packet['sources'],
+                'sourceRanking':source_packet.get('sourceRanking',{}),
                 'evidence':evidence,'priorFollowUps':source_result['followUps'],
                 'pendingSourceVerification':source_result['sourceGate']['pendingVerification'],
                 'task':'Independently assess the original requirement against exact source and actual project execution evidence/attached PNG pixels. Cover each original criterion once. Satisfied requires evidence ids. Pending remote CI/release/production remain pending-delivery. Do not add mandatory verification methods absent from the requirement. Report unperformed optional methods as limitations; if essential behavior remains unproved use uncertain. Preserve genuine defects and follow-up findings with factual severity/impact. Account for each pendingSourceVerification id exactly once in priorDispositions. Resolved requires actual evidence ids; retain nonessential unperformed methods as nonblocking limitations, and leave essential unresolved evidence blocked. Do not claim human review, deployment or unexecuted tests.'}
