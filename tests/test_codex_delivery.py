@@ -183,5 +183,38 @@ print(json.dumps({'type':'turn.completed','usage':{'input_tokens':17,'cached_inp
         with self.assertRaises(Refused):control_package.verify_installation(installed,receipt['manifestSha256'])
 
 
+class CodexInputTests(unittest.TestCase):
+    def test_exact_source_union_and_conflicting_editable_source(self):
+        sources={'src/label.py':'exact \\"\n å😀', 'README.md':'process context'}
+        editable={'src/label.py':sources['src/label.py']}
+        context=codex.distinct_context(sources,editable)
+        self.assertEqual({**context,**editable},sources)
+        self.assertFalse(set(context)&set(editable))
+        with self.assertRaises(Refused):codex.distinct_context(sources,{'src/label.py':'changed'})
+        with self.assertRaises(Refused):codex.distinct_context(sources,{'missing.py':'missing'})
+
+    def test_exact_serialized_character_boundary_includes_json_escaping(self):
+        raw=codex.checked_input({'text':'å😀\\"\n'},'fixture')
+        self.assertEqual(raw,api.encoded({'text':'å😀\\"\n'}))
+        self.assertEqual(codex.input_summary(raw)['characters'],len(raw.decode()))
+        self.assertGreater(len(raw),len(raw.decode()))
+        overhead=len(api.encoded({'text':''}).decode())
+        request={'text':'x'*(codex.MAX_INPUT_CHARACTERS-overhead)}
+        self.assertEqual(codex.input_summary(codex.checked_input(request,'fixture'))['characters'],codex.MAX_INPUT_CHARACTERS)
+        request['text']+='x'
+        with self.assertRaisesRegex(Refused,'input_too_large before dispatch'):codex.checked_input(request,'fixture')
+        with self.assertRaises(Refused):codex.checked_input({'text':'\\'*(codex.MAX_INPUT_CHARACTERS//2)},'escaped')
+
+    def test_every_native_phase_rejects_oversize_without_cli_or_dispatch_marker(self):
+        import flow_codex_stage as stage
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve()
+            for phase in ('model-implementation','model-source-review','model-executed-review'):
+                with self.subTest(phase=phase), patch.object(stage.subprocess,'run',side_effect=AssertionError('no CLI invocation')):
+                    with self.assertRaisesRegex(Refused,phase+' input_too_large before dispatch'):
+                        stage.stage({},root/phase,phase,{'text':'x'*codex.MAX_INPUT_CHARACTERS},{})
+            self.assertEqual(list(root.iterdir()),[])
+
+
 if __name__ == '__main__':
     unittest.main()

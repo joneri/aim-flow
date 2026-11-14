@@ -1,3 +1,25 @@
+# AIM Flow 0.1.0-beta.14
+
+Remove duplicated implementation source text from both native Codex routes.
+Writable files appear once in `editableSources`; all other selected context
+appears once in `contextSources`. Exact source union and original requirements
+are preserved, with no truncation.
+
+Check the complete serialized request against the Codex CLI's 1,048,576-character
+transport limit before every model phase. Include JSON escaping, instructions,
+diagnostics and evidence in that check. Startup previews report the actual first
+request size/hash and refuse oversize before creating an attempt or dispatch.
+Later review/evidence inputs are checked before their own account consumption.
+
+Focused tests cover exact source union, conflicting source refusal, Unicode and
+JSON escaping at the transport boundary, all three phase guards, large committed
+source previews and both source-free installed CLI routes. A retained oversized
+request was reassembled read-only: all selected source bytes remained present and
+the deduplicated request fit. No live model call, queue replay or API charge was
+used for this correction. Previous controllers, attempts and downloads remain
+unchanged; install a fresh controller and preserve cumulative queue authority.
+Automatic CI remains 17 selected cases, with full suites manual only.
+
 # AIM Flow 0.1.0-beta.13
 
 Add a native local Codex-account workflow alongside the existing API route.
