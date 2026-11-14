@@ -108,7 +108,7 @@ def allowed(command):
         return False
     if c[3] == 'verify-project-onboarding':
         return not any(x in c for x in ('--authorize-intent', '--key-file', '--continue'))
-    return c[3] in ('work', 'repair-candidate', 'resume-candidate') and '--verify' in c and not any(
+    return c[3] in ('work', 'repair-candidate', 'resume-candidate', 'run-codex') and '--verify' in c and not any(
         x in c for x in ('--authorize-intent', '--key-file', '--continue'))
 
 
@@ -173,7 +173,7 @@ def _git_query(command):
             i += 2
         else:
             break
-    return i < len(c) and c[i] in ('--version', 'rev-parse', 'ls-tree', 'cat-file', 'diff',
+    return i < len(c) and c[i] in ('--version', '--exec-path', 'rev-parse', 'ls-tree', 'cat-file', 'diff',
                                     'merge-base', 'status', 'show', 'ls-files', 'rev-list', 'log')
 
 
@@ -457,6 +457,11 @@ def shared_store(runtime_sha):
 def terminal_failure(command, expected):
     if expected is None:
         return None
+    native = (allowed(command) and command[3] == 'run-codex' and isinstance(expected, dict)
+        and expected.get('format') == 'aim-flow-codex-local-run'
+        and expected.get('status') == 'codex-review-blocked' and expected.get('localFeatureAccepted') is False)
+    if native:
+        return json.loads(encoded(expected))
     if (not allowed(command) or command[3] != 'resume-candidate'
             or not isinstance(expected, dict)
             or expected.get('format') != 'aim-flow-resumed-candidate-local-run'

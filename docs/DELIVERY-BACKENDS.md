@@ -1,8 +1,8 @@
 # Delivery backend and agent host
 
-This source branch adds `delivery-route` and a local `deliver-codex` proposal
-adapter. The public beta.12 download predates these commands. Build a new private
-controller before using them; never modify a retained installation in place.
+Beta.13 includes `delivery-route`, the local `run-codex` workflow and the
+proposal-only `deliver-codex` adapter. Earlier downloads predate these commands.
+Install a fresh private controller; never modify a retained installation in place.
 
 Backend is the model delivery mechanism. Execution host is where that adapter and
 agent run. They are separate choices, and neither grants project testing or release
@@ -16,7 +16,7 @@ python3 aim-flow.py delivery-route --backend codex-cli --execution-host cloud
 | Backend | Agent host | Implemented route | Cost source |
 | --- | --- | --- | --- |
 | `responses-api` | `local` | Existing `deliver-api` proposal adapter | Existing API campaign |
-| `codex-cli` | `local` | New `deliver-codex` proposal adapter | Saved ChatGPT/Codex account usage |
+| `codex-cli` | `local` | `run-codex` workflow or `deliver-codex` proposal | Saved ChatGPT/Codex account usage |
 | Either | `cloud` | Blocked before dispatch | No fabricated usage or charge |
 
 `available` means the adapter exists, not that authentication, source coverage,
@@ -121,3 +121,187 @@ Official contracts checked for this implementation:
 [non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode),
 [authentication](https://learn.chatgpt.com/docs/auth), and
 [developer commands](https://learn.chatgpt.com/docs/developer-commands).
+
+## Native implementation-to-delivery workflow
+
+`run-codex` differs from the proposal-only `deliver-codex`: it
+orchestrates implementation, a fresh independent source review, the selected
+project-owned local tests, an executed-evidence review, and bounded repair rounds.
+Its model stages have native Codex JSONL receipts, distinct thread identities,
+usage and replay fences. They are not represented as historical API receipts.
+The shared source-citation and finding-materiality validators remain in force.
+
+The model backend remains independent of the agent host. This adapter currently
+runs locally on a POSIX host with an existing eligible Codex login. Test recipes
+run with ordinary host/network privileges in a private committed copy; this is
+not a hostile-code sandbox. The original checkout and API cost history are not
+execution workspaces. Codex model phases stay read-only.
+
+Use configuration format `aim-flow-codex-local-run`, schema 1. Start with the
+source/model/login/manifest fields from the proposal configuration above, then add:
+
+```json
+{
+  "format": "aim-flow-codex-local-run",
+  "python": {"path": "/absolute/python3.11-or-newer", "sha256": "SHA256"},
+  "maximumRounds": 2,
+  "maximumCodexTurns": 6,
+  "testTimeoutSeconds": null,
+  "testCatalog": {"path": "/private/input/project-tests.json", "sha256": "SHA256"},
+  "tools": {"node": {"path": "/absolute/resolved/node", "sha256": "SHA256"}},
+  "environment": {"LC_ALL": "C"},
+  "outputBytes": 32000000,
+  "artifactBytes": 8000000,
+  "runtimeReview": "Explicit review of this trusted project's exact recipes, lifecycle hooks, host effects and prerequisites."
+}
+```
+
+The examples' limits are operator choices, not hidden product defaults. Both
+model and local test timeouts can be null. The optional `reviewMaxSourceBytes`
+uses the existing source-review bound validator; no context is silently truncated.
+Source discovery includes committed catalog definition files, and source review
+uses compact unchanged context. A separate native criterion document retains the
+original requirement text; the model cannot invent a new mandatory test method.
+
+The test catalog is source-bound configuration, selected before claiming a queue
+item. It is not arbitrary commands supplied by a model:
+
+```json
+{
+  "schemaVersion": 1,
+  "minimumTests": 1,
+  "maximumTests": 2,
+  "requiredTests": ["focused-feature"],
+  "stages": [{
+    "id": "focused-feature",
+    "kind": "test",
+    "root": ".",
+    "tool": "node",
+    "arguments": ["scripts/focused-feature-check.mjs"],
+    "needs": [],
+    "definitionSources": ["package.json", "scripts/focused-feature-check.mjs"],
+    "artifacts": [{"path": "output/feature-check.json", "mediaType": "application/json"}]
+  }]
+}
+```
+
+`install`, `test` and `build` are the only stage kinds. A recipe names an already
+pinned tool and exact literal arguments. For npm, include the pinned npm CLI as
+an explicit Node argument and all source-supported lifecycle definitions in the
+reviewed catalog. Declare any required install/build predecessors through `needs`;
+dependencies must precede their consumers. The source reviewer chooses the smallest
+sufficient subset within the reviewed policy, including mandatory tests. Each
+selected stage and dependency executes once per candidate. No general full suite
+is added automatically. A changed candidate can require a new focused test run;
+prior tests are not silently accepted against changed source.
+
+Recipes and all changes are disclosed to the independent source reviewer before
+host execution. Test stdout/stderr, exact argv, tracked input identities and
+selected PNG/JSON artifacts are retained. An executed-evidence Codex turn receives
+actual JSON bytes and PNG attachments, with explicit evidence identities. It
+cannot satisfy a criterion by citing an unexecuted test. The evidence review
+reports limitations and preserves source-review follow-ups. Genuine blockers
+cause a new candidate within the already granted rounds/turns; unknown or
+interrupted outcomes never authorize an automatic replay.
+
+```sh
+python3 /private/controller/aim-flow.py run-codex \
+  --config /private/input/native-run.json --config-sha256 SHA256 \
+  --state /private/codex-run
+# Consume the exact preview once:
+python3 /private/controller/aim-flow.py run-codex \
+  --config /private/input/native-run.json --config-sha256 SHA256 \
+  --state /private/codex-run --authorize-intent INTENT_SHA256
+# Completed-run verification is read-only and invokes no model/project commands:
+python3 /private/controller/aim-flow.py run-codex \
+  --config /private/input/native-run.json --config-sha256 SHA256 \
+  --state /private/codex-run --verify
+```
+
+`--continue` may advance an existing granted run only through its original scope;
+it does not replay a consumed stage or enlarge an allowance. A structured blocked
+response includes a reason and the last retained phase. `progress.json` reports
+local phase progress without pretending to know monetary cost or available plan
+quota. Terminal results and original stage receipts remain immutable.
+
+A completed native local run is accepted by the existing `deliver` command using
+the normal `localRun` config/state/grant/result pins. The candidate producer kind
+is `codex-workflow`, independently verified by the fixed installed
+`run-codex --verify` command. The existing authenticated flat verification closure
+can be reused only while its actual input bytes, directory observations and Git
+queries remain unchanged. No historical recursive model/test execution is run.
+
+Remote publication is a separate exact grant: the existing create-only branch
+and draft PR adapter, exact-head checks/merge, exact main-push CI/artifact checks,
+and project-owned release/production commands keep their original contracts.
+`continue-release` accepts the resulting normal delivery handoff. A local
+Codex success never claims those remote or production steps have happened.
+A queue integration must explicitly opt into this new configuration, bind its
+own test catalog and normal release policy, and preserve existing paused items
+and cost journals. The legacy API `run` command never silently switches backend.
+
+## Authentication, eligibility and actual cost evidence
+
+This implementation invokes the user's installed Codex CLI with its existing
+ChatGPT login. Flow does not export, parse, retain or refresh OAuth access/refresh
+tokens itself; credential renewal stays with Codex. Missing, revoked or expired
+login/account access stops the stage without an API-key fallback. Installation
+or a model catalog does not prove entitlement; only a successful real inference
+turn demonstrates that request's access. Local synthetic CLI tests prove protocol
+and refusal behavior, not access to a user's account or an allocation of quota.
+
+This CLI route is separate from registering AIM Flow as its own Sign in with
+ChatGPT application. The documented app integration requires an explicit user
+permission for plan usage and a distinct registration/sign-in lifecycle. It is
+available to eligible open-source/local personal tools, with restrictions on
+remotely hosted/commercial uses. AIM Flow's public MIT/local design appears to fit
+the documented category, but availability and the user's account remain separate
+checks. No first-class Flow OAuth connection or quota dashboard is claimed here.
+
+The documented app-server integration is a supported future option for such a
+registered connection; Flow currently uses `codex exec`, not a manually copied
+OAuth token or undocumented endpoint. We do not label the CLI's token counters
+as an invoice, remaining quota, guaranteed subscription inclusion or free usage.
+API campaign accounting stays a separate cost source, and switching to it still
+requires its existing explicit funding/credential authority. No automatic credit
+purchase, reset or paid API failover is implemented.
+
+Sources: [Sign in with ChatGPT cookbook](https://developers.openai.com/cookbook/articles/sign-in-with-chatgpt),
+[Codex app-server integration](https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server),
+and the CLI/authentication references above. Documentation establishes supported
+integration patterns; it is not evidence that this particular account completed
+a live turn or that a specific usage bucket was debited.
+
+
+## Phase gates and continuation without repeating model work
+
+The independent source reviewer has a separate `executionGate`. Demonstrated
+source defects, missing source requirements and unsafe/unapproved runtime
+prerequisites block before tests. A test not having run yet is pending execution
+verification; it cannot be a prerequisite for collecting that very evidence.
+The original source review and its raw blockers remain intact. Every pending
+source uncertainty/coverage item receives an exact executed disposition; resolved
+items need actual evidence IDs. Unresolved essential items still prevent delivery.
+
+A verified legacy pre-execution stop can continue through a new exact grant with
+optional `resumeCandidate`. It pins the original installed controller, local run,
+grant/result, every explicitly deferred item ID and an explanation. The fixed
+original verifier must reconstruct its original blocked result; no raw review or
+candidate is edited. Concrete source defects and explicit blocked safety gates
+cannot use this route. Source, model, tools, test policy, runtime scope, account
+ledger and original requirement must remain identical. The new workflow is
+limited to one continuation round and the original unused Codex-turn allowance.
+It reuses implementation/source-review receipts, runs only the never-started
+reviewed tests and performs the remaining fresh executed review. Combined usage
+and all prior model-stage references stay in the result. This is not a way to
+replay failed or unknown model/process outcomes, expand permissions or reset cost.
+
+An isolated live qualification completed three genuine Codex CLI turns, one
+focused Python check and retained JSON evidence. Its two earlier model receipts
+were reused under the verified continuation; final read-only verification left
+all three dispatch records unchanged. This demonstrates local CLI/account access
+and the narrow fixture's native pipeline. It does not qualify arbitrary projects,
+Node/browser/PNG execution, cloud, hosted delivery, production or a billing bucket.
+Remote adapter contracts were exercised separately with simulated GitHub effects.
+
+Local native Git preparation also defaults to no Flow deadline. Optional `localGitTimeoutSeconds` sets a positive explicit deadline without changing historical API grants. Runtime and permission prerequisites that source edits cannot resolve stop before another implementation turn.

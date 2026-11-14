@@ -1,3 +1,36 @@
+# AIM Flow 0.1.0-beta.13
+
+Add a native local Codex-account workflow alongside the existing API route.
+Backend and agent execution host are separate explicit choices. Cloud selection
+reports missing environment/repository/adapter bindings before any dispatch.
+
+- Retain native Codex JSONL, distinct implementation/review thread identities,
+  token usage and immutable attempt receipts. No fake API receipt, dollar cost,
+  remaining plan quota, account migration or automatic API fallback is claimed.
+- Prepare private Git candidates, independently review source and select a small
+  subset of reviewed project recipes. Execute real tests in a committed private
+  host copy, retain exact logs and selected PNG/JSON, and independently assess
+  that evidence before the existing branch/PR/CI/merge/release adapters can proceed.
+- Keep source defects and unsafe execution prerequisites blocking. Pending test
+  evidence is resolved after tests, with explicit dispositions. A separately
+  granted verified pre-execution continuation can preserve prior model work and
+  use only its original remaining allowance. Unknown outcomes never auto-replay.
+- Drive repair rounds within explicit Codex-turn authority. Read-only native
+  verification joins the existing authenticated flat evidence cache; changed
+  bytes, sources or receipts invalidate reuse. Operator timeouts may be null.
+- Fix multilingual requirement retrieval and documentation outliers suppressing
+  feature code. Limit relationship expansion to adjacent ranked context and
+  retain omitted dependencies explicitly.
+
+Focused contracts cover real Git, actual local tests, native source-free
+installation, failures, replay/usage bounds, preserved predecessor evidence and
+simulated GitHub/release handoff. An isolated live qualification completed three
+genuine Codex CLI turns and a focused Python/JSON check; no API campaign operation
+or customer-card replay was used. That is not production, cloud, PNG/browser,
+arbitrary-project or monetary-billing qualification. API histories and prior
+controllers/downloads remain intact. Automatic CI stays at 17 selected cases,
+including one small native Codex fixture; full suites remain manual only.
+
 # AIM Flow 0.1.0-beta.12
 
 Integrate the existing initial-workflow funding fix into the upstream controller

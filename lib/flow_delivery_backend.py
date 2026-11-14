@@ -20,6 +20,7 @@ def route(profile):
                      'An explicit remote Flow runner, pinned inputs, approved API credentials and campaign continuity are required; a local watcher is not a remote runner.')]}
     return {**result, 'status': 'available',
             'command': 'deliver-api' if backend == 'responses-api' else 'deliver-codex',
+            'workflowCommand': 'run' if backend == 'responses-api' else 'run-codex',
             'scope': 'proposal-only; application, project tests, acceptance and release remain separate',
             'prerequisites': ['Existing pinned API campaign and approved API key'] if backend == 'responses-api'
                 else ['Pinned Codex CLI supporting exec JSON/schema and ignore-user-config',

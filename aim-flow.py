@@ -137,6 +137,13 @@ elif sys.argv[1:2] == ['onboard-api']:
         raise SystemExit(main(sys.argv[2:]))
     except (ValueError, OSError) as error:
         raise SystemExit(str(error))
+elif sys.argv[1:2] == ['run-codex']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_codex_workflow import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
 elif sys.argv[1:2] == ['delivery-route']:
     sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
     import argparse

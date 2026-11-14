@@ -6,13 +6,14 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.12` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.13` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md) · [CI: 17-case default](docs/CI.md)
 
-Development source adds a separate local Codex-account proposal route and explicit
-backend/agent-host selection. It is not part of the published beta.12 download or
-the API workflow. See [delivery backends and current cloud blockers](docs/DELIVERY-BACKENDS.md).
+Beta.13 adds a local Codex-account workflow alongside the existing API route,
+with explicit backend/agent-host selection. It can prepare and review a candidate,
+run selected project tests and pass verified native evidence to the normal
+delivery adapters. Cloud dispatch remains unavailable. See [delivery backends](docs/DELIVERY-BACKENDS.md).
 
 ## What you can explore now
 

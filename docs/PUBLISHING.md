@@ -6,12 +6,13 @@ below; confirm the exact remote commit, hosted checks and live download before
 claiming a new version is published. Do not replace an existing repository or
 assume remote main is unchanged from a cached local observation.
 
-## Active release: beta.12
+## Prepared release: beta.13
 
-Source VERSION and the active download are `0.1.0-beta.12`. This release adds
-funding continuation to the initial workflow, onboarding and combined intake
-without resetting historical accounting. The prior beta.11 and earlier ZIPs
-remain unchanged. Active pins live in
+Source VERSION and the prepared active download are `0.1.0-beta.13`. This release
+adds explicit backend/agent-host selection, native local Codex workflow receipts,
+phase-aligned source/test/evidence review, continuation without repeated model
+work and the existing guarded delivery adapters. The API option and historical
+accounting remain available. Earlier ZIPs remain unchanged. Active pins live in
 `site/downloads/release.json` and `site/downloads/SHA256SUMS`.
 
 The branded bundle check with `--current-source` must match every controller

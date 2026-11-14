@@ -90,6 +90,11 @@ def verify_local(spec, manifest_sha, *, owner_decision=None):
     grant = delivery.unique_json(api.pinned(spec['grant']))
     old_result = delivery.unique_json(api.pinned(spec['result']))
     config = delivery.unique_json(api.pinned(spec['config']))
+    if intent_format := grant.get('intent', {}).get('format'):
+        if intent_format == 'aim-flow-codex-local-run':
+            require(owner_receipt is None and owner_decision is None, 'Native Codex run does not adopt API owner-acceptance receipts')
+            from flow_codex_workflow import verified_local
+            return verified_local(spec, manifest_sha)
     local_manifest = spec.get('controller', {}).get('manifestSha256', manifest_sha)
     require(config.get('manifestSha256') == local_manifest, 'Completed local run differs from pinned controller')
     intent = grant.get('intent', {})
@@ -213,6 +218,27 @@ def verify_local(spec, manifest_sha, *, owner_decision=None):
 
 
 def render_body(verified):
+    if verified.get('nativeCodex'):
+        source, result = verified['source'], verified['result']
+        body = '\n'.join(['## Requirement', '', verified['packet']['requirement']['original'], '',
+            '## Exact native Codex candidate', '', 'Baseline: ' + source['baseSha'],
+            'Candidate: ' + source['headSha'], 'Tree: ' + source['treeSha'],
+            'Complete diff SHA-256: ' + source['diffSha256'], '',
+            'Flow verified separate native Codex implementation, source-review and executed-evidence turns,',
+            'plus the selected real project test recipes in a committed private host copy.',
+            'This is model evidence assessment with normal host privileges, not human acceptance or a security sandbox.',
+            'Cost source: Codex account usage. USD cost is unknown; no API budget charge is claimed.', '',
+            '## Evidence hashes', '',
+            *[role + ': ' + value['sha256'] for role, value in verified['evidence'].items()], '',
+            '## Retained limitations and follow-ups', '',
+            *verified['review']['limitations'],
+            *[f['disposition']['title'] for f in verified['review']['followUps'] + verified['review']['sourceFollowUps']], '',
+            '## Pending delivery', '',
+            'Hosted PR checks, exact-head merge, main-push CI/artifacts, project release and production verification remain pending.',
+            *[x['analysis'] for x in result['pendingDeliveryObligations']], ''])
+        acceptance.safe_text(body)
+        require(len(body.encode()) <= 65536, 'Native Codex draft exceeds platform metadata bound')
+        return body
     review, packet, source = verified['review'], verified['packet'], verified['source']
     stages = verified['validation']['validation']['report']['stages']
     artifacts = verified['validation']['validation']['report'].get('artifacts', [])
@@ -290,6 +316,11 @@ def publication_config(c, verified, state, body):
         require(resumed and intent.get('producerKind') == 'repair-candidate' and 'repairConfig' in intent,
                 'Unsupported publication producer continuation')
         producer.update(producerKind=intent['producerKind'], repairConfig=intent['repairConfig'])
+    if verified.get('nativeCodex'):
+        producer = {'controller': verified['producerController'], 'config': verified['localConfig'],
+            'state': verified['producerState'], 'producerKind': 'codex-workflow',
+            'runState': verified['runState'], 'runGrant': verified['evidence']['localGrant'],
+            'runResult': verified['evidence']['localRun']}
     return {'format': 'aim-flow-github-publication', 'schemaVersion': 1, 'manifestSha256': c['manifestSha256'],
         'repository': c['repository'], 'source': {**verified['source'], 'git': {'path': wc['source']['git'], 'sha256': wc['source']['gitSha256']}},
         'branch': c['branch'], 'baseRef': c['baseRef'], 'pull': {'title': c['title'],
@@ -327,9 +358,12 @@ def prepare(config_path, config_sha, state):
     require(isinstance(c['title'], str) and 0 < len(c['title']) <= 256 and all(ord(v) >= 32 for v in c['title']), 'Invalid title')
     acceptance.safe_text(c['title'])
     protected = [ROOT, Path(c['localRun']['state']), Path(verified['source']['checkout']),
-                 Path(verified['config']['source']['checkout']), config_path,
-                 Path(verified['config']['campaignDirectory']), Path(verified['config']['historicalBudget']['directory']),
-                 Path(verified['config']['historicalBudget']['legacy']['path']).parent]
+                 Path(verified['config']['source']['checkout']), config_path]
+    if verified.get('nativeCodex'):
+        protected.append(Path(verified['config']['dispatchDirectory']))
+    else:
+        protected += [Path(verified['config']['campaignDirectory']), Path(verified['config']['historicalBudget']['directory']),
+                      Path(verified['config']['historicalBudget']['legacy']['path']).parent]
     if 'controller' in c['localRun']:
         protected.append(api.canonical_path(c['localRun']['controller']['path']))
     if verified['runIntent']['format'] == 'aim-flow-resumed-candidate-local-run':
