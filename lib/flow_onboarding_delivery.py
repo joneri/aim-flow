@@ -292,7 +292,8 @@ def prepare(config_path, config_sha, state):
     config = unique_json(raw)
     onboarding._keys(config, ('schemaVersion', 'purpose', 'model', 'reasoning', 'manifestSha256', 'source',
         'packet', 'campaignDirectory', 'historicalBudget', 'timeoutSeconds', 'maxOutputTokens',
-        'maxOperationNanoUsd', *(key for key in ('sourceRanges', 'requirement', 'availableCapabilities') if key in config)), 'onboarding dispatch configuration')
+        'maxOperationNanoUsd', *(key for key in ('sourceRanges', 'requirement', 'availableCapabilities',
+        'campaignContinuation') if key in config)), 'onboarding dispatch configuration')
     if (type(config['schemaVersion']) is not int or config['schemaVersion'] != 1
             or config['purpose'] != PURPOSE or config['model'] != api.MODEL or config['reasoning'] != 'xhigh'
             or type(config['timeoutSeconds']) is not int or not 1 <= config['timeoutSeconds'] <= 3600
@@ -315,7 +316,7 @@ def prepare(config_path, config_sha, state):
     campaign = api.canonical_path(config['campaignDirectory'])
     history = api.canonical_path(config['historicalBudget']['directory'])
     legacy = api.canonical_path(config['historicalBudget']['legacy']['path']).parent
-    protected = [args.checkout, ROOT, history, legacy]
+    protected = [args.checkout, ROOT, history, legacy, *api.prior_campaign_roots(config)]
     for output in (state, campaign):
         for other in [*protected, campaign if output == state else state]:
             if output == other or output in other.parents or other in output.parents:
@@ -343,7 +344,8 @@ def prepare(config_path, config_sha, state):
         'provider': 'OpenAI Responses API', 'modelRequested': api.MODEL, 'reasoningRequested': 'xhigh',
         'serviceTier': 'default', 'maxOutputTokens': config['maxOutputTokens'],
         'maxOperationNanoUsd': config['maxOperationNanoUsd'], 'timeoutSeconds': config['timeoutSeconds'],
-        'campaignLimitNanoUsd': api.LIMIT, 'pricing': api.PRICING, 'maxAttempts': 1,
+        'campaignLimitNanoUsd': api.campaign_limit(config), 'pricing': api.PRICING, 'maxAttempts': 1,
+        **({'campaignContinuation': config['campaignContinuation']} if 'campaignContinuation' in config else {}),
         'responseContract': 'bounded-compact-v2-local-citation-enrichment',
         'disclosure': [{'path': s['path'], 'sha256': s['sha256'], 'sourceLineCount': s['lineCount'],
             'disclosedBytes': sum(len(''.join(e['lines']).encode()) for e in s['excerpts']),

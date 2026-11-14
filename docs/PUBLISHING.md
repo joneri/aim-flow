@@ -6,11 +6,12 @@ below; confirm the exact remote commit, hosted checks and live download before
 claiming a new version is published. Do not replace an existing repository or
 assume remote main is unchanged from a cached local observation.
 
-## Active release: beta.11
+## Active release: beta.12
 
-Source VERSION and the active download are `0.1.0-beta.11`. This release packages
-the controller changes from merged [PR #4](https://github.com/joneri/aim-flow/pull/4).
-The prior beta.10 and earlier ZIPs remain unchanged. Active pins live in
+Source VERSION and the active download are `0.1.0-beta.12`. This release adds
+funding continuation to the initial workflow, onboarding and combined intake
+without resetting historical accounting. The prior beta.11 and earlier ZIPs
+remain unchanged. Active pins live in
 `site/downloads/release.json` and `site/downloads/SHA256SUMS`.
 
 The branded bundle check with `--current-source` must match every controller

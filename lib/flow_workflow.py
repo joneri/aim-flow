@@ -42,7 +42,8 @@ def inputs(config_path, config_sha, state):
     onboarding._keys(c, ('schemaVersion', 'manifestSha256', 'requirement', 'source',
         'projectDocuments', 'onboardingSources', 'reviewSources', 'editablePaths', 'resourceCatalog', 'campaignDirectory',
         'historicalBudget', 'timeoutSeconds', 'onboardingMaxOutputTokens',
-        'implementationMaxOutputTokens', 'onboardingMaxOperationNanoUsd'), 'workflow configuration')
+        'implementationMaxOutputTokens', 'onboardingMaxOperationNanoUsd',
+        *(('campaignContinuation',) if 'campaignContinuation' in c else ())), 'workflow configuration')
     if type(c['schemaVersion']) is not int or c['schemaVersion'] != 1:
         raise Refused('Unsupported workflow configuration')
     onboarding._keys(c['source'], ('checkout', 'commit', 'git', 'gitSha256'), 'source')
@@ -57,7 +58,8 @@ def inputs(config_path, config_sha, state):
         onboarding._source_path(name)
     requirement = agent.requirement_text(c['requirement'])
     onboarding._outside(Path(c['requirement']['path']), ROOT, Path(c['source']['checkout']))
-    if Path(c['requirement']['path']).is_relative_to(api.canonical_path(c['campaignDirectory'])):
+    budget_roots = [api.canonical_path(c['campaignDirectory']), *api.prior_campaign_roots(c)]
+    if any(Path(c['requirement']['path']).is_relative_to(root) for root in budget_roots):
         raise Refused('Workflow requirement must be outside mutable campaign state')
     resources = unique_json(api.pinned(c['resourceCatalog']))
     if not isinstance(resources, dict):
@@ -69,7 +71,8 @@ def inputs(config_path, config_sha, state):
     context_packet = onboarding.build_packet(ROOT, args)
     state = api.canonical_path(state)
     protected = [ROOT, Path(c['source']['checkout']), Path(c['campaignDirectory']),
-        Path(c['historicalBudget']['directory']), Path(c['historicalBudget']['legacy']['path']).parent]
+        Path(c['historicalBudget']['directory']), Path(c['historicalBudget']['legacy']['path']).parent,
+        *api.prior_campaign_roots(c)]
     for other in protected:
         api.canonical_path(other)
         if state == other or state in other.parents or other in state.parents:
@@ -191,7 +194,8 @@ def implementation_config(c, state, packet, requirement, resources):
         'candidateDirectory': str(source_dir), 'sourceFiles': sources,
         'inputFiles': [c['requirement'], c['resourceCatalog'], pin(state / 'onboarding-attempt/project-instance.json')],
         'request': request, 'campaignDirectory': c['campaignDirectory'], 'historicalBudget': c['historicalBudget'],
-        'timeoutSeconds': c['timeoutSeconds']}
+        'timeoutSeconds': c['timeoutSeconds'],
+        **({'campaignContinuation': c['campaignContinuation']} if 'campaignContinuation' in c else {})}
 
 
 def candidate_inputs(c, state):
@@ -256,7 +260,8 @@ def advance(c, packet, context_packet, requirement, resources, state, authorizat
         'requirement': c['requirement'], 'availableCapabilities': public_capabilities(resources),
         'campaignDirectory': c['campaignDirectory'], 'historicalBudget': c['historicalBudget'],
         'timeoutSeconds': c['timeoutSeconds'], 'maxOutputTokens': c['onboardingMaxOutputTokens'],
-        'maxOperationNanoUsd': c['onboardingMaxOperationNanoUsd']}
+        'maxOperationNanoUsd': c['onboardingMaxOperationNanoUsd'],
+        **({'campaignContinuation': c['campaignContinuation']} if 'campaignContinuation' in c else {})}
     for stage, module in (('onboarding', agent), ('implementation', api)):
         if stage == 'implementation':
             config = implementation_config(c, state, context_packet, requirement, resources)
@@ -404,7 +409,8 @@ def grant_intent(c, packet, context_packet, identity):
         'maximumGenerationAttempts': 2, 'onboardingMaxOutputTokens': c['onboardingMaxOutputTokens'],
         'implementationMaxOutputTokens': c['implementationMaxOutputTokens'],
         'campaignDirectory': c['campaignDirectory'], 'historicalBudget': c['historicalBudget'],
-        'combinedHistoricalAndCampaignLimitNanoUsd': api.LIMIT,
+        'combinedHistoricalAndCampaignLimitNanoUsd': api.campaign_limit(c),
+        **({'campaignContinuation': c['campaignContinuation']} if 'campaignContinuation' in c else {}),
         'credentialReuse': 'same approved provider key within granted model phases; never retained',
         'projectCommandsAuthorized': False, 'publicationAuthorized': False, 'deploymentAuthorized': False}
 

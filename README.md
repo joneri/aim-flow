@@ -6,7 +6,7 @@
 
 AIM Flow helps you understand a software project, choose the next step and check what happened. It reads the project's committed files and workflow, proposes a plan for that project and keeps evidence for the operations you approve. The goal is to make AI-assisted development easier to review and repeat.
 
-**Version:** `0.1.0-beta.11` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
+**Version:** `0.1.0-beta.12` · **Code license:** [MIT](LICENSE) · **Status:** early technical beta for trusted, reviewed projects.
 
 [Website](https://joneri.github.io/aim-flow/) · [Start safely](docs/QUICKSTART.md) · [What the beta proves](docs/BETA-SCOPE.md) · [Roadmap](docs/ROADMAP.md) · [CI: 17-case default](docs/CI.md)
 
@@ -89,3 +89,5 @@ nonessential verification methods are recorded honestly rather than silently
 becoming new requirements. See [remaining autonomy gaps](docs/AUTONOMY-GAPS.md).
 
 Included in beta.11: [change-focused test scheduling](docs/WORKFLOW-VALIDATION.md), explicitly reviewed same-attempt test reuse, focused installed contracts and structural regression checks. The versioned download includes these controller changes.
+
+Included in beta.12: initial workflow, onboarding and outer-run funding continuation with preserved historical accounting and pre-write protection for ancestor budget directories.

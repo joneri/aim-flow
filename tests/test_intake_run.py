@@ -111,6 +111,29 @@ from aim_ci import project_container as container
 
 class IntakeChildIntegrationTests(run_fixtures.FullRunTests):
     def test_bridge_drives_and_verifies_existing_child_without_manual_config_extraction(self):
+        self.exercise_child_bridge()
+
+    def test_bridge_preserves_funding_through_derived_config_and_three_paid_phases(self):
+        self.setup_workflow_funding(maximum=3)
+        self.exercise_child_bridge()
+        ledger = api.read_existing_campaign(self.wc)
+        self.assertEqual(len(ledger['requests']), 3)
+        self.assertEqual(ledger['identity']['allocatedPriorCampaignNanoUsd'], 20_000_000_000)
+        self.assertEqual((self.prior_campaign / 'budget.json').read_bytes(), self.prior_budget_bytes)
+
+    def test_bridge_funding_refuses_ancestor_intake_state_before_any_writes(self):
+        self.setup_workflow_funding(maximum=3)
+        before = {str(p): p.read_bytes() for p in self.prior_campaign.rglob('*') if p.is_file()}
+        state = self.prior_campaign / 'must-not-create-intake'
+        with patch.object(intake, 'derive', side_effect=AssertionError('intake must not start')) as derive:
+            with self.assertRaisesRegex(Refused, 'disjoint'):
+                full.run_requirement(self.wpath, self.wsha, state, ['web'])
+            derive.assert_not_called()
+        self.assertFalse(state.exists())
+        self.assertEqual(before, {str(p): p.read_bytes() for p in self.prior_campaign.rglob('*') if p.is_file()})
+        self.assertFalse(self.wcalls)
+
+    def exercise_child_bridge(self):
         state = self.case/'intake-bridge'
         selected = {name: self.wc[name] for name in ('projectDocuments', 'onboardingSources', 'reviewSources', 'editablePaths')}
         derived = {'format': intake.FORMAT, 'status': 'selected', 'source': self.wc['source'],
@@ -118,6 +141,9 @@ class IntakeChildIntegrationTests(run_fixtures.FullRunTests):
         self.fs = state/'run'; self.ws = self.fs/'initial'; self.ps = self.fs/'validation'
         with patch.object(intake, 'derive', return_value=derived), patch.object(container, 'execute', side_effect=self.execute_fake):
             preview = full.run_requirement(self.wpath, self.wsha, state, ['web'])
+            if 'campaignContinuation' in self.wc:
+                self.assertEqual(preview['intent']['runIntent']['campaignContinuation'], self.wc['campaignContinuation'])
+                self.assertEqual(preview['intent']['runIntent']['combinedHistoricalAndCampaignLimitNanoUsd'], 30_000_000_000)
             result = full.run_requirement(self.wpath, self.wsha, state, ['web'], preview['intentSha256'], transport=self.post_all)
             self.assertEqual(result['status'], 'local-validation-passed')
             self.assertEqual(result['intakeEvidence']['workflowState'], str(self.fs))

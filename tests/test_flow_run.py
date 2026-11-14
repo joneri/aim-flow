@@ -53,6 +53,23 @@ class FullRunTests(fixtures.ContinuationTests):
         with patch.object(container,'execute',side_effect=self.execute_fake):
             self.assertEqual(self.full(transport=self.post_all)['status'],'local-validation-passed')
 
+    def test_initial_run_continuation_funds_three_phases_and_completed_verification(self):
+        self.setup_workflow_funding(maximum=3)
+        preview = self.full()
+        self.assertEqual(preview['intent']['combinedHistoricalAndCampaignLimitNanoUsd'], 30_000_000_000)
+        self.assertEqual(preview['intent']['initialIntent']['campaignContinuation'], self.pin(self.funding_path))
+        with patch.object(container, 'execute', side_effect=self.execute_fake):
+            result = self.full(preview['intentSha256'], transport=self.post_all)
+            self.assertEqual(result['status'], 'local-validation-passed', result)
+            phase = json.loads((self.fs / 'validation-config.json').read_bytes())
+            self.assertEqual(phase['campaignContinuation'], self.pin(self.funding_path))
+            self.assertEqual(self.full(verify_only=True), result)
+        ledger = api.read_existing_campaign(self.wc)
+        self.assertEqual(len(ledger['requests']), 3)
+        self.assertEqual(ledger['identity']['allocatedPriorCampaignNanoUsd'], 20_000_000_000)
+        self.assertEqual((self.prior_campaign / 'budget.json').read_bytes(), self.prior_budget_bytes)
+        self.assertEqual(self.wcalls, ['responses/input_tokens', 'responses'] * 3)
+
     def test_old_grant_and_changed_review_limits_never_expand_authority(self):
         preview=self.full()
         old=api.digest(api.encoded(preview['intent']['initialIntent']))
