@@ -97,3 +97,11 @@ source review must assess changed tests and guards; a directory grant or intake
 classification is not evidence of their safety or semantic correctness. Every
 recognized process definition that cannot be read is reported incomplete,
 including excluded configuration paths and unsupported formats.
+
+
+For the native Codex routes, beta.15 separates this complete provenance selection
+from phase-specific model display. Protected process/lock evidence is retained
+without automatically sending all of it inline. Relevant code and line-addressed
+excerpts are backed by exact read-only expansion files; the preview reports both
+full and displayed context sizes. See [delivery backends](DELIVERY-BACKENDS.md).
+The historical API intake/assembly contract remains unchanged.

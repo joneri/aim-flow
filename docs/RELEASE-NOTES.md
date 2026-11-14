@@ -1,3 +1,24 @@
+# AIM Flow 0.1.0-beta.15
+
+Separate complete selected-source provenance from phase-relevant inline model
+context. Preserve original tree-wide relevance scores, display leading feature
+code and exact test definitions, and use original-line excerpts for literal
+callers/imports and relevant CSS selectors. Generic entrypoint names no longer
+connect unrelated files. Locks and irrelevant process code remain available as
+hash-bound inventory instead of filling implementation prompts. Dependency
+requirements and changed review sources retain whole-file display.
+
+Retain every selected full source in private read-only expansion files, with
+explicit paths, hashes, editable scope and line ranges. Models can inspect these
+when excerpts are insufficient. Verify the files and their exact inventory before
+reusing an attempt or cached proof. Validate edits and review citations against
+complete committed sources; preserve original requirements and runtime evidence.
+The actual serialized prompt still receives the existing CLI size preflight.
+No new file-size prohibition, API dispatch, automatic replay, queue activation
+or production delivery is introduced. Historical controllers/downloads stay
+unchanged. This correction is qualified by focused synthetic-CLI contracts and
+read-only retained-input previews, not a new live model run.
+
 # AIM Flow 0.1.0-beta.14
 
 Remove duplicated implementation source text from both native Codex routes.
