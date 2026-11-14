@@ -13,7 +13,7 @@
     "test_finding_disposition.FindingDispositionTests.test_low_follow_up_is_retained_without_blocking",
     "test_finding_disposition.FindingDispositionTests.test_real_impact_blocks_even_at_low_severity",
     "test_runtime_hardlinks.RuntimeHardlinkTests.test_alias_outside_runtime_remains_refused",
-    "test_runtime_hardlinks.RuntimeHardlinkTests.test_internal_npm_style_aliases_are_hashed_and_topology_recorded",
+    "test_codex_workflow.CodexWorkflowTests.test_full_source_free_native_run_and_read_only_verification",
     "test_tool_runtime_prefix.ToolPrefixTests.test_existing_legacy_intent_does_not_gain_new_runtime_authority"
   ],
   "node": [

@@ -321,11 +321,14 @@ def git(c, directory, *args, data=None, timestamp=None):
         'GIT_COMMITTER_NAME': 'AIM Flow', 'GIT_COMMITTER_EMAIL': 'aim-flow@invalid'}
     if timestamp is not None:
         environment.update(GIT_AUTHOR_DATE=timestamp, GIT_COMMITTER_DATE=timestamp)
+    timeout = c.get('localGitTimeoutSeconds', None if c.get('format') == 'aim-flow-codex-local-run' else 120)
+    if timeout is not None and (type(timeout) is not int or timeout <= 0):
+        raise Refused('Local Git timeout must be null or an explicit positive integer')
     result = subprocess.run([str(executable), '--no-replace-objects', '-c', 'core.hooksPath=/dev/null',
         '-c', 'core.fsmonitor=false', '-c', 'core.autocrlf=false', '-c', 'core.attributesFile=/dev/null',
         '-c', 'commit.gpgSign=false', '-c', 'protocol.allow=never', '-c', 'protocol.file.allow=always',
         *args], cwd=directory, env=environment, input=data, capture_output=True,
-        timeout=None if args[0] in ('diff', 'status', 'rev-parse', 'ls-tree', 'cat-file') else 120)
+        timeout=None if args[0] in ('diff', 'status', 'rev-parse', 'ls-tree', 'cat-file') else timeout)
     if result.returncode:
         raise Refused('Typed local candidate Git operation failed: ' + args[0])
     return result.stdout

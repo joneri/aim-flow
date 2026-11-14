@@ -115,4 +115,10 @@ executed-evidence review. This does not replay an old attempt or regenerate its
 completed candidate. Report recorded usage separately from reserved liability;
 neither is an independently retrieved billing invoice.
 
-`deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation. Local Codex and Codex Cloud delivery are not included in this download.
+`deliver-api` produces `proposal.json` in its own old/new edit format. It is not a retained `run-local-intake` proposal and cannot be passed directly to `prepare-local-candidate`. Applying and testing its reviewed edits remains a separate operation.
+
+Beta.13 also includes a separate local Codex-account `run-codex` workflow and a
+proposal-only `deliver-codex` command; see [DELIVERY-BACKENDS.md](DELIVERY-BACKENDS.md).
+This does not change an API grant, migrate an installation or turn the legacy API
+workflow into a Codex workflow. Cloud dispatch remains unavailable. API campaign
+accounting and Codex account usage stay distinct, with no automatic failover.

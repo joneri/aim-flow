@@ -70,3 +70,17 @@ The presence of GitHub/release adapters does not qualify production feature acce
 Linux CI skips the macOS-only execution tests and cannot replace their retained
 local results. The hosted runner's Git prerequisite must be verified before
 calling its portable checks complete. No hosted run is claimed by local packaging.
+
+
+## Beta.13 native local Codex path
+
+`run-codex` has native implementation/source/test/evidence receipts, a bounded
+repair loop and a verifier accepted by the existing delivery/release adapters.
+`deliver-codex` remains proposal-only. Both require a separately installed Codex
+CLI and existing eligible account login; the download itself makes no model call.
+Model turns are read-only, while explicitly reviewed project recipes run with
+normal host privileges in a private committed copy. This is not a hostile-code
+sandbox. API and Codex accounting stay separate; Codex USD cost/quota is unknown.
+An isolated live Python/JSON qualification and focused synthetic contracts are
+not arbitrary-project, cloud, browser/PNG or production qualification. See
+[delivery backends](DELIVERY-BACKENDS.md) for the exact scope and continuation rules.

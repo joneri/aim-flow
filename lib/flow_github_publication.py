@@ -72,7 +72,14 @@ def source_binding(c):
     parents = [line[7:].decode('ascii') for line in header if line.startswith(b'parent ')]
     expected_parent = source['baseSha']
     spec = c['candidateVerification']
-    if 'producerKind' in spec or 'repairConfig' in spec:
+    if spec.get('producerKind') == 'codex-workflow':
+        receipt = gh.unique_json(gh.pinned_metadata(c['evidence']['candidate']))
+        intent = receipt.get('intent', {})
+        expected_parent = intent.get('parent', {}).get('commit')
+        gh.require(intent.get('format') == 'aim-flow-codex-candidate'
+            and intent.get('originalBaseline') == source['baseSha']
+            and gh.pattern(expected_parent, '[a-f0-9]{40}'), 'Native Codex candidate parent/baseline differs')
+    elif 'producerKind' in spec or 'repairConfig' in spec:
         gh.require(spec.get('producerKind') == 'repair-candidate' and 'repairConfig' in spec,
                    'Unknown repair publication producer')
         receipt = gh.unique_json(gh.pinned_metadata(c['evidence']['candidate']))
@@ -125,8 +132,10 @@ def source_binding(c):
 
 def verify_producer(c):
     spec = c['candidateVerification']
+    native = spec.get('producerKind') == 'codex-workflow'
     gh.keys(spec, ('controller', 'python', 'config', 'state',
-        *(('producerKind', 'repairConfig') if 'producerKind' in spec or 'repairConfig' in spec else ()),
+        *(('producerKind', 'runState', 'runGrant', 'runResult') if native else
+          ('producerKind', 'repairConfig') if 'producerKind' in spec or 'repairConfig' in spec else ()),
         *(('producerVerificationTimeoutSeconds',) if 'producerVerificationTimeoutSeconds' in spec else ())), 'candidate verifier')
     timeout = project_validation.producer_timeout(spec)
     gh.keys(spec['controller'], ('path', 'manifestSha256'), 'candidate controller')
@@ -148,6 +157,21 @@ def verify_producer(c):
     target = {'checkout': source['checkout'], 'commit': source['headSha'], 'tree': source['treeSha']}
     gh.require(candidate.get('status') == 'candidate-prepared' and candidate.get('source') == source
                and candidate.get('candidate') == target, 'Candidate producer receipt/source differs')
+    if native:
+        from flow_codex_workflow import verified_local
+        verified = verified_local({'controller': spec['controller'], 'config': spec['config'],
+            'state': spec['runState'], 'grant': spec['runGrant'], 'result': spec['runResult']},
+            spec['controller']['manifestSha256'])
+        gh.require(verified['source'] == source and verified['candidate'] == target
+            and verified['evidence']['candidate'] == candidate_pin and verified['producerState'] == str(state)
+            and verified['runIntent']['python'] == spec['python'],
+            'Native Codex verifier did not confirm the exact accepted producer')
+        gh.require(before == project_validation.prior_controller(producer, spec['controller']['manifestSha256'])
+            and raw == gh.pinned_metadata(candidate_pin) and config_raw == gh.pinned_metadata(spec['config']),
+            'Native producer evidence changed during verification')
+        return {'candidateReceipt': candidate_pin, 'source': source, 'producer': spec['controller'],
+            'producerKind': 'codex-workflow', 'status': 'source-bound-flow-candidate',
+            'verification': 'Fixed installed run-codex --verify; native receipts, no API receipt substitution'}
     if 'producerKind' in spec:
         from flow_repair_candidate import verify_repair_producer
         bridge = {'producerKind': spec['producerKind'], 'repairConfig': spec['repairConfig'],
@@ -226,6 +250,12 @@ def prepare(config_path, config_sha, state):
                  Path(c['pull']['body']['path']), *(Path(pin['path']) for pin in c['evidence'].values()),
                  Path(c['candidateVerification']['controller']['path']), Path(c['candidateVerification']['state']),
                  Path(c['candidateVerification']['python']['path']), Path(c['candidateVerification']['config']['path'])]
+    if c['candidateVerification'].get('producerKind') == 'codex-workflow':
+        native_root = local.canonical_path(c['candidateVerification']['runState'])
+        gh.require(not state.is_relative_to(native_root), 'Publication state overlaps native Codex run')
+        native_config = gh.unique_json(gh.pinned_metadata(c['candidateVerification']['config']))
+        gh.require(not state.is_relative_to(local.canonical_path(native_config['dispatchDirectory'])),
+                   'Publication state overlaps native Codex dispatch ledger')
     gh.require(not any(p.is_relative_to(state) for p in protected)
                and not state.is_relative_to(ROOT) and not state.is_relative_to(reader.checkout),
                'Publication state overlaps protected inputs')

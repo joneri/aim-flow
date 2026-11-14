@@ -266,3 +266,23 @@ fetch. The remote main was refreshed and the reviewed beta.9 branch and draft
 PR were published. These local packaging results do not themselves prove hosted
 checks or a Pages deployment; verify their exact remote identities separately.
 See [publication steps and prerequisites](PUBLISHING.md).
+
+
+## Beta.13 native Codex evidence
+
+A source-free installed controller completed an isolated Python greeting fixture
+with three genuine Codex account turns, a real focused project check and retained
+JSON output. The existing implementation/source-review records were preserved;
+a verified continuation consumed only the third remaining evidence-review turn.
+Read-only reconstruction matched the result and left the three dispatch records
+unchanged. Token counters were retained privately; USD cost and which account
+allowance/credit bucket applied were not independently measured.
+No Responses API campaign dispatch, customer-card replay or production deployment
+was part of this qualification.
+
+Focused installed contracts additionally exercise actual local Git/test failure
+and repair, source/evidence refusal, unknown outcomes, turn bounds, predecessor
+continuity, mutation-sensitive cached verification and the normal delivery/release
+handoff with injected GitHub effects. Simulated remote effects are not evidence of
+a customer PR, hosted CI or deploy. CI/source/package checks qualify each exact
+release commit separately; complete regression remains manual only.

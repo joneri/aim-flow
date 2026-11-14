@@ -137,6 +137,32 @@ elif sys.argv[1:2] == ['onboard-api']:
         raise SystemExit(main(sys.argv[2:]))
     except (ValueError, OSError) as error:
         raise SystemExit(str(error))
+elif sys.argv[1:2] == ['run-codex']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_codex_workflow import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
+elif sys.argv[1:2] == ['delivery-route']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    import argparse
+    import json
+    from flow_delivery_backend import route
+    parser = argparse.ArgumentParser(description='Inspect separate delivery backend and agent host; no dispatch')
+    parser.add_argument('--backend', required=True, choices=['responses-api', 'codex-cli'])
+    parser.add_argument('--execution-host', required=True, choices=['local', 'cloud'])
+    args = parser.parse_args(sys.argv[2:])
+    result = route({'backend': args.backend, 'executionHost': args.execution_host})
+    print(json.dumps(result, indent=2))
+    raise SystemExit(0 if result['status'] == 'available' else 3)
+elif sys.argv[1:2] == ['deliver-codex']:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
+    from flow_codex_delivery import main
+    try:
+        raise SystemExit(main(sys.argv[2:]))
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))
 elif sys.argv[1:2] == ['deliver-api']:
     sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
     from flow_api_delivery import main

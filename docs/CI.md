@@ -6,7 +6,7 @@ The exact auditable selection is [smoke-contracts.json](../tests/smoke-contracts
 It covers authorization, shared budget/replay fencing, source-bound cache reuse
 and tampering, reviewed test-reuse boundaries, repair iteration, owner scope limits, finding materiality,
 hardlink boundaries, historical intents, strict JSON and artifact/environment
-integrity. Long fixture lineage integrations are outside the automatic subset.
+integrity, plus one small source-free native Codex workflow with a simulated CLI and real focused local test. Long fixture lineage integrations are outside the automatic subset.
 
 Run the same subset locally:
 

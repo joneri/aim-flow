@@ -291,7 +291,6 @@ def build_packet(root, source, requirement, approved_plan, source_paths, *, dedu
 
 
 def parse_response(response, packet):
-    protocol = citation_protocol(packet)
     texts = []
     if not isinstance(response.get('output'), list): raise Refused('Missing review output')
     for item in response['output']:
@@ -305,8 +304,15 @@ def parse_response(response, packet):
             if part.get('type') != 'output_text' or not isinstance(part.get('text'), str): raise Refused('Invalid review text')
             texts.append(part['text'])
     if len(texts) != 1 or len(texts[0].encode()) > 262144: raise Refused('One bounded review body required')
+    return parse_body(unique_json(texts[0]), packet)
+
+
+def parse_body(body, packet, *, reviewer='Sol'):
+    """Validate structured review content independently of its transport receipt."""
+    body = copy.deepcopy(body)
+    protocol = citation_protocol(packet)
     policy = packet.get('findingDispositionPolicy')
-    body = unique_json(texts[0]); compact.validate_shape(body, citation_schema(finding_schema(SCHEMA, policy), protocol))
+    compact.validate_shape(body, citation_schema(finding_schema(SCHEMA, policy), protocol))
     expected = {x['id'] for x in packet['requirement']['criteria']}
     actual = [x['requirementId'] for x in body['coverage']]
     if len(actual) != len(set(actual)) or set(actual) != expected: raise Refused('Review must cover every exact requirement id')
@@ -342,7 +348,7 @@ def parse_response(response, packet):
         **({'findingDispositionPolicy': policy, 'followUps': follow_up_findings(assessed)} if finding_policy(policy) else {}),
         'baseline': packet['baseline'], 'candidate': packet['candidate'], **body, 'blockers': blockers,
         'candidateReview': {'reference': 'candidate-source-review:' + packet_sha,
-            'qualifications': ['Fresh Sol request; source-only findings, not human review or product acceptance.'],
+            'qualifications': ['Fresh ' + reviewer + ' request; source-only findings, not human review or product acceptance.'],
             'changedPaths': [x['path'] for x in packet['changes']]},
         'executionAuthorized': False, 'productAcceptance': 'not-run'}
 

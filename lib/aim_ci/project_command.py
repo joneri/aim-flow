@@ -372,7 +372,7 @@ def capture(command, cwd, environment, state, prefix, seconds, output_limit, red
         if len(output) > available: reason = 'output-limit'
         pending[key] = data[index:]
 
-    started = time.monotonic(); deadline = started + seconds; total = 0; reason = None
+    started = time.monotonic(); deadline = None if seconds is None else started + seconds; total = 0; reason = None
     process = None
     try:
         process = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
@@ -380,8 +380,8 @@ def capture(command, cwd, environment, state, prefix, seconds, output_limit, red
         with selectors.DefaultSelector() as selector:
             for key in streams: selector.register(getattr(process, key), selectors.EVENT_READ, key)
             while selector.get_map():
-                remaining = deadline - time.monotonic()
-                if remaining <= 0: reason = 'timeout'; break
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0: reason = 'timeout'; break
                 for event, _ in selector.select(remaining):
                     chunk = os.read(event.fileobj.fileno(), 8192)
                     if not chunk:
@@ -391,7 +391,7 @@ def capture(command, cwd, environment, state, prefix, seconds, output_limit, red
                     if total > output_limit: reason = 'output-limit'; break
                 if reason: break
             if not reason:
-                try: process.wait(timeout=max(.001, deadline - time.monotonic()))
+                try: process.wait(timeout=None if deadline is None else max(.001, deadline - time.monotonic()))
                 except subprocess.TimeoutExpired: reason = 'timeout'
     except BaseException:
         reason = 'interrupted'
