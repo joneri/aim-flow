@@ -6,12 +6,13 @@ below; confirm the exact remote commit, hosted checks and live download before
 claiming a new version is published. Do not replace an existing repository or
 assume remote main is unchanged from a cached local observation.
 
-## Prepared release: beta.13
+## Prepared release: beta.14
 
-Source VERSION and the prepared active download are `0.1.0-beta.13`. This release
-adds explicit backend/agent-host selection, native local Codex workflow receipts,
-phase-aligned source/test/evidence review, continuation without repeated model
-work and the existing guarded delivery adapters. The API option and historical
+Source VERSION and the prepared active download are `0.1.0-beta.14`. This release
+fixes duplicate implementation source text in both native Codex routes and checks
+the exact serialized input against the CLI character limit before each model
+phase. Startup previews report the first implementation input size and hash.
+Existing native evidence, bounded continuation and delivery adapters remain. The API option and historical
 accounting remain available. Earlier ZIPs remain unchanged. Active pins live in
 `site/downloads/release.json` and `site/downloads/SHA256SUMS`.
 

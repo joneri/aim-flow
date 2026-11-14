@@ -13,6 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'lib'))
 import flow_api_delivery as api
 import flow_codex_workflow as native
+import flow_codex_delivery as cli
 import flow_delivery_chain as chain
 from aim_ci import control_package, control_archive, verification_runtime, project_validation
 from aim_ci.owned_paths import Refused
@@ -111,8 +112,42 @@ print('focused label check passed')
   self.assertEqual(result['status'],'local-feature-evidence-reviewed');self.assertEqual(len(result['modelStages']),3)
   self.assertIsNone(result['amountNanoUsd']);self.assertFalse(result['responsesApiDispatchExecuted'])
   self.assertEqual(invoke('--verify'),result)
+  request_path=self.state/'round-001/model-implementation/request.json'
+  request=json.loads(request_path.read_bytes());packet=request['packet']
+  self.assertFalse(set(packet['contextSources']) & set(packet['editableSources']))
+  self.assertEqual(cli.input_summary(request_path.read_bytes()),preview['intent']['firstModelInput'])
+  for path,text in {**packet['contextSources'],**packet['editableSources']}.items():
+   self.assertEqual(text,(self.checkout/path).read_text())
   self.assertIn("'Tickets'",(self.checkout/'src/label.py').read_text())
   self.assertEqual(len(list((self.case/'codex-dispatch').glob('*.json'))),3)
+ def test_large_source_preview_deduplicates_and_refuses_oversize_before_attempt(self):
+  # More than half a CLI input in exact editable code: the old duplicated maps
+  # exceeded transport capacity even though their union fits comfortably.
+  for i in range(3):
+   (self.checkout/f'src/label-context-{i}.py').write_text('# label.py change focused check original request\n'+'# context\n'*25000)
+  self.git_run('add','.');self.git_run('commit','-qm','Large selected source fixture')
+  self.c['source']['commit']=self.git_run('rev-parse','HEAD')
+  self.c['intakeLimits']={**native.intake.DEFAULT_LIMITS,'reviewBytes':1000000}
+  self.save();preview=self.run_native()
+  c,report,files,tests,requirement,intent=native.prepare(self.config,self.sha,self.state)
+  context={p:files[p][1].decode() for p in intent['contextPaths']}
+  editable={p:files[p][1].decode() for p in report['selection']['editablePaths']}
+  packet=native.implementation_packet(requirement,intent['target'],context,editable)
+  self.assertEqual({**packet['contextSources'],**packet['editableSources']},context)
+  old_packet={**packet,'contextSources':context}
+  self.assertGreater(len(api.encoded(native.model.request_for('model-implementation',old_packet)).decode()),cli.MAX_INPUT_CHARACTERS)
+  self.assertLess(preview['intent']['firstModelInput']['characters'],cli.MAX_INPUT_CHARACTERS)
+  # Escaping, not just original file byte count, can exceed the wire limit.
+  (self.checkout/'src/label-context-0.py').write_text('# label.py change focused check original request\n'+'\\'*250000)
+  self.git_run('add','.');self.git_run('commit','-qm','Escaped source exceeds transport capacity')
+  self.c['source']['commit']=self.git_run('rev-parse','HEAD');self.save()
+  actual=subprocess.run
+  def only_git(argv,*args,**kwargs):
+   self.assertEqual(argv[0],str(self.git),'Oversize preview must not run the account CLI')
+   return actual(argv,*args,**kwargs)
+  with patch.object(subprocess,'run',side_effect=only_git):
+   with self.assertRaisesRegex(Refused,'input_too_large before dispatch'):self.run_native()
+  self.assertFalse(self.state.exists());self.assertFalse((self.case/'codex-dispatch').exists())
  def test_real_failed_test_repairs_once_and_delivery_handoff_uses_native_producer(self):
   self.c['model']='fixture-repair';self.save();result=self.start()
   self.assertEqual(result['status'],'local-feature-evidence-reviewed');self.assertEqual(len(result['rounds']),2)

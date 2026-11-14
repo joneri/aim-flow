@@ -305,3 +305,33 @@ Node/browser/PNG execution, cloud, hosted delivery, production or a billing buck
 Remote adapter contracts were exercised separately with simulated GitHub effects.
 
 Local native Git preparation also defaults to no Flow deadline. Optional `localGitTimeoutSeconds` sets a positive explicit deadline without changing historical API grants. Runtime and permission prerequisites that source edits cannot resolve stop before another implementation turn.
+
+
+## Complete-input preflight (beta.14)
+
+Implementation context maps are disjoint: `editableSources` contains every exact
+selected writable file; `contextSources` contains the remaining exact selected
+context. Their union is unchanged. Neither requirements nor source text are
+truncated to fit. Both `run-codex` and `deliver-codex` use this representation.
+
+The installed CLI's `turn/start` transport rejects text inputs over 1,048,576
+characters with `input_too_large`. Flow checks the complete serialized UTF-8 JSON,
+including escaping, instructions, metadata, diagnostics and evidence, before
+invoking the account CLI or writing that phase's dispatch marker. This is a
+transport character limit, separate from source byte allowances or token quotas.
+The source-review and executed-evidence phases each receive the same check when
+their actual input exists; a startup preview cannot predict future model answers
+or project output.
+
+The workflow preview exposes `intent.firstModelInput`; proposal previews expose
+`intent.modelInput`. These contain exact serialized characters, UTF-8 bytes, the
+CLI maximum and SHA-256. Stage intents retain the corresponding `modelInput`.
+An oversized first request fails before creating an attempt or consuming a turn.
+A later oversized phase reports its exact size before that phase's dispatch;
+earlier model work and tests remain preserved. Review the project context scope
+or separate the task explicitly rather than dropping evidence automatically.
+
+Install a fresh beta.14 controller for this change. Never rewrite an older
+attempt, its controller, request or dispatch journal, or treat an earlier failed
+CLI start as an unused/refunded turn. Queue owners retain their cumulative
+authority when explicitly creating a new attempt; this fix restarts nothing.
